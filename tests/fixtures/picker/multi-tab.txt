@@ -1,0 +1,22 @@
+● Earlier in the chat Claude listed:
+  1. Something numbered
+  2. That must not be read
+❯ Use the AskUserQuestion tool to ask me 2 questions in ONE call.
+──────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☐ Fruits  ✔ Submit  →
+
+Which fruits do you like?
+
+  1. [✔] Apple
+         A crisp apple
+  2. [ ] Banana
+         A ripe banana
+❯ 3. [✔] Cherry
+         A sweet cherry
+  4. [✔] Kiwi from Orbit
+     Submit
+──────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+────────────────────────────────────────────────────────────────────────── ORBIT-TEST-IGNORE ─

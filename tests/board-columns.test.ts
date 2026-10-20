@@ -1,0 +1,46 @@
+import { describe, expect, it } from 'vitest';
+import { ACTIVE_WINDOW_MS, toBoardColumns } from '../src/renderer/views/board-columns';
+import type { ChatSnapshot, ChatStatus } from '../src/shared/types';
+
+const NOW: number = 100 * ACTIVE_WINDOW_MS;
+
+function chat(name: string, status: ChatStatus, finishedAgo: number = 0): ChatSnapshot {
+  return {
+    sessionId: name, pid: 1, name, color: null, repository: { name: 'repo', root: '/repo' }, cwd: '/repo', startedAt: 0,
+    status, statusSince: NOW - finishedAgo, agents: [], shells: [], isFocused: false,
+  };
+}
+
+const names = (columns: ReturnType<typeof toBoardColumns>): string[][] => columns.map((column) => column.chats.map((item) => item.name));
+
+describe('toBoardColumns', () => {
+  it('puts unseen finished chats and permission prompts in Needs you, then splits seen ones by age', () => {
+    const unseen = (item: ChatSnapshot): boolean => item.name === 'fresh';
+    const chats: ChatSnapshot[] = [
+      chat('fresh', 'idle'),
+      chat('asking', 'waiting'),
+      chat('running', 'busy'),
+      chat('recent', 'idle', ACTIVE_WINDOW_MS - 1),
+      chat('old', 'idle', ACTIVE_WINDOW_MS + 1),
+    ];
+    expect(names(toBoardColumns(chats, unseen, NOW))).toEqual([['fresh', 'asking'], ['running'], ['recent'], ['old']]);
+  });
+
+  it('keeps a resting chat where it was dragged, whatever its age', () => {
+    const never = (): boolean => false;
+    const chats: ChatSnapshot[] = [chat('recent', 'idle', ACTIVE_WINDOW_MS - 1), chat('old', 'idle', ACTIVE_WINDOW_MS + 1)];
+    const pin = (item: ChatSnapshot): 'active' | 'idle' | null => (item.name === 'recent' ? 'idle' : 'active');
+    expect(names(toBoardColumns(chats, never, NOW, pin))).toEqual([[], [], ['old'], ['recent']]);
+  });
+
+  it('never lets a pin pull a working or waiting chat out of its column', () => {
+    const never = (): boolean => false;
+    const pin = (): 'idle' => 'idle';
+    expect(names(toBoardColumns([chat('running', 'busy'), chat('asking', 'waiting')], never, NOW, pin))).toEqual([['asking'], ['running'], [], []]);
+  });
+
+  it('lists unseen chats first inside a column', () => {
+    const unseen = (item: ChatSnapshot): boolean => item.name === 'b';
+    expect(toBoardColumns([chat('a', 'waiting'), chat('b', 'idle')], unseen, NOW)[0]?.chats.map((item) => item.name)).toEqual(['b', 'a']);
+  });
+});

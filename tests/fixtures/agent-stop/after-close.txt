@@ -1,0 +1,12 @@
+
+❯ /tasks
+
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+❯ 
+──────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on · 1 shell · ↓ to manage                              84568 tokens
+                                                                          ◐ medium · /effort
+
+  ● main
+  ◯ general-purpose  Agent J: count                                   27s · ↓ 55.0k tokens
+  ◯ general-purpose  Agent K: count                                   27s · ↓ 55.0k tokens

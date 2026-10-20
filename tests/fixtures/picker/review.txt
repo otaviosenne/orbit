@@ -1,0 +1,18 @@
+──────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☒ Fruits  ✔ Submit  →
+
+Review your answers
+
+ ● Which color do you prefer?
+   → Purple, dark
+ ● Which fruits do you like?
+   → Apple, Cherry, Banana,
+     Mango
+
+Ready to submit your answers?
+
+❯ 1. Submit answers
+  2. Cancel
+
+
+────────────────────────────────────────────────────────────────────────── ORBIT-TEST-IGNORE ─

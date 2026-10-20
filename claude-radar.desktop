@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Orbit
+Comment=Watch and steer every open Claude Code chat and its agents
+Exec=/home/senne/Claude/Projects/claude-radar/node_modules/.bin/electron /home/senne/Claude/Projects/claude-radar
+Icon=/home/senne/Claude/Projects/claude-radar/assets/orbit-icon.svg
+Terminal=false
+Categories=Utility;Development;
+StartupWMClass=claude-radar

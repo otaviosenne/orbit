@@ -1,0 +1,26 @@
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● Agent(Agent K: count)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● OK. The sleep 240 runs in the background in Bash, and agents J and K are running in the
+  background too. Each counts from 1 to 300 with a foreground sleep 4 between numbers.
+
+✻ Waiting for 2 background agents to finish
+
+❯ /tasks
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+  Background
+  1 active shell · 2 active agents
+
+    Shells (1)
+    ● sleep 240          running
+
+    Local agents (2)
+    ● Agent K: count   running · Sonnet 5.5
+  ❯ ● Agent J: count   running · Sonnet 5.5
+
+  ↑/↓ to select · Enter to view · f to foreground · x to stop · ctrl+x ctrl+k to stop all
+  agents · Esc to close

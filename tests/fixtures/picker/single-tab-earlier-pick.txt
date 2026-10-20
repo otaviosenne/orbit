@@ -1,0 +1,18 @@
+──────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☒ Fruits  ✔ Submit  →
+
+Which color do you prefer? This question is long enough that the terminal
+wraps it onto a second line.
+
+❯ 1. Red
+     The color red
+  2. Green ✔
+     The color green, a description that also runs long enough to wrap onto
+     another line
+  3. Blue
+     The color blue
+  4. Type something.
+──────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel

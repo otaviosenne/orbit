@@ -1,0 +1,8 @@
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+❯
+──────────────────────────────────────────────────────────────────────────────────────────────
+  Enter to view · x to stop · ctrl+x ctrl+k to stop all agents                  71529 tokens
+
+  ● main
+  ◯ general-purpose  Agent A: sleep 300                                 9s · ↓ 55.9k tokens
+❯ ◯ general-purpose  Counting with sleep 3 intervals                    38s · ↓ 56.1k tokens

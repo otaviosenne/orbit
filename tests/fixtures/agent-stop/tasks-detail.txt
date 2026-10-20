@@ -1,0 +1,30 @@
+● Agent(Agent J: count)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● Agent(Agent K: count)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● OK. The sleep 240 runs in the background in Bash, and agents J and K are running in the
+  background too. Each counts from 1 to 300 with a foreground sleep 4 between numbers.
+
+✻ Waiting for 2 background agents to finish
+
+❯ /tasks
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+  general-purpose › Agent J: count
+  26s · 55.0k tokens · 3 tools · Sonnet 5.5
+
+  Progress
+    Bash(sleep 4)
+    Bash(sleep 4)
+  › Bash(sleep 4)
+
+  Prompt
+  Count from 1 to 300, one number at a time. Between each number, run `sleep 4` via the Bash
+  tool in the foreground (do NOT use run_in_background). Do one Bash call per number, until
+  you reach 300. Then say done.
+
+  ← to go back · Esc/Enter/Space to close · x to stop · f to foreground · ctrl+x ctrl+k to
+  stop all agents

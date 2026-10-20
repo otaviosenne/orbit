@@ -1,0 +1,40 @@
+{
+  "name": "orbit",
+  "productName": "Orbit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One window to watch and steer every Claude Code chat open on your Linux desktop",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "otaviosenne",
+  "homepage": "https://github.com/otaviosenne/orbit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/otaviosenne/orbit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/otaviosenne/orbit/issues"
+  },
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "npm run build && electron .",
+    "demo": "npm run build && ORBIT_DEMO=1 electron ."
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@phosphor-icons/core": "^2.1.1",
+    "@types/node": "^26.6.5",
+    "electron": "^44.9.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "@types/ws": "^8.18.2",
+    "dompurify": "^3.4.17",
+    "marked": "^18.1.1",
+    "ws": "^8.22.0"
+  }
+}

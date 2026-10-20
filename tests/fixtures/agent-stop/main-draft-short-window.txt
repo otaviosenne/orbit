@@ -1,0 +1,10 @@
+❯ draft line one
+  draft line two
+──────────────────────────────────────────────
+  ⏵⏵ bypass permissions on · 3 shells
+                                93018 tokens
+  current: 2.1.304 ·… ✔ Update installed · …
+                      ctrl+g to edit in nano
+
+  ● main
+  ◯ general-purpose 18m 57s · ↓ 77.1k tokens

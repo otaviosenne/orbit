@@ -1,0 +1,14 @@
+
+✻ Waiting for 1 background agent to finish
+
+────────────────────── ORBIT-AGENT-STOP-TEST ─
+❯ draft line one
+  draft line two
+──────────────────────────────────────────────
+  ⏵⏵ bypass permissions on · 3 shells
+                                92548 tokens
+  current: 2.1.304 ·… ✔ Update installed · …
+                      ctrl+g to edit in nano
+
+  ● main
+  ◯ general-purpose 17m 23s · ↓ 75.2k tokens

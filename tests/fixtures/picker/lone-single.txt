@@ -1,0 +1,45 @@
+● User answered Claude's questions:
+  ⎿  · Which color do you prefer? → Purple, dark
+     · Which fruits do you like? → Apple, Cherry, Banana, Mango
+
+● Você escolheu o seguinte. Este é o resultado bruto da ferramenta, citado sem alterações:
+
+  ▎ The user answered: "Which color do you prefer?"="Purple, dark", "Which fruits do you like?"="Apple, Cherry, Banana, Mango". Read the answers carefully — they may request clarification,
+  ▎ changes, or that you not proceed — and follow what they actually say.
+
+  - Color: você não escolheu nenhuma das três opções. Usou o campo "Other" e escreveu "Purple, dark".
+  - Fruits: você marcou Apple, Cherry, Banana e incluiu Mango pelo "Other", que não estava entre as opções.
+
+✻ Brewed for 9s · done 4:29 PM
+
+❯ Now use AskUserQuestion with exactly ONE multi-select question, header 'Pets', options Cat, Dog, Fish. Then reply with the raw tool result.                                                  
+
+● User answered Claude's questions:
+  ⎿  · Which pets do you like? → Cat, Fish
+
+● Este é o resultado bruto da ferramenta, citado sem alterações:
+
+  ▎ Your questions have been answered: "Which pets do you like?"="Cat, Fish". You can now continue with these answers in mind.
+
+  Você marcou Cat e Fish, e não marcou Dog.
+
+✻ Churned for 7s · done 4:29 PM
+
+❯ Now use AskUserQuestion with exactly ONE single-choice question, header 'Size', options Small, Medium, Large. Then reply with the raw tool result.                                           
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ☐ Size 
+
+Which size do you prefer?
+
+  1. Small
+     Small size
+  2. Medium
+     Medium size
+  3. Large
+     Large size
+  4. Type something.
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 5. Chat about this
+
+Enter to select · ↑/↓ to navigate · ctrl+g to edit in nano · Esc to cancel
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ORBIT-TEST-IGNORE ─

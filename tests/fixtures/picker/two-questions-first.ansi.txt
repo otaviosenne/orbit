@@ -1,0 +1,45 @@
+[m[38:2:255:255:255m●[39m Este é o resultado bruto da ferramenta, citado sem alterações:
+
+[m  [22;2m▎[22m [3mYour[23m [3mquestions[23m [3mhave[23m [3mbeen[23m [3manswered:[23m [3m"Which[23m [3mpets[23m [3mdo[23m [3myou[23m [3mlike?"="Cat,[23m [3mFish".[23m [3mYou[23m [3mcan[23m [3mnow
+[m  [22;2m▎[22m [3mcontinue[23m [3mwith[23m [3mthese[23m [3manswers[23m [3min[23m [3mmind.
+
+[m  Você marcou [22;1mCat[22m e [22;1mFish[22m, e não marcou Dog.
+
+[m[38:2:153:153:153m✻[39m [38:2:153:153:153mChurned[39m [38:2:153:153:153mfor[39m [38:2:153:153:153m7s[39m [38:2:153:153:153m·[39m [38:2:153:153:153mdone[39m [38:2:153:153:153m4:29[39m [38:2:153:153:153mPM
+
+[m[38:2:153:153:153;48:2:55:55:55m❯ [38:2:255:255:255mNow use AskUserQuestion with exactly ONE single-choice question, header 'Size', options [39m    
+[m[48:2:55:55:55m  [38:2:255:255:255mSmall, Medium, Large. Then reply with the raw tool result.[39m                                  
+
+[m[38:2:153:153:153m● [39mUser answered Claude's questions:
+[m[38:2:153:153:153m  ⎿  · Which size do you prefer? → Medium
+
+[m[38:2:255:255:255m●[39m Este é o resultado bruto da ferramenta, citado sem alterações:
+
+[m  [22;2m▎[22m [3mYour questions have been answered: "Which size do you prefer?"="Medium". You can now 
+[m  [22;2m▎[22m [3mcontinue with these answers in mind.
+
+[m  Você escolheu [22;1mMedium[22m.
+[m               
+[m[38:2:153:153:153m✻[39m [38:2:153:153:153mCooked for 5s · done 4:54 PM
+
+[m[38:2:153:153:153;48:2:55:55:55m❯ [38:2:255:255:255mUse the AskUserQuestion tool to ask me 2 questions in ONE call: first a single-choice [39m      
+[m[48:2:55:55:55m  [38:2:255:255:255mquestion with header 'Color' and 3 options (Red, Green, Blue); second a multi-select [39m       
+[m[48:2:55:55:55m  [38:2:255:255:255mquestion with header 'Fruits' and 3 options (Apple, Banana, Cherry). Then reply with [39m       
+[m[48:2:55:55:55m  [38:2:255:255:255mexactly what I chose, quoting the raw tool result.[39m                                          
+[m[38:2:153:153:153m──────────────────────────────────────────────────────────────────────────────────────────────
+[m[38:2:153:153:153m← [38:2:0:0:0;48:2:177:185:249m ☐ Color [39;49m ☐ Fruits  ✔ Submit  →
+
+[m[22;1;38:2:255:255:255mWhich color do you prefer?
+
+[m[38:2:177:185:249m❯[39m [38:2:153:153:153m1.[39m [38:2:177:185:249mRed
+[m     [38:2:153:153:153mThe color red
+[m  [38:2:153:153:153m2.[39m Green
+[m     [38:2:153:153:153mThe[39m [38:2:153:153:153mcolor[39m [38:2:153:153:153mgreen
+[m  [38:2:153:153:153m3.[39m Blue
+[m     [38:2:153:153:153mThe[39m [38:2:153:153:153mcolor[39m [38:2:153:153:153mblue
+[m  [38:2:153:153:153m4.[39m [38:2:153:153:153mType[39m [38:2:153:153:153msomething.
+[m[38:2:153:153:153m──────────────────────────────────────────────────────────────────────────────────────────────
+[m  5. Chat about this
+
+[m[38:2:153:153:153mEnter[39m [38:2:153:153:153mto[39m [38:2:153:153:153mselect[39m [38:2:153:153:153m·[39m [38:2:153:153:153mTab/Arrow[39m [38:2:153:153:153mkeys[39m [38:2:153:153:153mto[39m [38:2:153:153:153mnavigate[39m [38:2:153:153:153m·[39m [38:2:153:153:153mEsc[39m [38:2:153:153:153mto[39m [38:2:153:153:153mcancel
+[m[38:2:136:136:136m──────────────────────────────────────────────────────────────────────────[39m [38:2:136:136:136mORBIT-TEST-IGNORE[39m [38:2:136:136:136m─

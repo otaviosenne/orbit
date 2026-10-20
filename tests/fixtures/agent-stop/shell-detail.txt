@@ -1,0 +1,14 @@
+❯ /tasks
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+  Shell details
+
+  Status:   running
+  Runtime:  2m 7s
+  Command:  sleep 240
+
+  Output:
+  No output available
+
+  ← to go back · Esc/Enter/Space to close · x to stop

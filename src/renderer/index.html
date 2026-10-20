@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:" />
+    <title>Orbit</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div id="app-title" class="app-title"></div>
+      <nav id="nav" class="nav"></nav>
+      <div class="topbar-info">
+        <div id="resume-chat" class="resume-chat"></div>
+        <div id="new-chat" class="new-chat"></div>
+        <button id="settings-button" class="icon-button settings-button" type="button" title="Settings (4)" aria-label="Settings"></button>
+      </div>
+    </header>
+    <main id="view" class="view"></main>
+    <section id="sheet" class="sheet">
+      <div id="panel-resizer" class="panel-resizer" title="Drag to resize, double-click to reset"></div>
+      <header class="sheet-head">
+        <div class="sheet-title">
+          <div class="sheet-title-row">
+            <button id="sheet-back" class="icon-button sheet-back" type="button" title="Back to the chat" hidden></button>
+            <span id="sheet-agent-dot" class="sheet-agent-dot" hidden></span>
+            <button id="action-color" class="sheet-dot" type="button" title="Change color"></button>
+            <h2 id="sheet-name" class="sheet-name"></h2>
+            <button id="action-rename" class="icon-button" type="button" title="Rename"></button>
+            <form id="rename-form" class="rename-form" hidden>
+              <input id="rename-input" class="rename-input" maxlength="80" spellcheck="false" />
+              <button type="submit" class="button button-primary">Save</button>
+              <button type="button" id="rename-cancel" class="button">Cancel</button>
+            </form>
+          </div>
+          <p id="sheet-meta" class="sheet-meta"></p>
+        </div>
+        <div class="sheet-actions">
+          <button id="action-settings" class="icon-button" type="button" title="Model, effort and skills" aria-label="Chat settings" aria-haspopup="dialog"></button>
+          <button id="action-focus" class="link-button" type="button" title="Switch to this chat's window">Go to chat</button>
+          <button id="sheet-close" class="icon-button" type="button" title="Close (Esc)"></button>
+        </div>
+        <div id="chat-settings" class="chat-settings" role="dialog" aria-label="Chat settings" hidden></div>
+      </header>
+      <div id="agent-strip" class="agent-strip" hidden></div>
+      <div id="color-picker" class="color-picker" hidden></div>
+      <div class="thread">
+        <div id="sheet-messages" class="sheet-messages"></div>
+        <button id="jump-previous" class="jump-button jump-up" type="button" aria-label="Previous message of yours" hidden></button>
+        <button id="jump-next" class="jump-button jump-down" type="button" aria-label="Next message of yours" hidden></button>
+        <div id="jump-preview" class="jump-preview" hidden></div>
+        <div id="working-indicator" class="working-indicator" role="status"></div>
+      </div>
+      <form id="composer" class="composer">
+        <div class="composer-field">
+          <div id="composer-box" class="composer-box">
+            <div id="attachment-tray" class="attachment-tray" hidden></div>
+            <div class="composer-text">
+              <div id="composer-markers" class="composer-markers" aria-hidden="true"></div>
+              <textarea id="composer-input" class="composer-input" rows="1" placeholder=" "></textarea>
+            </div>
+            <button id="composer-attach" type="button" class="composer-attach" aria-label="Attach images"></button>
+            <input id="composer-file" type="file" accept="image/*" multiple hidden />
+            <span id="voice-bars" class="voice-bars" hidden><i></i><i></i><i></i><i></i></span>
+            <button id="composer-mic" type="button" class="composer-mic" title="Talk (or hold Space)"></button>
+          </div>
+        </div>
+        <button id="composer-send" type="submit" class="button button-primary">Send</button>
+      </form>
+      <p id="sheet-status" class="sheet-status" role="status"></p>
+    </section>
+    <div id="lightbox" class="lightbox" hidden><img id="lightbox-image" class="lightbox-image" alt="" /></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+     tick 6
+     tick 7
+     (21s · timeout 2m 30s)
+     (ctrl+b to run in background)
+
+✢ Spelunking… (31s · ↓ 309 tokens)
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+  Background
+  1 active shell · 2 active agents
+
+    Shells (1)
+    ● sleep 200          running
+
+    Local agents (2)
+  ❯ ● Agent G: count   running · Sonnet 5.5
+    ● Agent F: count   running · Sonnet 5.5
+
+  ↑/↓ to select · Enter to view · f to foreground · x to stop · ctrl+x ctrl+k to stop all
+  agents · Esc to close
+
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+❯
+──────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · esc to interrupt · ↓ to manage
+
+  ● main
+  ◯ general-purpose  Pausing four seconds after ten                   2m 5s · ↓ 57.5k tokens
+  ◯ general-purpose  Agent G: count                                   29s · ↓ 55.0k tokens

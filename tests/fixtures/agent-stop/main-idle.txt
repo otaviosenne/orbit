@@ -1,0 +1,16 @@
+● Agent(Agent K: count)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● OK. The sleep 240 runs in the background in Bash, and agents J and K are running in the
+  background too. Each counts from 1 to 300 with a foreground sleep 4 between numbers.
+
+✻ Waiting for 2 background agents to finish
+
+────────────────────────────────────────────────────────────────────── ORBIT-AGENT-STOP-TEST ─
+❯ 
+──────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on · 1 shell · ↓ to manage                              84568 tokens
+
+  ● main
+  ◯ general-purpose  Agent J: count                                   23s · ↓ 55.0k tokens
+  ◯ general-purpose  Agent K: count                                   23s · ↓ 54.8k tokens

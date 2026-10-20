@@ -1,0 +1,16 @@
+
+● 4
+
+● Bash(sleep 4)
+  ⎿  (No output)
+
+✢ Billowing… (39s · ↑ 55.2k tokens)
+
+─────────────────────────────────────────────────────────────────────────── Agent J: count ─
+❯ Message @general-purpose…
+──────────────────────────────────────────────────────────────────────────────────────────────
+  ↑/↓ to select · ctrl+x ctrl+k to stop all agents                              84568 tokens
+
+  ◯ main
+❯ ● general-purpose  Counting with sleep, step 3                        38s · ↓ 55.2k tokens
+  ◯ general-purpose  Counting to 300 with sleeps                        38s · ↓ 55.2k tokens

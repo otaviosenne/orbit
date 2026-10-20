@@ -1,0 +1,16 @@
+✻ Worked for 1m 20s · done 5:27 PM
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+  Background
+
+  No tasks currently running
+
+  ↑/↓ to select · Enter to view · Esc to close
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+❯
+──────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · ↓ to manage
+
+  ● main
+  ◯ general-purpose  Pausing four seconds after eight
