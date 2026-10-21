@@ -10,18 +10,22 @@ import type { ChromeInstance } from './chrome-instances';
 import { chromesThatMayHold } from './chrome-instances';
 import type { DesktopWindowList } from './desktop-windows';
 import { focusWindowAt } from './desktop-windows';
+import { SessionTabActivator } from './session-tab-activator';
 
 // Same pace as the window list: the panel asks every poll, a tab list changes far less often.
 const TARGET_LIST_TTL_MS: number = 3000;
 // Chrome retitles the window a moment after a tab is activated; the focus waits for it to find the right window.
 const RETITLE_WAIT_MS: number = 150;
 
-// Finds the chat's Claude in Chrome tab from outside Chrome. Exact only through a DevTools port; without one,
-// a window's title shows just its active tab, so a tab behind others can only be approached by its window.
+// Finds the chat's Claude in Chrome tab from outside Chrome: through a DevTools port when Chrome has one, else
+// through its session file; when neither places it, a tab behind others can only be approached by its window.
 export class BrowserLocator {
   private readonly targetLists: Map<number, { readonly at: number; readonly targets: Promise<PageTarget[]> }> = new Map();
+  private readonly sessionTabs: SessionTabActivator;
 
-  constructor(private readonly windowList: DesktopWindowList) {}
+  constructor(private readonly windowList: DesktopWindowList) {
+    this.sessionTabs = new SessionTabActivator(windowList);
+  }
 
   // A Chrome without DevTools cannot be asked about its tabs, so it counts as possibly holding the tab.
   async mayBeOpen(tab: BrowserTabReference, windows: readonly DesktopWindow[]): Promise<boolean> {
@@ -38,7 +42,12 @@ export class BrowserLocator {
     for (const chrome of chromes) {
       if (chrome.devToolsPort !== null && (await this.activateTab(tab, chrome, chrome.devToolsPort))) return 'exact';
     }
-    return focusLikelyWindow(tab, chromes.filter((chrome: ChromeInstance) => chrome.devToolsPort === null).flatMap((chrome) => chrome.windows));
+    const withoutDevTools: ChromeInstance[] = chromes.filter((chrome: ChromeInstance) => chrome.devToolsPort === null);
+    for (const chrome of withoutDevTools) {
+      const focus: DeviceFocus | null = await this.sessionTabs.activate(tab, chrome);
+      if (focus !== null) return focus;
+    }
+    return focusLikelyWindow(tab, withoutDevTools.flatMap((chrome: ChromeInstance) => chrome.windows));
   }
 
   private async activateTab(tab: BrowserTabReference, chrome: ChromeInstance, port: number): Promise<boolean> {
