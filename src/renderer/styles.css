@@ -1170,10 +1170,19 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
   box-shadow: 0 1px 3px color-mix(in srgb, var(--question-tint) 45%, transparent);
 }
 .question-badge svg { width: 12px; height: 12px; fill: #ffffff; }
-.question-progress { display: flex; gap: 4px; margin-top: -2px; }
-.question-progress-step { flex: 1; height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--question-tint) 16%, transparent); transition: background 0.2s; }
-.question-progress-step.is-done { background: color-mix(in srgb, var(--question-tint) 55%, transparent); }
-.question-progress-step.is-current { background: var(--question-tint); }
+/* Each segment is a button; the transparent border gives a taller hit area than the 3 px line it draws */
+.question-progress { display: flex; gap: 4px; margin: -6px 0 -4px; }
+.question-progress-step {
+  flex: 1; height: 11px; padding: 0; border: solid transparent; border-width: 4px 0; border-radius: 6px; background-clip: padding-box; cursor: pointer;
+  background-color: color-mix(in srgb, var(--question-tint) 16%, transparent); transition: background-color 0.2s;
+}
+.question-progress-step { transition: background-color 0.2s, border-width 0.12s; }
+/* Hovered, the line thickens (the border gives up space) so it reads as something to click */
+.question-progress-step:hover:not(:disabled) { border-width: 2.5px 0; }
+.question-progress-step:hover:not(:disabled):not(.is-current) { background-color: color-mix(in srgb, var(--question-tint) 35%, transparent); }
+.question-progress-step:disabled { cursor: default; }
+.question-progress-step.is-done { background-color: color-mix(in srgb, var(--question-tint) 55%, transparent); }
+.question-progress-step.is-current { background-color: var(--question-tint); }
 .question-hint { color: var(--tertiary); font-size: 11px; }
 /* "Question 2 of 4" is where the user is in the set, so it reads as a pill rather than a faint caption */
 .question-count {

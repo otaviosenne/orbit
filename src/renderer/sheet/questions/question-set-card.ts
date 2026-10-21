@@ -38,7 +38,7 @@ export class QuestionSetCard {
 
   constructor(private readonly view: PickerSetView, private readonly actions: QuestionSetActions) {
     this.problem = new ProblemLine((): void => actions.goToChat());
-    this.progress = new QuestionProgress(view.questions.length);
+    this.progress = new QuestionProgress(view.questions.length, (index: number): void => this.go(index));
     this.fieldsets = view.questions.map((question: Question, index: number) => new QuestionFieldset(fieldsetQuestion(question), `set-${view.questionId}-${index}`, (): void => this.refresh()));
     this.previousArrow.addEventListener('click', (): void => this.go(this.step - 1));
     this.nextArrow.addEventListener('click', (): void => this.go(this.step + 1));
@@ -86,6 +86,7 @@ export class QuestionSetCard {
   private refresh(): void {
     const answered: boolean = this.fieldsets[this.step]?.read() !== null;
     this.progress.show(this.step, this.fieldsets.map((fieldset: QuestionFieldset): boolean => fieldset.read() !== null));
+    this.progress.setDisabled(this.isSending);
     this.previousArrow.disabled = this.isSending || this.step === 0;
     this.nextArrow.disabled = this.isSending || this.isLastStep;
     this.back.hidden = this.step === 0;

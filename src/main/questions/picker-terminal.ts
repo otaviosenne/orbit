@@ -7,7 +7,7 @@ const STEP_SETTLE_MS: number = 80;
 
 // The chat's terminal seen through its kitty remote-control socket: keys in, the visible screen out.
 export class PickerTerminal {
-  private readonly target: readonly string[];
+  readonly target: readonly string[];
 
   constructor(kittyPid: number) {
     this.target = ['@', '--to', `unix:${kittySocketPath(kittyPid)}`];
