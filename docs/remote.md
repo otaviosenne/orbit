@@ -65,7 +65,8 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4517 (Or
 
 Allowed from the web: reading everything Orbit shows; sending messages and images; interrupting a
 turn or a background shell; answering questions; stopping agents; renaming and recoloring;
-switching model, effort and permission mode; resuming past chats; and opening a chat from a
+switching model, effort and permission mode (wide screens only: on a phone the chat's header keeps
+just back, its dot and its name); resuming past chats; and opening a chat from a
 **saved** New chat shortcut (by name: the command is re-read from the launcher list).
 
 ## Setup
@@ -77,7 +78,8 @@ switching model, effort and permission mode; resuming past chats; and opening a 
    are refused, so this step is required.
 4. Scan the **QR code** with the phone. It opens `<external url>/#token=…` and signs in. Or open
    the address and paste the token.
-5. Optional: in the phone browser's menu, use **Add to Home Screen**.
+5. Optional: in the phone browser's menu, use **Add to Home Screen**. On iOS the home-screen app
+   keeps its own cookies, so sign in once more inside it (paste the token).
 
 ### Cloudflare Tunnel (with Cloudflare Access)
 

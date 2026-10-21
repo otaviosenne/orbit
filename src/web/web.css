@@ -14,7 +14,7 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
 
 /* ---------- Desktop-only controls (see REMOTE_ACCESS in src/shared/remote-access.ts) ---------- */
 /* Focus or pop out a desktop window, attach a folder, dictate: none of it reaches a phone */
-#action-focus, #action-window, #sheet-devices, #composer-mic, #voice-bars, .panel-resizer,
+#action-focus, #action-window, #sheet-devices, #composer-mic, #voice-bars, #hands-free-indicator,
 .new-chat-add, .new-chat-separator { display: none !important; }
 /* The phone's own back button, shown only on narrow screens */
 .web-sheet-back { display: none; }
@@ -128,7 +128,7 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   }
   .sheet.is-open { transform: none; }
   .sheet-head { padding: calc(6px + env(safe-area-inset-top)) var(--web-gutter) 8px 4px; }
-  .sheet-actions, .sheet-meta, #action-rename { display: none; }
+  .sheet-actions, .sheet-meta, #action-rename, .panel-resizer { display: none; }
   .web-sheet-back { display: grid; place-items: center; margin-right: -4px; }
   .web-sheet-back svg { width: 18px; height: 18px; }
   .sheet.is-agent .web-sheet-back { display: none; }

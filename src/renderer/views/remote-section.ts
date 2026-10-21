@@ -22,6 +22,8 @@ export class RemoteSection {
 
   private async apply(pending: Promise<RemoteSettings>): Promise<void> {
     this.busy = true;
+    // Shown at once, so the switch is disabled while the server starts or stops.
+    this.render();
     try {
       this.settings = await pending;
     } finally {

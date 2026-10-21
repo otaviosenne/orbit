@@ -227,8 +227,9 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
 
 Follow and steer your chats from your phone while the computer is on: Board, Timeline, Panel (one
 column) and the chat panel, where you can read, send messages and images, answer questions,
-interrupt, stop agents and switch model or mode. On a phone the board shows one column at a time
-(tap or swipe), a chat opens full screen, and a long press on a card opens its menu. It is the
+interrupt, stop agents, and (on wide screens) switch model or mode. On a phone the board shows one
+column at a time (tap or swipe), a chat opens full screen with only back, its dot and its name on
+top, and a long press on a card opens its menu. It is the
 same renderer as the desktop app, talking HTTP instead of IPC. Off by default.
 
 1. **Settings → Orbit Web → Allow remote access.** Orbit listens on `http://127.0.0.1:4517` only.

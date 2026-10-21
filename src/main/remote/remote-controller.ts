@@ -25,12 +25,17 @@ export class RemoteController {
   private error: string | null = null;
   // Kept across restarts of the server, so turning it off and on does not reset a lockout.
   private readonly limiter: FailureLimiter = new FailureLimiter(SIGN_IN_POLICY);
+  // Changes run one at a time: an "off" arriving while "on" still binds the port must wait for it, or the server
+  // would end up listening with the setting off.
+  private queue: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly options: RemoteControllerOptions) {}
 
-  async start(): Promise<void> {
-    this.config = await this.options.store.load();
-    if (this.config.enabled) await this.applyEnabled(true);
+  start(): Promise<void> {
+    return this.serialize(async (): Promise<void> => {
+      this.config = await this.options.store.load();
+      if (this.config.enabled) await this.applyEnabled(true);
+    });
   }
 
   async stop(): Promise<void> {
@@ -56,29 +61,41 @@ export class RemoteController {
   }
 
   // The token is made on first enable, so a never-used Orbit Web has no secret lying around.
-  async setEnabled(enabled: unknown): Promise<RemoteSettings> {
-    if (typeof enabled !== 'boolean') return this.settings();
-    const token: string = enabled && this.config.token.length === 0 ? generateToken() : this.config.token;
-    await this.update({ ...this.config, enabled, token });
-    await this.applyEnabled(enabled);
-    return this.settings();
+  setEnabled(enabled: unknown): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      if (typeof enabled !== 'boolean') return this.settings();
+      const token: string = enabled && this.config.token.length === 0 ? generateToken() : this.config.token;
+      await this.update({ ...this.config, enabled, token });
+      await this.applyEnabled(enabled);
+      return this.settings();
+    });
   }
 
-  async setExternalUrl(input: unknown): Promise<RemoteSettings> {
-    const externalUrl: string | null = typeof input === 'string' ? normalizeExternalUrl(input) : null;
-    if (externalUrl === null) {
-      this.error = 'The external URL must be an http(s) address, such as https://orbit.example.com';
+  setExternalUrl(input: unknown): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      const externalUrl: string | null = typeof input === 'string' ? normalizeExternalUrl(input) : null;
+      if (externalUrl === null) {
+        this.error = 'The external URL must be an http(s) address, such as https://orbit.example.com';
+        return this.settings();
+      }
+      this.error = null;
+      await this.update({ ...this.config, externalUrl });
       return this.settings();
-    }
-    this.error = null;
-    await this.update({ ...this.config, externalUrl });
-    return this.settings();
+    });
   }
 
   // Every cookie is derived from the token, so a new one signs every paired browser out at once.
-  async regenerateToken(): Promise<RemoteSettings> {
-    await this.update({ ...this.config, token: generateToken() });
-    return this.settings();
+  regenerateToken(): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      await this.update({ ...this.config, token: generateToken() });
+      return this.settings();
+    });
+  }
+
+  private serialize<T>(work: () => Promise<T>): Promise<T> {
+    const result: Promise<T> = this.queue.then(work, work);
+    this.queue = result.catch((): void => undefined);
+    return result;
   }
 
   private credentials(): RemoteCredentials {
