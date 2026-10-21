@@ -3,6 +3,7 @@ import { element } from '../../dom';
 import type { FieldsetQuestion } from './question-fieldset';
 import { QuestionFieldset } from './question-fieldset';
 import { ProblemLine } from './problem-line';
+import { QuestionProgress, renderQuestionTitle } from './question-head';
 import { settleAction } from './settle-action';
 
 // What a question-set card needs: send every answer at once, hear that the picker is done, reach the chat.
@@ -31,11 +32,13 @@ export class QuestionSetCard {
   private readonly back: HTMLButtonElement = element('button', 'button question-back', BACK_LABEL);
   private readonly forward: HTMLButtonElement = element('button', 'button button-primary question-submit');
   private readonly problem: ProblemLine;
+  private readonly progress: QuestionProgress;
   private step: number = 0;
   private isSending: boolean = false;
 
   constructor(private readonly view: PickerSetView, private readonly actions: QuestionSetActions) {
     this.problem = new ProblemLine((): void => actions.goToChat());
+    this.progress = new QuestionProgress(view.questions.length);
     this.fieldsets = view.questions.map((question: Question, index: number) => new QuestionFieldset(fieldsetQuestion(question), `set-${view.questionId}-${index}`, (): void => this.refresh()));
     this.previousArrow.addEventListener('click', (): void => this.go(this.step - 1));
     this.nextArrow.addEventListener('click', (): void => this.go(this.step + 1));
@@ -43,7 +46,7 @@ export class QuestionSetCard {
     this.back.addEventListener('click', (): void => this.go(this.step - 1));
     this.forward.type = 'button';
     this.forward.addEventListener('click', (): void => void (this.isLastStep ? this.send() : this.go(this.step + 1)));
-    this.root.append(this.head(), ...this.fieldsets.map((fieldset: QuestionFieldset) => fieldset.root), this.foot());
+    this.root.append(this.head(), ...(this.fieldsets.length > 1 ? [this.progress.root] : []), ...this.fieldsets.map((fieldset: QuestionFieldset) => fieldset.root), this.foot());
     this.go(0);
   }
 
@@ -53,7 +56,7 @@ export class QuestionSetCard {
 
   private head(): HTMLElement {
     const head: HTMLElement = element('header', 'question-head');
-    head.append(element('span', 'question-title', TITLE));
+    head.append(...renderQuestionTitle(TITLE));
     if (this.fieldsets.length > 1) {
       const stepper: HTMLSpanElement = element('span', 'question-stepper');
       stepper.append(this.previousArrow, this.stepLabel, this.nextArrow);
@@ -75,12 +78,14 @@ export class QuestionSetCard {
       fieldset.root.hidden = index !== step;
     });
     this.stepLabel.textContent = `Question ${step + 1} of ${this.fieldsets.length}`;
+    this.progress.show(step, this.fieldsets.map((fieldset: QuestionFieldset): boolean => fieldset.read() !== null));
     this.refresh();
   }
 
   // Moving between steps is always allowed; Next waits for this step's answer, Submit for every answer.
   private refresh(): void {
     const answered: boolean = this.fieldsets[this.step]?.read() !== null;
+    this.progress.show(this.step, this.fieldsets.map((fieldset: QuestionFieldset): boolean => fieldset.read() !== null));
     this.previousArrow.disabled = this.isSending || this.step === 0;
     this.nextArrow.disabled = this.isSending || this.isLastStep;
     this.back.hidden = this.step === 0;

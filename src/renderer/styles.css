@@ -1155,12 +1155,25 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 /* ---------- Question cards (Claude's AskUserQuestion) ---------- */
 /* A waiting question is a card in the thread, like a macOS sheet: header chip, radio or checkbox rows, Submit */
 .question-card {
-  align-self: stretch; display: flex; flex-direction: column; gap: 10px; padding: 12px 12px 10px;
-  border-radius: var(--radius-card); background: color-mix(in srgb, var(--tag-blue) 10%, var(--card)); box-shadow: var(--shadow-card);
-  font-size: 12.5px;
+  --question-tint: var(--tag-blue);
+  align-self: stretch; display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px;
+  border-radius: var(--radius-card); font-size: 12.5px;
+  /* A wash of blue that fades down the card, with a hairline of the same blue, so it reads as Claude's turn */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--question-tint) 15%, var(--card)) 0, color-mix(in srgb, var(--question-tint) 5%, var(--card)) 140px);
+  box-shadow: var(--shadow-card), inset 0 0 0 1px color-mix(in srgb, var(--question-tint) 24%, transparent);
 }
 .question-head { display: flex; align-items: center; gap: 8px; }
-.question-title { font-weight: 650; color: var(--text); }
+.question-title { font-size: 13px; font-weight: 650; color: var(--text); }
+.question-badge {
+  flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--question-tint) 70%, #ffffff), var(--question-tint));
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--question-tint) 45%, transparent);
+}
+.question-badge svg { width: 12px; height: 12px; fill: #ffffff; }
+.question-progress { display: flex; gap: 4px; margin-top: -2px; }
+.question-progress-step { flex: 1; height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--question-tint) 16%, transparent); transition: background 0.2s; }
+.question-progress-step.is-done { background: color-mix(in srgb, var(--question-tint) 55%, transparent); }
+.question-progress-step.is-current { background: var(--question-tint); }
 .question-hint { color: var(--tertiary); font-size: 11px; }
 /* "Question 2 of 4" is where the user is in the set, so it reads as a pill rather than a faint caption */
 .question-count {
@@ -1171,13 +1184,20 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .question + .question { padding-top: 8px; border-top: 1px solid var(--separator); }
 .question-legend { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 0 0 4px; }
 .question-chip {
-  flex: none; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 600;
+  flex: none; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent);
 }
-.question-text { flex: 1 1 100%; font-weight: 600; line-height: 1.35; color: var(--text); }
-.question-option { display: flex; align-items: flex-start; gap: 8px; padding: 5px 8px; border-radius: 8px; transition: background 0.12s; }
-.question-option:hover { background: var(--disclosure-hover); }
-.question-option:has(.question-choice:checked) { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.question-text { flex: 1 1 100%; font-size: 13.5px; font-weight: 650; line-height: 1.35; color: var(--text); }
+/* Each option is a small framed tile; the picked one gets the blue ring */
+.question-option {
+  display: flex; align-items: flex-start; gap: 9px; margin-top: 4px; padding: 7px 10px; border-radius: 10px;
+  background: color-mix(in srgb, var(--card) 75%, transparent); box-shadow: 0 0 0 0.5px var(--control-border);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.question-option:hover { background: var(--card); box-shadow: 0 0 0 0.5px var(--control-border), 0 1px 3px rgb(0 0 0 / 0.08); }
+.question-option:has(.question-choice:checked) {
+  background: color-mix(in srgb, var(--question-tint) 12%, var(--card)); box-shadow: 0 0 0 1.5px var(--question-tint);
+}
 .question-choice { flex: none; margin: 2px 0 0; accent-color: var(--accent); }
 .question-option-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
 .question-option-label { font-weight: 500; }

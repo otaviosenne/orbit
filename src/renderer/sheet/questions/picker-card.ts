@@ -4,6 +4,7 @@ import { QuestionFieldset } from './question-fieldset';
 import { renderReviewLines } from './picker-review';
 import { ProblemLine } from './problem-line';
 import { settleAction } from './settle-action';
+import { renderQuestionTitle } from './question-head';
 
 // What the card can do in the chat's terminal; each resolves once the picker moved on, or with why not.
 export interface PickerActions {
@@ -85,7 +86,7 @@ export class PickerCard {
 
 function cardHead(title: string, step: string | null): HTMLElement {
   const head: HTMLElement = element('header', 'question-head');
-  head.append(element('span', 'question-title', title));
+  head.append(...renderQuestionTitle(title));
   if (step !== null) head.append(element('span', 'question-count', step));
   return head;
 }
