@@ -18,6 +18,8 @@ from its terminal window. It stays in Needs you while you are still reading it.
 Each card shows:
 
 - the chat name, with its `/color` as a tag dot;
+- beside the name, an Android icon and a globe icon while the chat's emulator window or Chrome tab is
+  open; clicking one goes straight to that window, without opening the card;
 - the repository (the git root of the folder the chat started in);
 - how long it has been in its current status, with Claude Code's spinner while it works;
 - its running agents with elapsed time. An agent that has not written anything for 3 minutes shows

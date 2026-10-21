@@ -91,7 +91,7 @@ const BROWSER_OUTCOMES: FocusMessages = {
   missing: "This chat's Chrome tab is no longer open",
 };
 
-function browserLines(browser: BrowserLink): string[] {
+export function browserLines(browser: BrowserLink): string[] {
   // A tab still loading reports its URL as its title; the line is shown once.
   const lines: string[] = [browser.title, browser.url].filter((line: string | null): line is string => line !== null && line.length > 0);
   return [...new Set(lines)];

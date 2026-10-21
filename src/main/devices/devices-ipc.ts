@@ -7,7 +7,7 @@ import { ChatDeviceService, NO_DEVICES } from './chat-devices';
 
 type DeviceChannel = 'GetChatDevices' | 'FocusChatEmulator' | 'FocusChatBrowser';
 
-// The panel's Emulator and Browser buttons; desktop only, since they move the desktop's focus.
+// The panel's Emulator and Browser pills and the board cards' device icons; desktop only, since they move the desktop's focus.
 export function registerDeviceHandlers(radar: ChatRadar): void {
   registerRoutes(deviceRoutes(new ChatDeviceService(radar)));
 }

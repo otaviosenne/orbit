@@ -342,7 +342,7 @@ export interface BrowserLink {
   readonly url: string | null;
 }
 
-// What the panel's Emulator and Browser buttons lead to; null hides that button.
+// What the panel's Emulator and Browser buttons and the cards' device icons lead to; null hides that button.
 export interface ChatDevices {
   readonly emulator: EmulatorLink | null;
   readonly browser: BrowserLink | null;
@@ -407,7 +407,7 @@ export interface RadarApi {
   getChatPermissions(sessionId: string): Promise<ChatPermissions>;
   // Resolves once the chat's footer shows the mode, or fails when the chat does not offer it.
   setPermissionMode(sessionId: string, mode: CycledPermissionMode): Promise<ActionResult>;
-  // The emulator and browser tab the chat worked with that are still open, for the panel's device buttons.
+  // The emulator and browser tab the chat worked with that are still open, for the panel's and the cards' device buttons.
   getChatDevices(sessionId: string): Promise<ChatDevices>;
   // Focuses the chat's emulator window, switching to its workspace.
   focusChatEmulator(sessionId: string): Promise<DeviceFocus>;

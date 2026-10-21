@@ -16,7 +16,7 @@ export class ChatDeviceService {
 
   constructor(private readonly radar: ChatRadar) {}
 
-  // Asked for the open chat only, on every poll: the transcript is re-read only when it changed.
+  // Asked for the open chat and for every card on the board, on each poll: the transcript is re-read only when it changed.
   async devicesOf(sessionId: string): Promise<ChatDevices> {
     const references: DeviceReferences = await this.radar.deviceReferences(sessionId);
     if (references.emulators.length === 0 && references.browserTab === null) return NO_DEVICES;

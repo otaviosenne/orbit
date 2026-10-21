@@ -310,6 +310,19 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card.is-open { box-shadow: 0 0 0 2px var(--accent), var(--shadow-card); }
 .card-top { display: flex; justify-content: space-between; gap: 10px; }
 .card-name { font-size: 13.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Grows to fill the row so the rename field still spans it; the icons follow the name, and the name shortens first */
+.card-title { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 4px; }
+/* Icon-only versions of the panel's Emulator and Browser pills, tinted the same so they read as the same buttons */
+.card-device {
+  flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px;
+  /* Taller than the name's line; the negative margin keeps cards with icons as tall as those without */
+  margin: -1px 0;
+  background: color-mix(in srgb, var(--device-tint) 14%, transparent); color: var(--device-tint); cursor: default;
+}
+.card-device.is-emulator { --device-tint: var(--tag-green); }
+.card-device.is-browser { --device-tint: var(--tag-purple); }
+.card-device:hover { background: color-mix(in srgb, var(--device-tint) 26%, transparent); }
+.card-device svg { width: 14px; height: 14px; fill: currentColor; }
 .card-time { display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* Finished since you last looked */
 .unseen-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-green) 22%, transparent); }

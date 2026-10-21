@@ -1,5 +1,6 @@
 import { statusAge } from '../../shared/chat-time';
-import type { ChatSnapshot } from '../../shared/types';
+import type { ChatDevices, ChatSnapshot } from '../../shared/types';
+import { renderCardDevices } from '../board/card-devices';
 import { element } from '../dom';
 import { formatDuration } from '../format';
 import { INFO_ICON, PIN_FILLED_ICON } from '../icons';
@@ -23,6 +24,8 @@ export interface BoardMarks {
   readonly closedPins: readonly ChatSnapshot[];
   // Active or Idle chosen by dragging, for the rest of the chat's resting stretch.
   readonly restingPin: RestingPin;
+  // The emulator and Chrome tab the chat has open, shown as icons beside its name.
+  readonly devicesOf: (sessionId: string) => ChatDevices;
 }
 
 // Pinned chats in a row on top (they also keep their place below), then Needs you | Working | Active over Idle.
@@ -85,9 +88,16 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   if (hasUnread) time.prepend(element('span', 'unseen-dot'));
   if (chat.status === 'busy') time.prepend(renderSpinner());
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());
-  top.append(element('span', 'card-name', chat.name), time);
+  top.append(renderTitle(chat.name, marks.devicesOf(chat.sessionId)), time);
   card.append(top, element('div', 'card-repo', chat.repository.name), ...renderAgentRows(chat.agents, now));
   return card;
+}
+
+// The name with the chat's device icons right after it; the name gives way to them when space runs short.
+function renderTitle(name: string, devices: ChatDevices): HTMLElement {
+  const title: HTMLDivElement = element('div', 'card-title');
+  title.append(element('span', 'card-name', name), ...renderCardDevices(devices));
+  return title;
 }
 
 // Pinning happens from the card's right-click menu; a pinned chat shows a filled pin left of its time.

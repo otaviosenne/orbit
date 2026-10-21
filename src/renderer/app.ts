@@ -1,9 +1,12 @@
-import type { ActionResult, ChatSnapshot, UsageSnapshot } from '../shared/types';
+import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
 import type { BoardColumn } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
 import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
 import { CardDrag } from './board/card-drag';
 import { RestingPins } from './board/resting-pins';
+import { BoardDevices } from './board/board-devices';
+import type { CardDeviceKind } from './board/card-devices';
+import { cardDeviceAt, focusCardDevice } from './board/card-devices';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
 import { PinnedInfoStore } from './board/pinned-info';
@@ -71,6 +74,12 @@ const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
+const boardDevices: BoardDevices = new BoardDevices(
+  (sessionId: string): Promise<ChatDevices> => window.radar.getChatDevices(sessionId),
+  (): void => {
+    if (view === 'board') renderView();
+  },
+);
 // Active and Idle cards open on release instead of press, so a press can turn into a drag between the two.
 const cardDrag: CardDrag = new CardDrag(viewRoot, {
   click: (sessionId: string): void => toggleSheet(sessionId),
@@ -149,6 +158,8 @@ async function refreshChats(): Promise<void> {
   polledChats = await window.radar.getChats();
   closing.settle(polledChats, Date.now());
   showChats();
+  // Only the board shows device icons, so other views do not ask about every chat's windows.
+  if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
   launches.settle(Date.now());
   await refreshSheet();
 }
@@ -208,7 +219,16 @@ function boardMarks(): BoardMarks {
     pinnedOrder: pins.order,
     closedPins: closedPins(),
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
+    devicesOf: (sessionId: string): ChatDevices => boardDevices.devicesOf(sessionId),
   };
+}
+
+// A card's emulator or browser icon goes straight to that window; one that has closed since drops its icon.
+async function openCardDevice(kind: CardDeviceKind, sessionId: string): Promise<void> {
+  const outcome: DeviceFocus = await focusCardDevice(kind, sessionId);
+  if (outcome !== 'missing') return;
+  console.warn(`The ${kind} of chat ${sessionId} is no longer open`);
+  await boardDevices.recheck(sessionId, Date.now());
 }
 
 // Optimistic like the panel's rename: the new name shows at once and is taken back if /rename fails.
@@ -357,6 +377,10 @@ viewRoot.addEventListener('pointerdown', (event: PointerEvent): void => {
   const modeChoice: string | undefined = (event.target as HTMLElement).closest<HTMLElement>('[data-timeline-mode]')?.dataset[TIMELINE_MODE_ATTRIBUTE];
   if (modeChoice !== undefined && isTimelineMode(modeChoice)) return setTimelineMode(modeChoice);
   if (cardRename.isActive) return;
+  // Checked before the card's own press, which would otherwise open or start dragging the card under the icon.
+  const device: CardDeviceKind | null = cardDeviceAt(event.target);
+  const deviceSession: string | undefined = device === null ? undefined : cardSessionAt(event.target);
+  if (device !== null && deviceSession !== undefined) return void openCardDevice(device, deviceSession);
   if (openTimelineAgent(event.target)) return;
   if (view === 'board' && cardDrag.begin(event)) return;
   const sessionId: string | undefined = cardSessionAt(event.target);
