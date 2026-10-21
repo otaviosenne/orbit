@@ -1,4 +1,5 @@
 import { sendOnVoiceCommand } from '../voice/voice-send';
+import { VoiceSendTimer } from '../voice/voice-send-timer';
 import type { TranscriptionResult } from '../../../shared/types';
 import { PcmRecorder } from '../pcm-recorder';
 import { DictatedSpan } from './dictated-span';
@@ -36,6 +37,7 @@ export class HandsFree {
   private readonly lane: SegmentLane;
   private readonly writer: SpanWriter = new SpanWriter();
   private readonly spans: Map<number, SpanBinding> = new Map();
+  private readonly quickSend: VoiceSendTimer = new VoiceSendTimer();
   private attached: SpanBinding | null = null;
   private clock: SegmentClock | null = null;
   // Per time hands-free is turned on, not per capture: switching chats reopens the microphone and must not warn again.
@@ -90,6 +92,7 @@ export class HandsFree {
   turnOff(): void {
     if (!this.isEnabled) return;
     this.isEnabled = false;
+    this.quickSend.cancel();
     this.syncCapture();
     this.report();
   }
@@ -109,6 +112,7 @@ export class HandsFree {
   // The draft in field was sent: words said so far never come back, and what follows starts the next message.
   discard(field: VoiceField): void {
     if (this.attached === null || !writesInto(this.attached, field)) return;
+    this.quickSend.cancel();
     this.attached.sink = DROPPED_SINK;
     this.attached = null;
     if (!this.isCapturing) return;
@@ -120,7 +124,10 @@ export class HandsFree {
   // words never come back; words the voice service has not shown yet still arrive, at the caret.
   edited(field: VoiceField): void {
     const attached: SpanBinding | null = this.attached;
-    if (attached !== null && writesInto(attached, field)) attached.span.rebase();
+    if (attached === null || !writesInto(attached, field)) return;
+    attached.span.rebase();
+    // The user's own edit decides what the draft ends with now; only new words can arm a send again.
+    this.quickSend.cancel();
   }
 
   private retarget(next: DictationPlace | null): void {
@@ -206,7 +213,9 @@ export class HandsFree {
     if (binding === undefined) return;
     if (segment === this.lane.active && binding.span.textOf(segment.id) !== text) this.clock?.wrote(Date.now());
     this.writer.write(binding, segment.id, text);
-    if (binding.sink.kind === 'field') this.hooks.onWords();
+    if (binding.sink.kind !== 'field') return;
+    this.hooks.onWords();
+    this.quickSend.wordsChanged(binding.sink.field.input);
   }
 
   private settle(segment: LaneSegment, result: TranscriptionResult): void {
