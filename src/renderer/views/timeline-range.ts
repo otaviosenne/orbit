@@ -1,6 +1,6 @@
-export type TimelineRange = '1h' | '2h' | '3h' | '6h';
+export type TimelineRange = '15m' | '30m' | '1h' | '2h' | '3h' | '6h';
 
-export const TIMELINE_RANGES: readonly TimelineRange[] = ['1h', '2h', '3h', '6h'];
+export const TIMELINE_RANGES: readonly TimelineRange[] = ['15m', '30m', '1h', '2h', '3h', '6h'];
 
 interface RangeScale {
   readonly historyMs: number;
@@ -14,6 +14,8 @@ const DEFAULT_RANGE: TimelineRange = '1h';
 
 // Tick spacing grows with the range so the axis keeps roughly the same number of readable labels.
 const RANGE_SCALES: Readonly<Record<TimelineRange, RangeScale>> = {
+  '15m': { historyMs: 15 * MINUTE_MS, tickMs: 2 * MINUTE_MS },
+  '30m': { historyMs: 30 * MINUTE_MS, tickMs: 5 * MINUTE_MS },
   '1h': { historyMs: HOUR_MS, tickMs: 10 * MINUTE_MS },
   '2h': { historyMs: 2 * HOUR_MS, tickMs: 15 * MINUTE_MS },
   '3h': { historyMs: 3 * HOUR_MS, tickMs: 30 * MINUTE_MS },

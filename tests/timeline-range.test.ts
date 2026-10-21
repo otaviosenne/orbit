@@ -20,6 +20,11 @@ describe('parseTimelineRange', () => {
     expect(parseTimelineRange('')).toBe('1h');
   });
 
+  it('knows the short ranges', () => {
+    expect(parseTimelineRange('15m')).toBe('15m');
+    expect(parseTimelineRange('30m')).toBe('30m');
+  });
+
   it('keeps a stored range', () => {
     expect(parseTimelineRange('6h')).toBe('6h');
   });
