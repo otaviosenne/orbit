@@ -13,9 +13,21 @@ export class PinnedChats {
   }
 
   toggle(sessionId: string): void {
+    if (this.has(sessionId)) this.unpin(sessionId);
+    else this.pin(sessionId);
+  }
+
+  // Pinning twice keeps the first place, so dropping a pinned chat's column card on Pinned changes nothing.
+  pin(sessionId: string): void {
+    if (this.has(sessionId)) return;
+    this.sessionIds.push(sessionId);
+    save(this.sessionIds);
+  }
+
+  unpin(sessionId: string): void {
     const index: number = this.sessionIds.indexOf(sessionId);
-    if (index === -1) this.sessionIds.push(sessionId);
-    else this.sessionIds.splice(index, 1);
+    if (index === -1) return;
+    this.sessionIds.splice(index, 1);
     save(this.sessionIds);
   }
 }

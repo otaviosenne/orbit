@@ -35,7 +35,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'pin-chat',
     question: 'How do I pin a chat?',
-    answer: 'Right-click its card and pick Pin, or press {key:chat-pin} with the chat open. Pinned chats also sit in a row above the columns; {key:open-pinned} opens them in order.',
+    answer: 'Drag its card onto Pinned, right-click it and pick Pin, or press {key:chat-pin} with the chat open. Pinned chats also sit in a row above the columns; {key:open-pinned} opens them in order, and dragging one out unpins it.',
   },
   {
     id: 'reopen-chat',

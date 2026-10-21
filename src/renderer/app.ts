@@ -3,6 +3,8 @@ import type { BoardColumn } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
 import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
 import { CardDrag } from './board/card-drag';
+import { applyDrop } from './board/apply-drop';
+import type { DropAction } from './board/drop-rules';
 import { RestingPins } from './board/resting-pins';
 import { BoardDevices } from './board/board-devices';
 import type { CardDeviceKind } from './board/card-devices';
@@ -94,13 +96,19 @@ const boardDevices: BoardDevices = new BoardDevices(
     if (view === 'board') renderView();
   },
 );
-// Active and Idle cards open on release instead of press, so a press can turn into a drag between the two.
+// Board cards open on release instead of press, so a press can turn into a drag (to Pinned, or between Active and Idle).
 const cardDrag: CardDrag = new CardDrag(viewRoot, {
   click: (sessionId: string): void => toggleSheet(sessionId),
-  move: (sessionId: string, to: RestingColumn): void => {
-    const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-    if (chat !== undefined) restingPins.set(chat, to);
-    // Optimistic: the card lands in its new column now, not at the next poll.
+  drop: (sessionId: string, action: DropAction): void => {
+    applyDrop(sessionId, action, {
+      pin: (id: string): void => pins.pin(id),
+      unpin: (id: string): void => pins.unpin(id),
+      rest: (id: string, to: RestingColumn): void => {
+        const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === id);
+        if (chat !== undefined) restingPins.set(chat, to);
+      },
+    });
+    // Optimistic: the card lands in its new place now, not at the next poll.
     renderView();
   },
   changed: (): void => renderView(),

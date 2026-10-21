@@ -11,6 +11,10 @@ import type { BoardColumn, RestingPin, UnseenCheck } from './board-columns';
 import { toBoardColumns } from './board-columns';
 
 export const SESSION_ATTRIBUTE: string = 'session';
+// Marks the Pinned row and each column with the zone a dragged card can be dropped on.
+export const DROP_ZONE_ATTRIBUTE: string = 'dropZone';
+export const DROP_ZONE_SELECTOR: string = '[data-drop-zone]';
+const PINNED_TITLE: string = 'Pinned';
 
 // What the board needs to know about each chat beyond its snapshot.
 export interface BoardMarks {
@@ -42,10 +46,25 @@ function pinnedChats(chats: readonly ChatSnapshot[], order: readonly string[]): 
 }
 
 function renderPinnedRow(pinned: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
-  const section: HTMLElement = element('section', 'pinned-row');
+  const section: HTMLElement = renderPinnedSection();
   const cards: HTMLDivElement = element('div', 'pinned-cards');
   cards.append(...pinned.map((chat: ChatSnapshot) => (marks.closedPins.includes(chat) ? renderClosedCard(chat) : renderCard(chat, marks, now))));
-  section.append(element('h2', 'column-title', 'Pinned'), cards);
+  section.append(cards);
+  return section;
+}
+
+// With nothing pinned the row is not drawn, so a drag shows this empty one to drop on.
+export function renderPinnedDropZone(): HTMLElement {
+  const section: HTMLElement = renderPinnedSection();
+  section.classList.add('is-drop-placeholder');
+  section.append(element('div', 'pinned-cards'));
+  return section;
+}
+
+function renderPinnedSection(): HTMLElement {
+  const section: HTMLElement = element('section', 'pinned-row');
+  section.dataset[DROP_ZONE_ATTRIBUTE] = 'pinned';
+  section.append(element('h2', 'column-title', PINNED_TITLE));
   return section;
 }
 
@@ -60,6 +79,7 @@ function renderColumns(chats: readonly ChatSnapshot[], marks: BoardMarks, now: n
 
 function renderColumn(column: BoardColumn, marks: BoardMarks, now: number): HTMLElement {
   const section: HTMLElement = element('section', `column column-${column.key}`);
+  section.dataset[DROP_ZONE_ATTRIBUTE] = column.key;
   const heading: HTMLHeadingElement = element('h2', 'column-title', column.title);
   heading.append(element('span', `column-count${column.chats.length > 0 ? ' has-items' : ''}`, String(column.chats.length)));
   if (column.info !== null) heading.append(renderInfo(column.info));
@@ -100,7 +120,7 @@ function renderTitle(name: string, devices: ChatDevices): HTMLElement {
   return title;
 }
 
-// Pinning happens from the card's right-click menu; a pinned chat shows a filled pin left of its time.
+// Pinning happens from the card's right-click menu or by dragging the card onto Pinned; a pinned chat shows a filled pin left of its time.
 function renderPinMark(): HTMLSpanElement {
   const mark: HTMLSpanElement = element('span', 'card-pin');
   mark.setAttribute('aria-label', 'Pinned');

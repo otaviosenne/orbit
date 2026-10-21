@@ -1,9 +1,13 @@
-import type { RestingColumn } from '../views/board-columns';
+import { SESSION_ATTRIBUTE } from '../views/board-view';
+import { dragSourceOf } from './drag-source';
+import type { DragSource, DropAction } from './drop-rules';
+import { DropZones } from './drop-zones';
 
 export interface CardDragHandlers {
   // A press that never became a drag: the card was simply clicked.
   readonly click: (sessionId: string) => void;
-  readonly move: (sessionId: string, to: RestingColumn) => void;
+  // Only called for a drop that does something; anywhere else the card just goes back.
+  readonly drop: (sessionId: string, action: DropAction) => void;
   // Called when a drag starts and ends, so the board holds off rebuilding under the pointer.
   readonly changed: () => void;
 }
@@ -11,29 +15,37 @@ export interface CardDragHandlers {
 // Further than a hand's tremble, so a click with a slight slip is still a click.
 const DRAG_THRESHOLD_PX: number = 6;
 const CANCEL_KEY: string = 'Escape';
+const CARD_SELECTOR: string = '.board-layout .card';
 const DRAG_SOURCE_CLASS: string = 'is-drag-source';
-const DROP_TARGET_CLASS: string = 'is-drop-target';
 const DRAGGING_BODY_CLASS: string = 'is-dragging-card';
 
 interface Press {
   readonly sessionId: string;
-  readonly from: RestingColumn;
+  readonly source: DragSource;
   readonly card: HTMLElement;
   readonly startX: number;
   readonly startY: number;
 }
 
-// Cards in Active and Idle can be dragged to the other of the two; no other column takes them.
+interface Lift {
+  readonly ghost: HTMLElement;
+  readonly zones: DropZones;
+  // Where the card was grabbed, so the ghost stays under the same spot of the card as zones appear around it.
+  readonly grabX: number;
+  readonly grabY: number;
+}
+
+// Any board card can be picked up; what a drop does is decided by the drop rules, and most places do nothing.
 export class CardDrag {
   private press: Press | null = null;
-  private ghost: HTMLElement | null = null;
-  private target: HTMLElement | null = null;
+  private lift: Lift | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly handlers: CardDragHandlers) {
     document.addEventListener('pointermove', (event: PointerEvent): void => this.follow(event));
     document.addEventListener('pointerup', (event: PointerEvent): void => this.release(event));
+    document.addEventListener('pointercancel', (): void => this.finish());
     document.addEventListener('keydown', (event: KeyboardEvent): void => {
-      if (event.key === CANCEL_KEY && this.ghost !== null) this.finish();
+      if (event.key === CANCEL_KEY && this.lift !== null) this.finish();
     });
   }
 
@@ -42,36 +54,37 @@ export class CardDrag {
     return this.press !== null;
   }
 
-  // Takes a press on an Active or Idle card; anything else is left to the board's usual click handling.
+  // Takes a press on a board card; anything else is left to the board's usual click handling.
   begin(event: PointerEvent): boolean {
-    const card: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>('.board .card');
-    const from: RestingColumn | null = card === null ? null : columnOf(card);
-    const sessionId: string | undefined = card?.dataset['session'];
-    if (card === null || from === null || sessionId === undefined) return false;
-    this.press = { sessionId, from, card, startX: event.clientX, startY: event.clientY };
+    const card: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>(CARD_SELECTOR);
+    const source: DragSource | null = card === null ? null : dragSourceOf(card, this.root);
+    const sessionId: string | undefined = card?.dataset[SESSION_ATTRIBUTE];
+    if (card === null || source === null || sessionId === undefined) return false;
+    this.press = { sessionId, source, card, startX: event.clientX, startY: event.clientY };
     this.handlers.changed();
     return true;
   }
 
   private follow(event: PointerEvent): void {
     if (this.press === null) return;
-    if (this.ghost === null && Math.hypot(event.clientX - this.press.startX, event.clientY - this.press.startY) < DRAG_THRESHOLD_PX) return;
-    if (this.ghost === null) this.lift(this.press);
-    this.placeGhost(event);
-    this.markTarget(event);
+    if (this.lift === null && !isPastDragThreshold(this.press, event)) return;
+    this.lift ??= this.pickUp(this.press);
+    this.lift.ghost.style.left = `${event.clientX - this.lift.grabX}px`;
+    this.lift.ghost.style.top = `${event.clientY - this.lift.grabY}px`;
+    this.lift.zones.hover(event.clientX, event.clientY);
   }
 
   private release(event: PointerEvent): void {
     const press: Press | null = this.press;
     if (press === null) return;
-    const wasDragging: boolean = this.ghost !== null;
-    const droppedOn: boolean = this.isOverTarget(event);
+    const action: DropAction | null = this.lift?.zones.actionAt(event.clientX, event.clientY) ?? null;
     this.finish();
-    if (!wasDragging) this.handlers.click(press.sessionId);
-    else if (droppedOn) this.handlers.move(press.sessionId, otherColumn(press.from));
+    if (action === null) this.handlers.click(press.sessionId);
+    else if (action.kind !== 'none') this.handlers.drop(press.sessionId, action);
   }
 
-  private lift(press: Press): void {
+  // The grab point is measured before the drop zones are drawn, since a new Pinned zone shifts the card.
+  private pickUp(press: Press): Lift {
     const box: DOMRect = press.card.getBoundingClientRect();
     const ghost: HTMLElement = press.card.cloneNode(true) as HTMLElement;
     ghost.classList.add('card-ghost');
@@ -79,45 +92,21 @@ export class CardDrag {
     document.body.append(ghost);
     document.body.classList.add(DRAGGING_BODY_CLASS);
     press.card.classList.add(DRAG_SOURCE_CLASS);
-    this.ghost = ghost;
-    this.target = this.root.querySelector<HTMLElement>(`.column-${otherColumn(press.from)}`);
-  }
-
-  private placeGhost(event: PointerEvent): void {
-    if (this.ghost === null || this.press === null) return;
-    const box: DOMRect = this.press.card.getBoundingClientRect();
-    this.ghost.style.left = `${event.clientX - (this.press.startX - box.left)}px`;
-    this.ghost.style.top = `${event.clientY - (this.press.startY - box.top)}px`;
-  }
-
-  private markTarget(event: PointerEvent): void {
-    this.target?.classList.toggle(DROP_TARGET_CLASS, this.isOverTarget(event));
-  }
-
-  private isOverTarget(event: PointerEvent): boolean {
-    if (this.target === null) return false;
-    const box: DOMRect = this.target.getBoundingClientRect();
-    return event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+    return { ghost, zones: new DropZones(this.root, press.source), grabX: press.startX - box.left, grabY: press.startY - box.top };
   }
 
   private finish(): void {
-    this.ghost?.remove();
-    this.press?.card.classList.remove(DRAG_SOURCE_CLASS);
-    this.target?.classList.remove(DROP_TARGET_CLASS);
+    if (this.press === null) return;
+    this.lift?.ghost.remove();
+    this.lift?.zones.dispose();
+    this.press.card.classList.remove(DRAG_SOURCE_CLASS);
     document.body.classList.remove(DRAGGING_BODY_CLASS);
-    this.ghost = null;
-    this.target = null;
+    this.lift = null;
     this.press = null;
     this.handlers.changed();
   }
 }
 
-function columnOf(card: HTMLElement): RestingColumn | null {
-  if (card.closest('.column-active') !== null) return 'active';
-  if (card.closest('.column-idle') !== null) return 'idle';
-  return null;
-}
-
-function otherColumn(column: RestingColumn): RestingColumn {
-  return column === 'active' ? 'idle' : 'active';
+function isPastDragThreshold(press: Press, event: PointerEvent): boolean {
+  return Math.hypot(event.clientX - press.startX, event.clientY - press.startY) >= DRAG_THRESHOLD_PX;
 }

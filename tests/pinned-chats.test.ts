@@ -28,4 +28,16 @@ describe('PinnedChats', () => {
     pins.toggle('a');
     expect(pins.has('a')).toBe(false);
   });
+
+  it('pins and unpins only once, whatever order the drops come in', () => {
+    const pins: PinnedChats = new PinnedChats();
+    pins.pin('a');
+    pins.pin('b');
+    pins.pin('a');
+    expect(pins.order).toEqual(['a', 'b']);
+    pins.unpin('a');
+    pins.unpin('a');
+    expect(pins.order).toEqual(['b']);
+    expect(new PinnedChats().order).toEqual(['b']);
+  });
 });
