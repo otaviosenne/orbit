@@ -286,10 +286,12 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
   background: var(--segment-track); color: var(--secondary); font-size: 11.5px; font-weight: 600;
 }
 .column-needs .column-count.has-items { background: var(--tag-green); color: #ffffff; }
-/* Active sits over Idle in the third column; Active takes what it needs, Idle the rest */
+/* Active sits over Idle in the third column. board/fit-resting-columns.ts sizes them from their cards (60/40 when
+   both overflow); these are the sizes before it runs and on a phone */
 .column-stack { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .column-stack .column-active { flex: 0 1 auto; max-height: 60%; }
 .column-stack .column-idle { flex: 1 1 auto; }
+.column-stack .column-active[style*='flex'] { max-height: none; }
 .column-info {
   position: relative; display: grid; place-items: center; width: 16px; height: 16px; padding: 0;
   border: 0; border-radius: 50%; background: transparent; color: var(--tertiary); cursor: default;

@@ -1,3 +1,4 @@
+import { fitRestingColumns } from './board/fit-resting-columns';
 import { CardPreview } from './board/card-preview';
 import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
 import type { BoardColumn } from './views/board-columns';
@@ -89,6 +90,10 @@ const nav: HTMLElement = requireElement('#nav');
 const settingsButton: HTMLButtonElement = requireElement('#settings-button');
 const viewRoot: HTMLElement = requireElement('#view');
 const boardFocus: BoardFocus = new BoardFocus(viewRoot);
+// The Active/Idle split depends on the window's height too.
+window.addEventListener('resize', (): void => {
+  if (view === 'board') fitRestingColumns(viewRoot);
+});
 // A finger has no hover, so Orbit Web on a phone never shows the card preview (it listens to the mouse only).
 new CardPreview(viewRoot);
 // Cards glide to their new place instead of jumping there when the board is rebuilt.
@@ -233,6 +238,7 @@ function renderView(): void {
   if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
     boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
+    fitRestingColumns(viewRoot);
     boardFocus.paint();
   }
   else if (view === 'grid') showGrid(now);
