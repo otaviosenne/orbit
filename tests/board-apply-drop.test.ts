@@ -16,15 +16,9 @@ describe('applyDrop', () => {
   it('pins, unpins, and moves between Active and Idle', () => {
     const { calls, effects } = recorder();
     applyDrop('a', { kind: 'pin' }, effects);
-    applyDrop('b', { kind: 'unpin', rest: null }, effects);
+    applyDrop('b', { kind: 'unpin' }, effects);
     applyDrop('c', { kind: 'rest', column: 'idle' }, effects);
     expect(calls).toEqual(['pin a', 'unpin b', 'rest c idle']);
-  });
-
-  it('unpins and rests in one drop out of the Pinned row', () => {
-    const { calls, effects } = recorder();
-    applyDrop('a', { kind: 'unpin', rest: 'active' }, effects);
-    expect(calls).toEqual(['unpin a', 'rest a active']);
   });
 
   it('does nothing for a drop the rules turned down', () => {

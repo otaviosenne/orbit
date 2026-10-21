@@ -14,9 +14,19 @@ const PINNED_KEYS: readonly KeyChord[] = Array.from({ length: PINNED_SLOTS }, (_
 // the two can never disagree.
 export const SHORTCUTS: readonly Shortcut[] = [
   { kind: 'action', id: 'view-board', group: 'Views', description: 'Board', keys: [{ key: '1' }] },
-  { kind: 'action', id: 'view-panel', group: 'Views', description: 'Panel', keys: [{ key: '2' }] },
+  // A grid of live tiles needs a desk-sized screen, so Orbit Web has no Panel.
+  { kind: 'action', id: 'view-panel', group: 'Views', description: 'Panel', keys: [{ key: '2' }], desktopOnly: true },
   { kind: 'action', id: 'view-timeline', group: 'Views', description: 'Timeline', keys: [{ key: '3' }] },
-  { kind: 'action', id: 'view-settings', group: 'Views', description: 'Settings', keys: [{ key: ',' }, { key: '4' }] },
+  { kind: 'action', id: 'view-list', group: 'Views', description: 'List', keys: [{ key: '4' }] },
+  // The digits follow the toolbar left to right, and the gear sits after the tabs.
+  { kind: 'action', id: 'view-settings', group: 'Views', description: 'Settings', keys: [{ key: ',' }, { key: '5' }] },
+  {
+    kind: 'reference',
+    id: 'list-move',
+    group: 'Views',
+    description: 'List: move the focused chat up or down (Manual order)',
+    keys: [{ key: 'ArrowUp', alt: true }, { key: 'ArrowDown', alt: true }],
+  },
 
   { kind: 'action', id: 'new-chat', group: 'General', description: 'New chat in the last project', keys: [{ key: 'n' }] },
   { kind: 'action', id: 'new-chat-menu', group: 'General', description: 'Choose a project for a new chat', keys: [{ key: 'n', shift: true }] },
@@ -59,7 +69,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { kind: 'action', id: 'timeline-scope', group: 'Timeline & Panel', description: 'Timeline: switch Open and All chats', keys: [{ key: 'a' }] },
   { kind: 'action', id: 'timeline-longer', group: 'Timeline & Panel', description: 'Timeline: longer range', keys: [{ key: '-' }] },
   { kind: 'action', id: 'timeline-shorter', group: 'Timeline & Panel', description: 'Timeline: shorter range', keys: [{ key: '=' }, { key: '+' }] },
-  { kind: 'reference', id: 'tile-zoom', group: 'Timeline & Panel', description: 'Panel: tile text size', keys: [{ key: 'Wheel', ctrl: true }] },
+  { kind: 'reference', id: 'tile-zoom', group: 'Timeline & Panel', description: 'Panel: tile text size', keys: [{ key: 'Wheel', ctrl: true }], desktopOnly: true },
 ];
 
 export function actionShortcuts(shortcuts: readonly Shortcut[] = SHORTCUTS): readonly ActionShortcut[] {

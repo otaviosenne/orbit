@@ -305,6 +305,17 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
   box-shadow: 0 14px 36px rgb(0 0 0 / 0.22), 0 0 0 0.5px var(--control-border);
 }
 .card.is-drag-source { opacity: 0.35; }
+/* A press on a card may become a drag; started on selectable text it would also select the board on its way */
+.board-layout .card { user-select: none; }
+/* A card changing place flies as a copy fixed to the window (board/card-flights.ts) while it waits hidden in its
+   new slot; below menus, tooltips and the drag's own lifted card */
+.card-flight { position: fixed; z-index: 45; margin: 0; pointer-events: none; }
+.card.is-arriving { visibility: hidden; }
+/* Only a from step, so the fade ends on the card's own opacity (a closed pin stays faded) */
+@keyframes card-enter { from { opacity: 0; transform: scale(0.97); } }
+@media (prefers-reduced-motion: no-preference) { .card.is-entering { animation: card-enter 0.24s ease-out; } }
+/* The columns as one zone, for a card taken out of Pinned */
+.board[data-drop-zone] { border-radius: 14px; }
 /* Zones that take the card are outlined, the one under the pointer is filled; zones a drop would ignore fade back */
 [data-drop-zone] { transition: opacity 0.12s, box-shadow 0.12s, background 0.12s; }
 [data-drop-zone].is-drop-target { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -1422,3 +1433,79 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 /* The wordmark menu's Help item names its key on the right, like a macOS menu */
 .app-menu-help .app-menu-key { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; }
 .app-menu-help span { margin-right: 18px; }
+
+/* ---------- List (views/list/) ---------- */
+/* An iOS-style inset grouped list: a header with the sort switch, one rounded group of rows, a footnote */
+.list-view { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 4px 20px 24px; }
+.list-header, .list-group, .list-hint { max-width: 760px; margin-left: auto; margin-right: auto; }
+.list-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 2px 10px 16px; }
+.list-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.list-count {
+  min-width: 20px; padding: 1px 7px; border-radius: 10px; text-align: center;
+  background: var(--segment-track); color: var(--secondary); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+/* The group draws the background, so rows stepping aside during a drag never open a hole in it */
+.list-group { border-radius: 12px; background: var(--group); box-shadow: var(--shadow-card); }
+.list-rows { position: relative; list-style: none; }
+.list-row {
+  position: relative; border-radius: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
+  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s, scale 0.18s;
+}
+/* Hairlines between rows start under the name, as in iOS */
+.list-row + .list-row::before { content: ''; position: absolute; top: 0; left: 38px; right: 0; border-top: 0.5px solid var(--separator); }
+.list-row-button {
+  width: 100%; min-height: 56px; display: grid; grid-auto-flow: column; grid-template-columns: auto minmax(0, 1fr); grid-auto-columns: auto;
+  align-items: center; gap: 12px; padding: 9px 14px 9px 16px; border: 0; border-radius: inherit;
+  background: transparent; color: var(--text); text-align: left; cursor: default;
+}
+.list-row:first-child .list-row-button { border-radius: 12px 12px 0 0; }
+.list-row:last-child .list-row-button { border-radius: 0 0 12px 12px; }
+.list-row:only-child .list-row-button { border-radius: 12px; }
+.list-row-button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+@media (hover: hover) { .list-row-button:hover { background: var(--well); } }
+.list-row.is-open .list-row-button { background: color-mix(in srgb, var(--accent) 11%, transparent); }
+.list-row-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--chat); }
+.list-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.list-row-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.list-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; }
+.list-row.is-unseen .list-row-name { font-weight: 700; }
+.list-row-pin { flex: none; display: grid; place-items: center; color: var(--chat); }
+.list-row-pin svg { width: 12px; height: 12px; fill: currentColor; }
+.list-row-title .unseen-dot { flex: none; }
+.list-row-detail { display: flex; min-width: 0; color: var(--secondary); font-size: 12px; white-space: nowrap; }
+.list-row-repo { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.list-row-agents { flex: none; }
+.list-row-agents::before { content: '·'; margin: 0 6px; }
+.list-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.list-row-time { display: inline-flex; align-items: center; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* Each status wears its Board column's color: green waits on you, blue works, the resting ones stay gray */
+.list-status {
+  padding: 1px 8px; border-radius: 10px; white-space: nowrap; font-size: 11px; font-weight: 600;
+  color: var(--status); background: color-mix(in srgb, var(--status) 14%, transparent);
+}
+.list-status-needs { --status: var(--tag-green); }
+.list-status-busy { --status: var(--accent); }
+.list-status-active { --status: var(--secondary); }
+/* Idle is outlined rather than tinted: the tertiary gray would be too faint to read on a dark row */
+.list-status-idle { --status: var(--secondary); background: transparent; box-shadow: inset 0 0 0 0.5px var(--control-border); }
+.list-row-grip { display: grid; place-items: center; color: var(--tertiary); cursor: grab; }
+.list-row-grip svg { width: 18px; height: 18px; fill: currentColor; }
+/* The held row floats above the others like an iOS row being moved */
+.list-row.is-lifted { z-index: 2; border-radius: 12px; background: var(--card); scale: 1.02; box-shadow: 0 12px 32px rgb(0 0 0 / 0.2), 0 0 0 0.5px var(--control-border); }
+.list-row.is-lifted .list-row-button { border-radius: 12px; }
+.list-row.is-lifted::before, .list-row.is-lifted + .list-row::before { opacity: 0; }
+body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
+@media (prefers-reduced-motion: reduce) { .list-row { transition: none; } }
+.list-empty { padding: 28px 16px; text-align: center; color: var(--tertiary); }
+.list-hint { display: none; padding: 8px 16px 0; color: var(--secondary); font-size: 12px; }
+.list-view.is-manual .list-hint { display: block; }
+@media (pointer: coarse) { .list-hint-keys { display: none; } .list-row-button { min-height: 60px; } }
+.list-announcer { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Phone width: the group meets the screen gutter and the text grows to iOS body sizes */
+@container (max-width: 520px) {
+  .list-view { padding: 0 12px calc(16px + env(safe-area-inset-bottom)); }
+  .list-row-name { font-size: 15px; }
+  .list-row-detail { font-size: 13px; }
+  .list-row-button { gap: 10px; padding: 10px 12px 10px 14px; }
+  .list-row + .list-row::before { left: 34px; }
+}

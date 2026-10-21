@@ -28,6 +28,8 @@ export class ResumeButton {
   ) {
     this.button.type = 'button';
     this.button.title = IDLE_TITLE;
+    // A phone shows only the icon, so the button needs a name of its own.
+    this.button.setAttribute('aria-label', 'Resume a past chat');
     this.button.innerHTML = HISTORY_ICON;
     this.button.append(this.label);
     root.append(this.button, this.popover.root);

@@ -1,4 +1,6 @@
 import { SESSION_ATTRIBUTE } from '../views/board-view';
+import { toCardBox } from './card-boxes';
+import type { CardBox } from './card-moves';
 import { dragSourceOf } from './drag-source';
 import type { DragSource, DropAction } from './drop-rules';
 import { DropZones } from './drop-zones';
@@ -6,8 +8,9 @@ import { DropZones } from './drop-zones';
 export interface CardDragHandlers {
   // A press that never became a drag: the card was simply clicked.
   readonly click: (sessionId: string) => void;
-  // Only called for a drop that does something; anywhere else the card just goes back.
-  readonly drop: (sessionId: string, action: DropAction) => void;
+  // Only called for a drop that does something; anywhere else the card just goes back. `landing` is where the
+  // lifted card was let go, so it can glide on from there.
+  readonly drop: (sessionId: string, action: DropAction, landing: CardBox) => void;
   // Called when a drag starts and ends, so the board holds off rebuilding under the pointer.
   readonly changed: () => void;
 }
@@ -78,9 +81,11 @@ export class CardDrag {
     const press: Press | null = this.press;
     if (press === null) return;
     const action: DropAction | null = this.lift?.zones.actionAt(event.clientX, event.clientY) ?? null;
+    // Measured before finishing, which takes the lifted card away.
+    const landing: CardBox | null = this.lift === null ? null : toCardBox(this.lift.ghost.getBoundingClientRect());
     this.finish();
-    if (action === null) this.handlers.click(press.sessionId);
-    else if (action.kind !== 'none') this.handlers.drop(press.sessionId, action);
+    if (action === null || landing === null) this.handlers.click(press.sessionId);
+    else if (action.kind !== 'none') this.handlers.drop(press.sessionId, action, landing);
   }
 
   // The grab point is measured before the drop zones are drawn, since a new Pinned zone shifts the card.
@@ -95,15 +100,19 @@ export class CardDrag {
     return { ghost, zones: new DropZones(this.root, press.source), grabX: press.startX - box.left, grabY: press.startY - box.top };
   }
 
+  // The board is rebuilt before the drop zones go: the cards are measured where the user saw them (below a
+  // Pinned row drawn only for the drag), so they glide back up instead of jumping.
   private finish(): void {
-    if (this.press === null) return;
-    this.lift?.ghost.remove();
-    this.lift?.zones.dispose();
-    this.press.card.classList.remove(DRAG_SOURCE_CLASS);
+    const press: Press | null = this.press;
+    const lift: Lift | null = this.lift;
+    if (press === null) return;
+    press.card.classList.remove(DRAG_SOURCE_CLASS);
     document.body.classList.remove(DRAGGING_BODY_CLASS);
     this.lift = null;
     this.press = null;
     this.handlers.changed();
+    lift?.ghost.remove();
+    lift?.zones.dispose();
   }
 }
 

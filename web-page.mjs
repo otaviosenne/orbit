@@ -15,11 +15,14 @@ const WEB_HEAD = [
   '<link rel="apple-touch-icon" href="icon-180.png" />',
 ];
 
+// After the desktop sheet, in this order: web.css adapts it to a browser, phone.css lays it out as a phone app.
+const WEB_STYLES = ['<link rel="stylesheet" href="web.css" />', '<link rel="stylesheet" href="phone.css" />'];
+
 export function webPage(desktopHtml) {
   for (const anchor of [HEAD_ANCHOR, STYLE_ANCHOR]) {
     if (!desktopHtml.includes(anchor)) throw new Error(`index.html changed: Orbit Web needs ${anchor}`);
   }
   return desktopHtml
     .replace(HEAD_ANCHOR, [HEAD_ANCHOR, ...WEB_HEAD].join('\n    '))
-    .replace(STYLE_ANCHOR, `${STYLE_ANCHOR}\n    <link rel="stylesheet" href="web.css" />`);
+    .replace(STYLE_ANCHOR, [STYLE_ANCHOR, ...WEB_STYLES].join('\n    '));
 }

@@ -39,6 +39,14 @@ describe('toBoardColumns', () => {
     expect(names(toBoardColumns([chat('running', 'busy'), chat('asking', 'waiting')], never, NOW, pin))).toEqual([['asking'], ['running'], [], []]);
   });
 
+  // The phone shows the board as one list in this same order (web.css flattens the columns, keeping it).
+  it('gives the groups in reading order: Needs you, Working, Active, Idle', () => {
+    const never = (): boolean => false;
+    const columns = toBoardColumns([], never, NOW);
+    expect(columns.map((column) => column.key)).toEqual(['needs', 'busy', 'active', 'idle']);
+    expect(columns.map((column) => column.title)).toEqual(['Needs you', 'Working', 'Active', 'Idle']);
+  });
+
   it('lists unseen chats first inside a column', () => {
     const unseen = (item: ChatSnapshot): boolean => item.name === 'b';
     expect(toBoardColumns([chat('a', 'waiting'), chat('b', 'idle')], unseen, NOW)[0]?.chats.map((item) => item.name)).toEqual(['b', 'a']);

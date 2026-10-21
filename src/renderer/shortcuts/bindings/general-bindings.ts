@@ -9,13 +9,14 @@ export interface GeneralShortcutHost {
   readonly help: { toggle(): void };
 }
 
-type GeneralShortcutId = 'view-board' | 'view-panel' | 'view-timeline' | 'view-settings' | 'new-chat' | 'new-chat-menu' | 'resume' | 'help';
+type GeneralShortcutId = 'view-board' | 'view-panel' | 'view-timeline' | 'view-list' | 'view-settings' | 'new-chat' | 'new-chat-menu' | 'resume' | 'help';
 
 export function generalBindings(host: GeneralShortcutHost): Pick<ShortcutBindings, GeneralShortcutId> {
   return {
     'view-board': always((): void => host.setView('board')),
     'view-panel': always((): void => host.setView('grid')),
     'view-timeline': always((): void => host.setView('timeline')),
+    'view-list': always((): void => host.setView('list')),
     'view-settings': always((): void => host.setView('settings')),
     'new-chat': always((): void => host.newChat.openLast()),
     'new-chat-menu': always((): void => void host.newChat.toggleMenu()),

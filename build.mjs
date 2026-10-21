@@ -11,6 +11,11 @@ const WEB_OUT_DIR = `${OUT_DIR}/web`;
 const WEB_STATIC_FILES = [
   ['src/renderer/styles.css', 'styles.css'],
   ['src/web/web.css', 'web.css'],
+  ['src/web/phone.css', 'phone.css'],
+  // The phone's tab bar draws these as masks in the tab's color (phone.css).
+  ['node_modules/@phosphor-icons/core/assets/fill/kanban-fill.svg', 'tab-board.svg'],
+  ['node_modules/@phosphor-icons/core/assets/fill/chart-bar-horizontal-fill.svg', 'tab-timeline.svg'],
+  ['node_modules/@phosphor-icons/core/assets/fill/list-bullets-fill.svg', 'tab-list.svg'],
   ['src/web/manifest.webmanifest', 'manifest.webmanifest'],
   ['assets/web/orbit-app-icon.svg', 'icon.svg'],
   ['assets/web/icon-180.png', 'icon-180.png'],

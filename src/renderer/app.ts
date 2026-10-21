@@ -5,6 +5,9 @@ import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
 import { CardDrag } from './board/card-drag';
 import { applyDrop } from './board/apply-drop';
 import type { DropAction } from './board/drop-rules';
+import { BoardMotion } from './board/board-motion';
+import type { CardBox } from './board/card-moves';
+import { landingCardKey } from './board/card-keys';
 import { RestingPins } from './board/resting-pins';
 import { BoardDevices } from './board/board-devices';
 import type { CardDeviceKind } from './board/card-devices';
@@ -48,6 +51,7 @@ import { renderUsageSection } from './views/usage-section';
 import type { TimelineChats } from './views/timeline-view';
 import { mountTimeline, renderTimeline } from './views/timeline-view';
 import { GridView } from './views/grid/grid-view';
+import { ListView } from './views/list/list-view';
 import { Lightbox } from './lightbox';
 import type { TimelineRange } from './views/timeline-range';
 import { isTimelineRange, loadTimelineRange, saveTimelineRange } from './views/timeline-range';
@@ -67,7 +71,7 @@ import { RemoteSection } from './views/remote-section';
 import { ResourcesSection } from './views/resources-section';
 import { BoardFocus } from './board/board-focus';
 import { HelpModal } from './help/help-modal';
-import { FAQ } from './help/faq';
+import { availableQuestions } from './help/faq';
 import { availableShortcuts } from './shortcuts/shortcut-catalog';
 import { installShortcutDispatcher } from './shortcuts/shortcut-dispatcher';
 import { appShortcutBindings } from './shortcuts/bindings/app-bindings';
@@ -83,10 +87,14 @@ const nav: HTMLElement = requireElement('#nav');
 const settingsButton: HTMLButtonElement = requireElement('#settings-button');
 const viewRoot: HTMLElement = requireElement('#view');
 const boardFocus: BoardFocus = new BoardFocus(viewRoot);
-const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: FAQ });
+// Cards glide to their new place instead of jumping there when the board is rebuilt.
+const boardMotion: BoardMotion = new BoardMotion();
+const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: availableQuestions(isWebHost()) });
 const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] =>
   toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
 );
+// Rows open on release, so a press-and-hold can become a drag that reorders the list.
+const listView: ListView = new ListView({ open: (sessionId: string): void => toggleSheet(sessionId), changed: (): void => renderView() });
 const pendingEdits: PendingEdits = new PendingEdits();
 // Orbit Web's own settings exist only in the desktop window: a phone must not be able to read or change its token.
 const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSection();
@@ -104,7 +112,7 @@ const boardDevices: BoardDevices = new BoardDevices(
 // Board cards open on release instead of press, so a press can turn into a drag (to Pinned, or between Active and Idle).
 const cardDrag: CardDrag = new CardDrag(viewRoot, {
   click: (sessionId: string): void => toggleSheet(sessionId),
-  drop: (sessionId: string, action: DropAction): void => {
+  drop: (sessionId: string, action: DropAction, landing: CardBox): void => {
     applyDrop(sessionId, action, {
       pin: (id: string): void => pins.pin(id),
       unpin: (id: string): void => pins.unpin(id),
@@ -114,6 +122,7 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
       },
     });
     // Optimistic: the card lands in its new place now, not at the next poll.
+    boardMotion.land(landingCardKey(sessionId, action), landing);
     renderView();
   },
   changed: (): void => renderView(),
@@ -216,11 +225,13 @@ function renderView(): void {
   // A card being renamed holds an open text field; rebuilding the board would throw the typing away.
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
   if (view === 'settings' && remoteSection?.isEditing === true) return;
+  if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
-    viewRoot.replaceChildren(renderBoard(chats, boardMarks(), now));
+    boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
     boardFocus.paint();
   }
   else if (view === 'grid') showGrid(now);
+  else if (view === 'list') showList(now);
   else if (view === 'timeline') showTimeline(now);
   else showSettings(now);
 }
@@ -254,6 +265,12 @@ function showSettingsPage(page: SettingsPage): void {
 function showGrid(now: number): void {
   grid.mount(viewRoot);
   grid.update(chats, now);
+}
+
+// Rows keep focus and a press in progress across polls, so the list is mounted once and updated in place.
+function showList(now: number): void {
+  listView.mount(viewRoot);
+  listView.update(chats, boardMarks(), now);
 }
 
 // Closed chats come from a slower fetch; the poll only asks for one when it is due. It watches the polled chats,

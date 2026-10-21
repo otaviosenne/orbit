@@ -80,6 +80,7 @@ describe('matching a key press', () => {
 
   it('tells a digit from Ctrl+digit and reports which pinned slot was pressed', () => {
     expect(matchedId(press('3'))).toBe('view-timeline');
+    expect(matchedId(press('4'))).toBe('view-list');
     const match: ShortcutMatch | null = matchShortcut(actionShortcuts(), press('3', { ctrlKey: true }));
     expect(match?.shortcut.id).toBe('open-pinned');
     expect(match?.chordIndex).toBe(2);
@@ -95,7 +96,7 @@ describe('matching a key press', () => {
 describe('tooltip hints', () => {
   it('name every key of a shortcut', () => {
     expect(withShortcut('Rename', 'chat-rename')).toBe('Rename (F2 or E)');
-    expect(withShortcut('Settings', 'view-settings')).toBe('Settings (, or 4)');
+    expect(withShortcut('Settings', 'view-settings')).toBe('Settings (, or 5)');
     expect(withShortcut('Close', 'chat-close')).toBe('Close (Ctrl+Backspace)');
     expect(withShortcut('Pinned', 'open-pinned')).toBe('Pinned (Ctrl+1–9)');
   });

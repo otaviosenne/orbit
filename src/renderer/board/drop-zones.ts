@@ -2,7 +2,7 @@ import { DROP_ZONE_SELECTOR, renderPinnedDropZone } from '../views/board-view';
 import { zoneOf } from './drag-source';
 import { DropHint } from './drop-hint';
 import type { BoardZone, DragSource, DropAction } from './drop-rules';
-import { dropActionFor, dropHint } from './drop-rules';
+import { dropActionFor, dropHint, isZoneInPlay } from './drop-rules';
 
 const ACCEPTS_CLASS: string = 'is-drop-target';
 const INERT_CLASS: string = 'is-drop-inert';
@@ -62,9 +62,10 @@ function addMissingPinnedZone(root: HTMLElement, source: DragSource): HTMLElemen
   return zone;
 }
 
+// Zones out of play for this drag are left alone entirely: neither outlined nor faded.
 function toZone(element: HTMLElement, source: DragSource): Zone[] {
   const key: BoardZone | null = zoneOf(element);
-  return key === null ? [] : [{ element, action: dropActionFor(source, key) }];
+  return key === null || !isZoneInPlay(source, key) ? [] : [{ element, action: dropActionFor(source, key) }];
 }
 
 // The zone the card came from is left as it is: it is where the card goes back to, not a refusal.

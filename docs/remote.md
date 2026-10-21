@@ -1,8 +1,9 @@
 # Orbit Web (remote access)
 
-Orbit Web serves the Board, Timeline, Panel and the chat panel to a browser, so you can follow and
+Orbit Web serves the Board, Timeline, List and the chat panel to a browser, so you can follow and
 steer your chats from your phone while the computer is on. It is the desktop renderer itself, with
-`window.radar` answered over HTTP instead of Electron IPC, plus a mobile layout.
+`window.radar` answered over HTTP instead of Electron IPC, plus a phone layout. The Panel (a grid of
+live tiles) needs a desk-sized screen and stays in the desktop app.
 
 It is **off by default**. Turn it on in Settings → Orbit Web.
 
@@ -30,8 +31,8 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
   decided exactly once.
 - **Web client.** `src/web/http-radar.ts` implements `RadarApi` over `fetch`. `src/web/entry.ts`
   signs in, installs it as `window.radar`, then loads the unchanged `src/renderer/app.ts`.
-  `build.mjs` derives `dist/web/index.html` from the desktop `index.html` (see `web-page.mjs`), and
-  `src/web/web.css` holds every web-only rule.
+  `build.mjs` derives `dist/web/index.html` from the desktop `index.html` (see `web-page.mjs`).
+  `src/web/web.css` adapts the page to a browser and `src/web/phone.css` lays it out as a phone app.
 - **Polling, like the desktop.** The web app polls every 2 seconds as the desktop window does. There
   is no WebSocket and no service worker. API answers are sent with `Cache-Control: no-store`.
 - **Bytes over JSON.** Attached images cross as base64 (`src/shared/wire-codec.ts`). Request bodies

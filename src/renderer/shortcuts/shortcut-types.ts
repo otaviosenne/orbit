@@ -9,6 +9,7 @@ export type ActionShortcutId =
   | 'view-board'
   | 'view-panel'
   | 'view-timeline'
+  | 'view-list'
   | 'view-settings'
   | 'new-chat'
   | 'new-chat-menu'
@@ -45,7 +46,7 @@ interface ShortcutBase {
   // Printed instead of every chord, for a run like Ctrl+1 … Ctrl+9.
   readonly display?: readonly KeyChord[];
   readonly gesture?: KeyGesture;
-  // Orbit Web has no windows, terminals, dictation or closing chats.
+  // Orbit Web has no windows, terminals, dictation, closing chats or Panel.
   readonly desktopOnly?: boolean;
 }
 

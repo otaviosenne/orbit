@@ -1,5 +1,6 @@
 import type { AttachmentUpload } from '../../shared/types';
 import { requireElement } from '../dom';
+import { isTouchWeb } from '../host';
 import { IMAGE_ICON } from '../icons';
 import type { Lightbox } from '../lightbox';
 import type { ComposerDraft } from './draft-store';
@@ -12,6 +13,7 @@ import { ImageMarkers } from './image-markers';
 import { AtomicMarkers } from './atomic-markers';
 import { MarkerChipClicks } from './marker-chip-clicks';
 import { MarkerHighlight } from './marker-highlight';
+import { returnKeyAction, showNewLineReturnKey } from './return-key';
 import { keepingThreadEnd } from './thread-end';
 import { DictationDisplay } from './voice/dictation-display';
 import type { DictationPlace } from './voice/dictation-place';
@@ -25,12 +27,11 @@ import type { VoiceHub } from './voice/voice-hub';
 export type MessageSubmitted = (text: string, attachments: readonly AttachmentUpload[]) => Promise<boolean>;
 export type ComposerProblem = (message: string) => void;
 
-const SUBMIT_KEY: string = 'Enter';
 // A leading /name (letters, digits, - : . _) followed by a space; a path such as /home/x is not a command.
 const LEADING_COMMAND: RegExp = /^\s*(\/[\w:.-]+(?:\s|$))?/;
 
-// Enter sends, Shift+Enter adds a line, holding Space (or the mic) dictates, a double tap of Space keeps the mic
-// on hands-free; the draft is kept if sending fails.
+// Enter sends, Shift+Enter adds a line (on a touch screen return only adds lines), holding Space (or the mic)
+// dictates, a double tap of Space keeps the mic on hands-free; the draft is kept if sending fails.
 export class Composer {
   private readonly form: HTMLFormElement = requireElement('#composer');
   private readonly input: HTMLTextAreaElement = requireElement('#composer-input');
@@ -57,8 +58,9 @@ export class Composer {
       event.preventDefault();
       void this.submit();
     });
+    if (isTouchWeb()) showNewLineReturnKey(this.input);
     this.input.addEventListener('keydown', (event: KeyboardEvent): void => {
-      if (event.key !== SUBMIT_KEY || event.shiftKey) return;
+      if (returnKeyAction(event, isTouchWeb()) !== 'send') return;
       event.preventDefault();
       void this.submit();
     });
@@ -127,12 +129,14 @@ export class Composer {
   }
 
   // The composer floats over the thread and grows with its text; the thread keeps that much room at its end.
+  // Its border box is watched: on a phone the bottom padding follows the safe area and the keyboard while the
+  // content stays put, and a stale height would leave the working line over the field.
   private reserveSpaceInThread(): void {
     const sheet: HTMLElement = requireElement('#sheet');
     const thread: HTMLElement = requireElement('#sheet-messages');
     new ResizeObserver((): void => {
       keepingThreadEnd(thread, (): void => sheet.style.setProperty('--composer-space', `${this.form.offsetHeight}px`));
-    }).observe(this.form);
+    }).observe(this.form, { box: 'border-box' });
   }
 
   // Images come in by pasting, dropping files on the composer, or the image button.

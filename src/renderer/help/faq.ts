@@ -4,6 +4,8 @@ export interface FaqEntry {
   readonly id: string;
   readonly question: string;
   readonly answer: string;
+  // About something Orbit Web leaves out, so its Help does not list it.
+  readonly desktopOnly?: boolean;
 }
 
 export const FAQ: readonly FaqEntry[] = [
@@ -111,6 +113,12 @@ export const FAQ: readonly FaqEntry[] = [
     id: 'panel-view',
     question: 'What is the Panel view?',
     answer: 'Several chats live side by side ({key:view-panel}): pick them in the sidebar, set columns, rows and text size at its foot, and drag a tile header to reorder.',
+    desktopOnly: true,
+  },
+  {
+    id: 'list-view',
+    question: 'How do I sort or reorder the List?',
+    answer: 'The List ({key:view-list}) has one row per open chat; pick A–Z or Manual at its top. In Manual, press and hold a row, then drag it up or down, or focus it and press Alt+↑ or Alt+↓.',
   },
   {
     id: 'timeline-marks',
@@ -143,3 +151,7 @@ export const FAQ: readonly FaqEntry[] = [
     answer: 'Yes: the arrow keys (or H, J, K and L) move a focus ring across the cards and {key:board-open} opens the focused chat; with a chat open, the arrows scroll it instead. {key:help} lists every shortcut.',
   },
 ];
+
+export function availableQuestions(isWeb: boolean, entries: readonly FaqEntry[] = FAQ): readonly FaqEntry[] {
+  return entries.filter((entry: FaqEntry) => !isWeb || entry.desktopOnly !== true);
+}

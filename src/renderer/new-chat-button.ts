@@ -1,5 +1,6 @@
 import type { ActionResult, LauncherEntry } from '../shared/types';
 import { element } from './dom';
+import { isPhoneLayout } from './host';
 import { CARET_DOWN_ICON, PLUS_ICON } from './icons';
 import type { LaunchListener } from './launch-watch';
 import { newChatTarget } from './launch-watch';
@@ -14,12 +15,13 @@ const CLOSE_KEY: string = 'Escape';
 const FEEDBACK_MS: number = 1500;
 
 // Top-right "New chat": left click reopens the last project, right click (or the caret) lists every SUPER+D entry.
+// On a phone it is one "+" that lists them at once: there is no right click, and no room for the caret.
 export class NewChatButton {
   private readonly main: HTMLButtonElement = element('button', 'new-chat-main');
   private readonly label: HTMLSpanElement = element('span', 'new-chat-label', 'New chat');
   private readonly menu: HTMLDivElement = element('div', 'new-chat-menu');
   private readonly form: ShortcutForm = new ShortcutForm(
-    { saved: (): void => void this.showList(), cancel: (): void => void this.showList() },
+    { saved: (): void => this.returnToList(), cancel: (): void => this.returnToList() },
     (): readonly string[] => this.entries.map((entry: LauncherEntry) => entry.name),
   );
   private entries: LauncherEntry[] = [];
@@ -37,7 +39,8 @@ export class NewChatButton {
     more.innerHTML = CARET_DOWN_ICON;
     this.menu.hidden = true;
     root.append(this.main, more, this.menu);
-    this.main.addEventListener('click', (): void => void this.open(this.last()));
+    this.main.setAttribute('aria-label', 'New chat');
+    this.main.addEventListener('click', (): void => this.press());
     more.addEventListener('click', (): void => void this.toggleMenu());
     root.addEventListener('contextmenu', (event: MouseEvent): void => {
       event.preventDefault();
@@ -56,6 +59,11 @@ export class NewChatButton {
   // What N does: the same as clicking the button.
   openLast(): void {
     if (!this.main.disabled) void this.open(this.last());
+  }
+
+  private press(): void {
+    if (isPhoneLayout()) void this.toggleMenu();
+    else void this.open(this.last());
   }
 
   private async load(): Promise<void> {
@@ -98,15 +106,30 @@ export class NewChatButton {
     }, FEEDBACK_MS);
   }
 
+  // Opens at once on the entries already known (over Orbit Web a fetch can take a while), then refreshes them.
   async toggleMenu(): Promise<void> {
     if (!this.menu.hidden) return this.closeMenu();
-    await this.showList();
+    this.renderList();
     this.menu.hidden = false;
+    await this.showList();
   }
 
   // Re-reads the list each time, so a project added to ~/.bashrc or a shortcut just saved shows up without restarting.
+  // Rows are only rebuilt when the list changed, so a finger already on a row keeps it.
   private async showList(): Promise<void> {
+    const before: string = JSON.stringify(this.entries);
     await this.load();
+    const changed: boolean = JSON.stringify(this.entries) !== before;
+    // The menu may have closed, or turned into the Add Shortcut form, while the list was on its way.
+    if (changed && !this.menu.hidden && !this.menu.classList.contains('is-form')) this.renderList();
+  }
+
+  private returnToList(): void {
+    this.renderList();
+    void this.showList();
+  }
+
+  private renderList(): void {
     this.menu.classList.remove('is-form');
     this.menu.replaceChildren(
       ...renderLauncherMenu(this.entries, this.last(), {

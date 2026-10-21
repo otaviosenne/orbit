@@ -1,6 +1,7 @@
 import { statusAge } from '../../shared/chat-time';
 import type { ChatDevices, ChatSnapshot } from '../../shared/types';
 import { renderCardDevices } from '../board/card-devices';
+import type { BoardZone } from '../board/drop-rules';
 import { element } from '../dom';
 import { formatDuration } from '../format';
 import { INFO_ICON, PIN_FILLED_ICON } from '../icons';
@@ -15,6 +16,7 @@ export const SESSION_ATTRIBUTE: string = 'session';
 export const DROP_ZONE_ATTRIBUTE: string = 'dropZone';
 export const DROP_ZONE_SELECTOR: string = '[data-drop-zone]';
 const PINNED_TITLE: string = 'Pinned';
+const COLUMNS_ZONE: BoardZone = 'columns';
 
 // What the board needs to know about each chat beyond its snapshot.
 export interface BoardMarks {
@@ -73,6 +75,8 @@ function renderColumns(chats: readonly ChatSnapshot[], marks: BoardMarks, now: n
   const resting: HTMLDivElement = element('div', 'column-stack');
   resting.append(...[active, idle].filter((column): column is HTMLElement => column !== undefined));
   const board: HTMLElement = element('div', 'board');
+  // A card taken out of Pinned can be dropped anywhere here: it only unpins.
+  board.dataset[DROP_ZONE_ATTRIBUTE] = COLUMNS_ZONE;
   board.append(...[needs, busy].filter((column): column is HTMLElement => column !== undefined), resting);
   return board;
 }

@@ -11,6 +11,5 @@ export interface DropEffects {
 export function applyDrop(sessionId: string, action: DropAction, effects: DropEffects): void {
   if (action.kind === 'pin') effects.pin(sessionId);
   if (action.kind === 'unpin') effects.unpin(sessionId);
-  if (action.kind === 'unpin' && action.rest !== null) effects.rest(sessionId, action.rest);
   if (action.kind === 'rest') effects.rest(sessionId, action.column);
 }

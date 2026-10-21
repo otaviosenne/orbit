@@ -1,0 +1,196 @@
+/* Orbit Web as a phone app: loaded after web.css, below the same breakpoint (PHONE_QUERY in renderer/host.ts).
+   Laid out like an iOS app: a slim top bar with the wordmark and its buttons, the views in a tab bar along the
+   bottom, New chat and Resume rising as sheets, a timeline that fits the width, and a composer that sits on the
+   keyboard. Wider screens never see any of it. */
+
+:root {
+  --phone-bar-height: 44px;
+  --phone-tab-bar-height: 50px;
+  --phone-sheet-radius: 14px;
+  --phone-icon: 22px;
+  --phone-tab-icon: 25px;
+  --phone-dim: rgb(0 0 0 / 0.32);
+  --phone-rise: 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes phone-sheet-rise {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (max-width: 700px) {
+  /* ---------- Top bar: the wordmark, then Resume, New chat and Settings ---------- */
+  /* Not a size container here: its container queries would hide its own buttons, and a container is also the box
+     its fixed children (the tab bar, the sheets) would be placed in instead of the screen */
+  .topbar {
+    container-type: normal; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    height: auto; min-height: calc(var(--phone-bar-height) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 6px 0 var(--web-gutter);
+  }
+  .topbar .app-title, .topbar .topbar-info { display: flex; align-items: center; }
+  .topbar .topbar-info { gap: 0; }
+  .wordmark { font-size: 21px; }
+
+  /* Resume and Settings: bare tinted icons, like an iOS navigation bar's buttons */
+  .resume-button, .settings-button {
+    display: grid; place-items: center; width: var(--web-touch); height: var(--web-touch); margin: 0; padding: 0;
+    border-radius: 50%; background: transparent; box-shadow: none; color: var(--accent);
+  }
+  .resume-button:hover, .settings-button:hover { background: transparent; color: var(--accent); }
+  .resume-button svg, .settings-button svg { width: var(--phone-icon); height: var(--phone-icon); }
+  .resume-label { display: none; }
+  .settings-button.is-active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+  /* New chat: one filled "+" square; tapping it lists the projects (new-chat-button.ts), so no caret */
+  .new-chat { margin: 0 5px; box-shadow: none; }
+  .new-chat-more, .new-chat-label { display: none; }
+  .new-chat-main {
+    position: relative; width: 34px; height: 34px; min-height: 0; padding: 0; justify-content: center;
+    border-radius: 10px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  }
+  /* The square stays small; its tap area reaches the 44px a finger needs */
+  .new-chat-main::after { content: ''; position: absolute; inset: calc((34px - var(--web-touch)) / 2); }
+  .new-chat-main svg { width: 16px; height: 16px; }
+
+  /* ---------- Views: a tab bar along the bottom ---------- */
+  body { padding-bottom: calc(var(--phone-tab-bar-height) + env(safe-area-inset-bottom)); }
+  .topbar .nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: center;
+    height: calc(var(--phone-tab-bar-height) + env(safe-area-inset-bottom));
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); border-radius: 0;
+    background: color-mix(in srgb, var(--web-window) 86%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 -0.5px 0 var(--separator);
+  }
+  .topbar .tab {
+    flex: 1 1 0; max-width: 140px; min-width: 0; min-height: var(--phone-tab-bar-height);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 3px 0 0;
+    border-radius: 0; background: transparent; box-shadow: none;
+    color: var(--secondary); font-size: 10.5px; font-weight: 600; letter-spacing: 0.1px;
+  }
+  .topbar .tab.is-active { color: var(--accent); background: transparent; box-shadow: none; }
+  /* Each known view draws its icon as a mask in the tab's color; a view without one shows its name alone */
+  .tab:is([data-view='board'], [data-view='timeline'], [data-view='list'])::before {
+    content: ''; width: var(--phone-tab-icon); height: var(--phone-tab-icon); background: currentColor;
+    -webkit-mask: var(--tab-icon) center / contain no-repeat; mask: var(--tab-icon) center / contain no-repeat;
+  }
+  .tab[data-view='board'] { --tab-icon: url(tab-board.svg); }
+  .tab[data-view='timeline'] { --tab-icon: url(tab-timeline.svg); }
+  .tab[data-view='list'] { --tab-icon: url(tab-list.svg); }
+
+  /* The chat covers the tab bar; menus, the lightbox and Help still come above it */
+  .sheet { z-index: 15; }
+  /* Dragged in from the left edge (swipe-back.ts): it follows the finger at once, its edge shadowed over the board */
+  .sheet.is-swiping { transition: none; box-shadow: -10px 0 30px rgb(0 0 0 / 0.18); }
+
+  /* ---------- New chat and Resume rise from the bottom as sheets over a dimmed page ---------- */
+  body:has(.new-chat-menu:not([hidden]), .resume-popover:not([hidden]))::after {
+    content: ''; position: fixed; inset: 0; z-index: 25; background: var(--phone-dim);
+  }
+  .new-chat-menu, .resume-popover {
+    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; top: auto; width: auto; min-width: 0; max-width: none;
+    border-radius: var(--phone-sheet-radius) var(--phone-sheet-radius) 0 0; box-shadow: 0 -8px 30px rgb(0 0 0 / 0.18);
+    animation: phone-sheet-rise var(--phone-rise);
+  }
+  .new-chat-menu {
+    max-height: 78dvh; overflow-y: auto; gap: 0;
+    padding: 0 var(--web-gutter) calc(var(--web-gutter) + env(safe-area-inset-bottom));
+  }
+  .new-chat-menu:not(.is-form)::before {
+    content: 'New chat in…'; padding: 16px 0 10px; text-align: center; font-size: 15px; font-weight: 650; color: var(--text);
+  }
+  /* A project per row, named on top and its folder under it, the last one used checked on the right */
+  .new-chat-item {
+    grid-template-columns: minmax(0, 1fr) 22px; grid-template-areas: 'name check' 'command check'; row-gap: 2px;
+    min-height: 58px; padding: 9px 4px; border-radius: 0; box-shadow: 0 -0.5px 0 var(--separator);
+  }
+  .new-chat-item:first-of-type { box-shadow: none; }
+  .new-chat-item:hover, .new-chat-item:active { background: transparent; color: var(--text); }
+  .new-chat-item:active { opacity: 0.55; }
+  .new-chat-item:hover .new-chat-command { color: var(--tertiary); opacity: 1; }
+  .new-chat-name { grid-area: name; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .new-chat-command { grid-area: command; justify-self: start; margin-left: 0; font-size: 12px; }
+  .new-chat-check { grid-area: check; justify-self: end; color: var(--accent); }
+  .new-chat-check svg { width: 15px; height: 15px; fill: currentColor; }
+  .new-chat-menu.is-form { width: auto; }
+
+  /* Resume: a page sheet nearly the screen's height, so the past chats have room under the search */
+  .resume-popover { top: calc(env(safe-area-inset-top) + 10px); max-height: none; padding-bottom: env(safe-area-inset-bottom); }
+  .resume-head { padding: 14px var(--web-gutter) 10px; border-bottom: 0; }
+  .resume-search { min-height: 38px; border-radius: 10px; }
+  .resume-list { padding: 0 8px 8px; border-radius: 0; }
+  .resume-row { padding-top: 9px; padding-bottom: 9px; }
+  .resume-row-title { font-size: 15px; }
+  .resume-row-meta { font-size: 12.5px; }
+
+  /* ---------- Timeline: as wide as the screen, each chat a short row with its bars under its name ---------- */
+  .timeline { margin: 0 var(--web-gutter) var(--web-gutter); padding: 4px 10px 6px; border-radius: 12px; }
+  .timeline-header { flex-wrap: wrap; gap: 6px; padding: 4px 0 6px; }
+  .timeline-header > .range-control { flex: 1 1 auto; }
+  .timeline-header > .range-control:first-child { flex-basis: 100%; }
+  .timeline-header .range-choice { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 2px 4px; font-size: 12.5px; }
+  .timeline-axis, .timeline .lane { grid-template-columns: minmax(0, 1fr); }
+  .timeline-axis .timeline-gutter { display: none; }
+  .timeline-ticks { height: 20px; font-size: 10.5px; }
+  .timeline .lane { padding: 5px 0 3px; border-radius: 0; }
+  .timeline .lane-label { flex-direction: row; justify-content: flex-start; align-items: baseline; gap: 6px; padding: 0 2px 2px; }
+  .timeline .lane-name { flex: 0 1 auto; min-width: 0; font-size: 13.5px; }
+  .timeline .lane-status { flex: 0 1 auto; min-width: 0; padding-left: 0; font-size: 11.5px; }
+  .timeline-lines .spark-title { flex: 0 1 auto; min-width: 0; }
+  .timeline-lines .spark-track { height: 30px; }
+  .lane-divider { padding: 12px 2px 2px; }
+
+  /* ---------- Settings ---------- */
+  /* Three theme previews side by side still fit a 360px screen */
+  .appearance { justify-content: space-between; gap: 12px; padding: 14px; }
+  .theme-preview { width: 80px; height: 52px; }
+
+  /* ---------- The chat ---------- */
+  /* Back reads as a link, as in iOS navigation bars */
+  .web-sheet-back { color: var(--accent); }
+  .web-sheet-back svg { width: 20px; height: 20px; }
+  /* The color dot stays a dot; a finger gets the 44px around it */
+  .sheet-dot { position: relative; }
+  .sheet-dot::after { content: ''; position: absolute; inset: calc((13px - var(--web-touch)) / 2); border-radius: 50%; }
+
+
+  /* A frosted bar like Messages' input row, so the thread passing under it never shows through beside the field */
+  .composer {
+    padding: var(--composer-padding-top) var(--web-gutter) calc(10px + env(safe-area-inset-bottom)); align-items: flex-end;
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  }
+  /* While typing the keyboard covers the home indicator, so its inset would only open a gap above the keyboard */
+  .composer:has(.composer-input:focus) { padding-bottom: 8px; }
+  .composer .composer-box { border-radius: 22px; }
+  .composer-input { min-height: var(--web-touch); padding: 11px 14px 11px var(--web-touch); border-radius: 22px; }
+  .composer-attach { left: 0; bottom: 0; width: var(--web-touch); height: var(--web-touch); padding: 0; }
+  .composer-attach svg { width: 20px; height: 20px; }
+  .composer .button { min-height: var(--web-touch); padding: 0 18px; border-radius: 22px; font-size: 15px; }
+  /* The working line keeps to the screen: a long count shortens, the verb and the stop button always show */
+  .working-indicator { left: var(--web-gutter); max-width: calc(100% - 2 * var(--web-gutter)); }
+  .working-verb, .working-stop { flex: none; }
+  .working-meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Stop's tap area grows up and sideways only: just below the line is the field's top edge */
+  .working-stop { position: relative; }
+  .working-stop::after { content: ''; position: absolute; inset: -22px -13px -4px; }
+
+  /* ---------- Small controls keep their look; a finger gets 44px around each ---------- */
+  .column-info::after, .jump-button::after, .agent-strip-stop::after, .settings-nav-item::after,
+  .resume-filters-button::after, .range-choice::after { content: ''; position: absolute; }
+  .jump-button::after { inset: calc((30px - var(--web-touch)) / 2); }
+  .column-info::after { inset: calc((16px - var(--web-touch)) / 2); }
+  .agent-strip-stop::after { inset: calc((32px - var(--web-touch)) / 2); }
+  .settings-nav-item, .resume-filters-button, .range-choice { position: relative; }
+  .settings-nav-item { min-height: 32px; }
+  .settings-nav-item::after { inset: calc((32px - var(--web-touch)) / 2) 0; }
+  .resume-filters-button { min-height: 28px; }
+  .resume-filters-button::after { inset: calc((28px - var(--web-touch)) / 2) 0; }
+  /* The timeline's segments reach 40px; the tap area takes in the track's padding around them */
+  .range-choice::after { inset: -2px 0; }
+}
+
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  .new-chat-menu, .resume-popover { animation: none; }
+  .sheet { transition: none; }
+}
