@@ -24,6 +24,8 @@ export interface HandsFreeHooks {
   // The target composer changed (or went away), even while the state stayed the same.
   readonly onMoved: () => void;
   readonly onError: (message: string) => void;
+  // Words were written into the target composer's field.
+  readonly onWords: () => void;
 }
 
 // "Mic always on": the microphone stays live without holding Space, and words go into the target composer: the
@@ -204,6 +206,7 @@ export class HandsFree {
     if (binding === undefined) return;
     if (segment === this.lane.active && binding.span.textOf(segment.id) !== text) this.clock?.wrote(Date.now());
     this.writer.write(binding, segment.id, text);
+    if (binding.sink.kind === 'field') this.hooks.onWords();
   }
 
   private settle(segment: LaneSegment, result: TranscriptionResult): void {

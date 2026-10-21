@@ -36,6 +36,7 @@ export class VoiceHub {
       onState: (state: HandsFreeState): void => this.showHandsFree(state),
       onMoved: (): void => this.moved(),
       onError: (message: string): void => this.showHandsFreeError(message),
+      onWords: (): void => this.focusTarget(),
     });
     this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.handsFree.turnOff());
     this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place));
@@ -167,6 +168,15 @@ export class VoiceHub {
   private moved(): void {
     this.lastTarget = this.handsFree.field ?? this.lastTarget;
     this.showStates();
+    this.focusTarget();
+  }
+
+  // While hands-free listens its composer holds the caret, so Backspace and Enter act on the words as they come.
+  // Another text field the user is typing in (a rename, a search) keeps its focus.
+  private focusTarget(): void {
+    const field: VoiceField | null = this.handsFree.isOn ? this.handsFree.field : null;
+    if (field === null || document.activeElement === field.input || isTextField(document.activeElement)) return;
+    field.input.focus({ preventScroll: true });
   }
 
   private showHandsFreeError(message: string): void {
@@ -179,6 +189,7 @@ export class VoiceHub {
     this.handsFreeState = state;
     this.indicator.show(state);
     this.showStates();
+    this.focusTarget();
   }
 
   // Hands-free, while running, decides what its target field shows; every other field shows its own dictation.
