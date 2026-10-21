@@ -18,6 +18,9 @@ export class FakePicker implements PickerIO {
   readonly tabs: TabState[];
   tab: number = 0;
   submitted: string[] | null = null;
+  // A small window in the preview layout: only the notes and the footer are in view, never the cursor row.
+  hidesCursorInPreview: boolean = false;
+  readonly typed: string[] = [];
 
   constructor(private readonly questions: readonly Question[]) {
     this.tabs = questions.map((): TabState => ({ cursor: 0, ticked: [], field: '', picked: null }));
@@ -51,6 +54,7 @@ export class FakePicker implements PickerIO {
   }
 
   async plainScreen(): Promise<string> {
+    if (this.hidesCursorInPreview) return 'Notes: press n to\n add notes\n────\n  Chat about this\n\nEnter to select · ↑/↓ to navigate · n to add\nnotes · Esc to cancel';
     const footer: string = 'Enter to select · Tab/Arrow keys to navigate ·\nEsc to cancel';
     if (this.submitted !== null) return '❯ ';
     if (this.onReview) return `${this.reviewLines()}\nReady to submit your answers?\n\n❯ 1. Submit answers\n  2. Cancel`;
@@ -82,6 +86,7 @@ export class FakePicker implements PickerIO {
   }
 
   private type(value: string): void {
+    this.typed.push(value);
     if (this.submitted !== null) return;
     if (this.onReview) {
       if (value === '1') this.submitted = this.answers();

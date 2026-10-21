@@ -17,7 +17,14 @@ export class ProblemLine {
 
   show(problem: string): void {
     this.message.textContent = problem;
+    this.root.classList.remove('is-note');
     this.root.hidden = false;
+  }
+
+  // Not a failure, just something to know (shown in the quiet text color).
+  showNote(note: string): void {
+    this.show(note);
+    this.root.classList.add('is-note');
   }
 
   clear(): void {

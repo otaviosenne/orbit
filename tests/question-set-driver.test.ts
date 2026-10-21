@@ -40,6 +40,14 @@ describe('SetDriver on a picker showing only the cursor row', () => {
     expect(picker.submitted).toEqual(['Small']);
   });
 
+  it('never picks blind in a set whose preview layout hides the cursor, since the tab on screen is unproven', async () => {
+    const previews: Question = { ...size, hasPreviews: true };
+    const picker: FakePicker = new FakePicker([previews, color]);
+    picker.hidesCursorInPreview = true;
+    expect(await new SetDriver(picker).answer([previews, color], [{ selected: [1], other: null }, { selected: [0], other: null }])).toMatch(/not on screen/);
+    expect(picker.typed).toEqual([]);
+  });
+
   it('refuses when the cursor row shows another question', async () => {
     const picker: FakePicker = new FakePicker([question('Pets', false, ['Cat', 'Dog'])]);
     expect(await new SetDriver(picker).answer([size], [{ selected: [0], other: null }])).toMatch(/different question/);

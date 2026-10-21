@@ -27,8 +27,10 @@ export class SetDriver {
   // Returns why it stopped, or null once the picker sits on its review (or sent a lone single choice).
   async answer(questions: readonly Question[], answers: readonly QuestionAnswer[]): Promise<string | null> {
     await this.returnToFirstTab(questions);
+    // Only a lone question can be picked without seeing its cursor: in a set there is no proof which tab is up.
+    const mayPickBlind: boolean = questions.length === 1;
     for (const [index, question] of questions.entries()) {
-      const problem: string | null = await this.answerTab(question, answers[index] ?? { selected: [], other: null });
+      const problem: string | null = await this.answerTab(question, answers[index] ?? { selected: [], other: null }, mayPickBlind);
       if (problem !== null) return problem;
     }
     return null;
@@ -54,9 +56,9 @@ export class SetDriver {
     }
   }
 
-  private async answerTab(question: Question, answer: QuestionAnswer): Promise<string | null> {
+  private async answerTab(question: Question, answer: QuestionAnswer, mayPickBlind: boolean): Promise<string | null> {
     const first: CursorRow | string = await this.climbToFirstOption(question);
-    if (first === NOT_ON_SCREEN && (await this.climbBlindly(question))) return this.pickOption(answer);
+    if (first === NOT_ON_SCREEN && mayPickBlind && (await this.climbBlindly(question))) return this.pickOption(answer);
     if (typeof first === 'string') return first;
     if (question.multiSelect) return this.answerMultiSelect(question, answer);
     const other: string | null = cleanOther(answer.other);

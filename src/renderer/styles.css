@@ -1164,6 +1164,7 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .question-back[hidden] { display: none; }
 .question-problem { flex: 1; min-width: 0; color: var(--danger); font-size: 11.5px; }
 .question-problem[hidden] { display: none; }
+.question-problem.is-note { color: var(--secondary); }
 .question-problem-link { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 .question-problem-link:hover { text-decoration: underline; }
 /* One step at a time: the line between questions only belongs to cards that show them all */

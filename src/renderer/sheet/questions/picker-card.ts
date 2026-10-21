@@ -32,7 +32,7 @@ export class PickerCard {
   constructor(view: PickerQuestionView | PickerReviewView | PickerUnreadableView, private readonly actions: PickerActions) {
     this.problem = new ProblemLine((): void => actions.goToChat());
     if (view.kind === 'unreadable') {
-      this.problem.show(UNREADABLE_HINT);
+      this.problem.showNote(UNREADABLE_HINT);
       this.root.append(cardHead(TITLE, null), this.problem.root);
       return;
     }

@@ -48,6 +48,13 @@ describe('picker evidence on a terminal too small for the picker', () => {
     expect(contradictsSet(parsePicker(fixture('cut-off-small-window.ansi.txt')), [fruits])).toBe(false);
   });
 
+  it('reads a real 2.1.306 capture of a last multi-select tab', () => {
+    expect(parsePicker(fixture('v306-multi-last-tab.ansi.txt'))).toMatchObject({
+      kind: 'question', current: 1, multiSelect: true, other: null, question: 'Which fruits do you like?',
+      options: [{ label: 'Apple', description: 'Crisp' }, { label: 'Banana' }, { label: 'Cherry' }],
+    });
+  });
+
   it('reads a 2.1.306 multi-select tab whose row under the field says "Next"', () => {
     expect(parsePicker(fixture('multi-tab-next-row.txt'))).toMatchObject({
       kind: 'question', multiSelect: true, other: null,
