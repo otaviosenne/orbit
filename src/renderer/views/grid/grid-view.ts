@@ -1,4 +1,7 @@
-import type { ChatSnapshot } from '../../../shared/types';
+import type { ChatDevices, ChatSnapshot } from '../../../shared/types';
+import { BoardDevices } from '../../board/board-devices';
+import type { CardDeviceKind } from '../../board/card-devices';
+import { openCardDevice } from '../../board/card-devices';
 import { element } from '../../dom';
 import type { Lightbox } from '../../lightbox';
 import { GridLayoutStore } from './grid-layout-store';
@@ -38,6 +41,11 @@ export class GridView {
   private readonly collapse: SidebarCollapse = new SidebarCollapse();
   // Tiles a poll skipped for being scrolled out of view; scrolling one back in fetches it without waiting a poll.
   private readonly unpolled: Set<GridTile> = new Set();
+  // Asked about only while the Panel is shown, since only update() follows it; the board keeps its own.
+  private readonly devices: BoardDevices = new BoardDevices(
+    (sessionId: string): Promise<ChatDevices> => window.radar.getChatDevices(sessionId),
+    (): void => this.render(),
+  );
   private chats: readonly ChatSnapshot[] = [];
   private now: number = 0;
 
@@ -83,6 +91,7 @@ export class GridView {
     this.now = now;
     this.render();
     this.tiles.forEach((tile: GridTile): void => this.refreshIfShown(tile));
+    void this.devices.follow([...this.tiles.keys()], now);
   }
 
   // Off-screen tiles are not polled; their threads would be fetched and rendered for nobody.
@@ -119,7 +128,7 @@ export class GridView {
     return liveOrder(state.order, new Set(live.keys())).map((sessionId: string) => {
       const chat: ChatSnapshot = live.get(sessionId) as ChatSnapshot;
       const tile: GridTile = this.tileFor(chat);
-      tile.update(chat, this.now);
+      tile.update(chat, this.now, this.devices.devicesOf(sessionId));
       return tile;
     });
   }
@@ -136,7 +145,10 @@ export class GridView {
   private tileFor(chat: ChatSnapshot): GridTile {
     const existing: GridTile | undefined = this.tiles.get(chat.sessionId);
     if (existing !== undefined) return existing;
-    const tile: GridTile = new GridTile(chat, this.lightbox, (sessionId: string): void => this.toggle(sessionId));
+    const tile: GridTile = new GridTile(chat, this.lightbox, {
+      remove: (sessionId: string): void => this.toggle(sessionId),
+      openDevice: (kind: CardDeviceKind, sessionId: string): void => void openCardDevice(kind, sessionId, this.devices),
+    });
     this.tiles.set(chat.sessionId, tile);
     // Fetched at once rather than on the next poll, so the tile is not empty for up to a poll.
     void tile.refresh();

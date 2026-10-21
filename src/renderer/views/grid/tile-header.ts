@@ -1,13 +1,16 @@
 import { statusAge } from '../../../shared/chat-time';
-import type { ChatSnapshot } from '../../../shared/types';
+import type { ChatDevices, ChatSnapshot } from '../../../shared/types';
 import { element } from '../../dom';
 import { formatDuration } from '../../format';
 import { CLOSE_ICON } from '../../icons';
 import { chatStatusLabel } from '../../status-label';
 import { setText, showSpinner } from './in-place';
+import type { DeviceOpen } from './tile-devices';
+import { TileDevices } from './tile-devices';
 
 export interface TileHeaderHandlers {
   readonly remove: () => void;
+  readonly openDevice: DeviceOpen;
 }
 
 // A tile's title bar: it names the chat, shows how it is doing, and is the handle tiles are dragged by.
@@ -18,8 +21,10 @@ export class TileHeader {
   private readonly status: HTMLElement = element('span', 'tile-status');
   private readonly statusLabel: HTMLElement = element('span', 'tile-status-label');
   private readonly statusTime: HTMLElement = element('span', 'tile-status-time');
+  private readonly devices: TileDevices;
 
   constructor(handlers: TileHeaderHandlers) {
+    this.devices = new TileDevices(this.root, this.name, handlers.openDevice);
     const remove: HTMLButtonElement = iconButton(CLOSE_ICON, 'Remove from Panel', handlers.remove);
     const actions: HTMLDivElement = element('div', 'tile-actions');
     actions.append(remove);
@@ -27,8 +32,9 @@ export class TileHeader {
     this.root.append(this.name, this.spinner, this.status, actions);
   }
 
-  update(chat: ChatSnapshot, now: number): void {
+  update(chat: ChatSnapshot, now: number, devices: ChatDevices): void {
     setText(this.name, chat.name);
+    this.devices.show(devices);
     this.root.title = chat.repository.name;
     showSpinner(this.spinner, chat.status === 'busy');
     setText(this.statusLabel, chatStatusLabel(chat.status));

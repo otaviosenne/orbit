@@ -6,6 +6,10 @@ import { setTip } from '../tooltip';
 
 export type CardDeviceKind = 'emulator' | 'browser';
 
+export interface DeviceRecheck {
+  recheck(sessionId: string, now: number): Promise<void>;
+}
+
 const CARD_DEVICE_ATTRIBUTE: string = 'cardDevice';
 const CARD_DEVICE_SELECTOR: string = '[data-card-device]';
 const BROWSER_LABEL: string = 'Open browser tab';
@@ -32,6 +36,13 @@ export function cardDeviceAt(target: EventTarget | null): CardDeviceKind | null 
 
 export function focusCardDevice(kind: CardDeviceKind, sessionId: string): Promise<DeviceFocus> {
   return FOCUS_REQUESTS[kind](sessionId).catch((): DeviceFocus => 'missing');
+}
+
+// Goes to the device; one that has closed since its icon was drawn is asked about again, so the icon goes away.
+export async function openCardDevice(kind: CardDeviceKind, sessionId: string, devices: DeviceRecheck): Promise<void> {
+  if ((await focusCardDevice(kind, sessionId)) !== 'missing') return;
+  console.warn(`The ${kind} of chat ${sessionId} is no longer open`);
+  await devices.recheck(sessionId, Date.now());
 }
 
 function emulatorButton(emulator: EmulatorLink): HTMLButtonElement {

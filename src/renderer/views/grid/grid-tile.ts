@@ -1,4 +1,5 @@
-import type { ActionResult, ChatSnapshot, TranscriptItem } from '../../../shared/types';
+import type { ActionResult, ChatDevices, ChatSnapshot, TranscriptItem } from '../../../shared/types';
+import type { CardDeviceKind } from '../../board/card-devices';
 import { element } from '../../dom';
 import type { Lightbox } from '../../lightbox';
 import { chatColor, textOnChatColor } from '../../palette';
@@ -14,6 +15,11 @@ export const TILE_SESSION_ATTRIBUTE: string = 'gridSession';
 
 const NO_IMAGES: readonly string[] = [];
 
+export interface GridTileHandlers {
+  readonly remove: (sessionId: string) => void;
+  readonly openDevice: (kind: CardDeviceKind, sessionId: string) => void;
+}
+
 // One chat in the grid: its header, a live copy of its thread, and an optional field to write to it.
 // Built once and kept, so its scroll, opened rows and draft survive every poll.
 export class GridTile {
@@ -25,12 +31,15 @@ export class GridTile {
   private readonly composer: TileComposer;
   private isFetching: boolean = false;
 
-  constructor(private chat: ChatSnapshot, lightbox: Lightbox, onRemove: (sessionId: string) => void) {
+  constructor(private chat: ChatSnapshot, lightbox: Lightbox, handlers: GridTileHandlers) {
     this.root.dataset[TILE_SESSION_ATTRIBUTE] = chat.sessionId;
     this.transcript = new TranscriptList(this.thread, lightbox, window.radar);
     this.feed = new ThreadFeed(this.thread, this.transcript, TILE_PAGE_ITEMS);
     this.composer = new TileComposer((text: string): Promise<ActionResult> => this.send(text));
-    this.header = new TileHeader({ remove: (): void => onRemove(this.chat.sessionId) });
+    this.header = new TileHeader({
+      remove: (): void => handlers.remove(this.chat.sessionId),
+      openDevice: (kind: CardDeviceKind): void => handlers.openDevice(kind, this.chat.sessionId),
+    });
     this.root.append(this.header.root, this.thread, this.composer.root);
   }
 
@@ -38,11 +47,11 @@ export class GridTile {
     return this.chat.sessionId;
   }
 
-  update(chat: ChatSnapshot, now: number): void {
+  update(chat: ChatSnapshot, now: number, devices: ChatDevices): void {
     this.chat = chat;
     this.root.style.setProperty('--chat', chatColor(chat.color));
     this.root.style.setProperty('--on-chat', textOnChatColor(chat.color));
-    this.header.update(chat, now);
+    this.header.update(chat, now, devices);
   }
 
   // Polls overlap with clicks that also re-render, so a fetch already on its way is not repeated.

@@ -2,7 +2,7 @@ import type { ChatDevices } from '../../shared/types';
 
 export type DeviceAsk = (sessionId: string) => Promise<ChatDevices>;
 
-const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
+export const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
 // The main process keeps the window list this long; asking more often would only re-read the same list.
 const REFRESH_MS: number = 3000;
 
@@ -11,8 +11,8 @@ interface Answer {
   readonly askedAt: number;
 }
 
-// The emulator and Chrome tab of every chat on the board, for the icons beside each card's name.
-// The board is rebuilt from this synchronously, so answers are kept here and the board redrawn only when one changes.
+// The emulator and Chrome tab of every chat on the board or in the Panel, for the icons beside each chat's name.
+// Both views draw from this synchronously, so answers are kept here and the view redrawn only when one changes.
 export class BoardDevices {
   private readonly answers: Map<string, Answer> = new Map();
   private readonly pending: Set<string> = new Set();
@@ -24,7 +24,7 @@ export class BoardDevices {
     return this.answers.get(sessionId)?.devices ?? NO_DEVICES;
   }
 
-  // Called with the board's live chats on each poll; chats that left are forgotten.
+  // Called with the shown chats on each poll; chats that left are forgotten.
   async follow(sessionIds: readonly string[], now: number): Promise<void> {
     this.listed = new Set(sessionIds);
     for (const sessionId of [...this.answers.keys()]) if (!this.listed.has(sessionId)) this.answers.delete(sessionId);

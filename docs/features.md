@@ -69,7 +69,8 @@ again to stop. The text appears word by word. The microphone button in the field
 
 The Panel view tiles live chats in a grid. Click chats in the sidebar to add or remove them, drag a
 tile's header to reorder, and use the sidebar foot to choose 1 to 3 columns and rows and the text
-size. Each tile has its own composer. The layout is remembered.
+size. Each tile has its own composer. The layout is remembered. A tile's header shows the same
+emulator and browser icons as the board's cards, beside the chat's name.
 
 ## Timeline
 
