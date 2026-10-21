@@ -6,7 +6,7 @@ import { normalizeExternalUrl } from './external-url';
 import { FailureLimiter, SIGN_IN_POLICY } from './failure-limiter';
 import { pairingQrSvg } from './pairing-qr';
 import type { RemoteConfig, RemoteConfigStore } from './remote-config';
-import { DEFAULT_REMOTE_CONFIG } from './remote-config';
+import { DEFAULT_REMOTE_CONFIG, isUserPort } from './remote-config';
 import type { RemoteCredentials, RemoteRoutes } from './remote-context';
 import { closeServer, createRemoteServer, listenLocally, LOOPBACK_HOST } from './remote-server';
 import { trustedOrigins } from './trusted-origins';
@@ -52,6 +52,7 @@ export class RemoteController {
       enabled: this.config.enabled,
       running: this.server !== null,
       localUrl,
+      port: this.config.port,
       externalUrl: this.config.externalUrl,
       token: this.config.token,
       pairingUrl,
@@ -80,6 +81,22 @@ export class RemoteController {
       }
       this.error = null;
       await this.update({ ...this.config, externalUrl });
+      return this.settings();
+    });
+  }
+
+  // A running server moves to the new port at once; phones keep working once the tunnel points there too.
+  setPort(input: unknown): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      const port: number = typeof input === 'string' ? Number(input) : Number.NaN;
+      if (!isUserPort(port)) {
+        this.error = 'The port must be a whole number from 1024 to 65535';
+        return this.settings();
+      }
+      this.error = null;
+      if (port === this.config.port) return this.settings();
+      await this.update({ ...this.config, port });
+      if (this.config.enabled) await this.applyEnabled(true);
       return this.settings();
     });
   }

@@ -36,12 +36,12 @@ export class RemoteSection {
     const settings: RemoteSettings | null = this.settings;
     if (settings === null) return;
     const group: HTMLDivElement = element('div', 'settings-group');
+    this.root.replaceChildren(element('h2', 'settings-heading', 'Orbit Web'), renderIntro());
     group.append(this.renderToggle(settings));
     if (settings.enabled) group.append(this.renderLocalUrl(settings), this.renderExternalUrl(settings), this.renderToken(settings));
-    this.root.replaceChildren(element('h2', 'settings-heading', 'Orbit Web'), group);
+    this.root.append(group);
     if (settings.error !== null) this.root.append(element('p', 'settings-note remote-error', settings.error));
     if (settings.enabled) this.root.append(this.renderPairing(settings));
-    this.root.append(element('p', 'settings-note', NOTE));
   }
 
   private renderToggle(settings: RemoteSettings): HTMLElement {
@@ -57,10 +57,24 @@ export class RemoteSection {
     return row;
   }
 
+  // Only the port can change: the server always stays on this computer's loopback address.
   private renderLocalUrl(settings: RemoteSettings): HTMLElement {
-    const row: HTMLDivElement = element('div', 'settings-row remote-row');
-    row.append(element('span', 'remote-label', 'Local URL'), element('code', 'remote-value', settings.localUrl));
-    return row;
+    const form: HTMLFormElement = element('form', 'settings-row remote-row');
+    const input: HTMLInputElement = element('input', 'remote-input remote-port');
+    input.inputMode = 'numeric';
+    input.value = String(settings.port);
+    input.spellcheck = false;
+    input.title = 'Port, 1024 to 65535; the tunnel or proxy must point to the same one';
+    const save: HTMLButtonElement = element('button', 'button', 'Save');
+    save.type = 'submit';
+    const host: string = settings.localUrl.slice(0, settings.localUrl.lastIndexOf(':') + 1);
+    form.append(element('span', 'remote-label', 'Local URL'), element('code', 'remote-value remote-host', host), input, save);
+    form.addEventListener('submit', (event: SubmitEvent): void => {
+      event.preventDefault();
+      input.blur();
+      void this.apply(window.radar.setRemotePort(input.value));
+    });
+    return form;
   }
 
   private renderExternalUrl(settings: RemoteSettings): HTMLElement {
@@ -109,8 +123,21 @@ export class RemoteSection {
   }
 }
 
-const NOTE: string =
-  'Serves the Board, Timeline, Panel and chats to a browser, on 127.0.0.1 only. Put it behind a tunnel or proxy with HTTPS to reach it from your phone; see "Orbit Web" in the README.';
+const INTRO: string = 'Use Orbit from a browser, such as on your phone: the Board, Timeline, Panel and chats, with the same answers and messages.';
+const STEPS: readonly string[] = [
+  'Turn on Allow remote access. Orbit then serves itself at the Local URL, reachable from this computer only.',
+  'Reach it from elsewhere through a tunnel or proxy with HTTPS (Cloudflare Tunnel, Tailscale, Caddy…) pointed at the Local URL, and type the address it gives you in External URL.',
+  'Scan the QR code with your phone: it opens that address already signed in. Anyone with the code or the token can type into your chats; New token signs every phone out.',
+];
+
+// What Orbit Web is and the three steps to a phone, shown whether it is on or off.
+function renderIntro(): HTMLElement {
+  const intro: HTMLDivElement = element('div', 'remote-intro');
+  const steps: HTMLOListElement = element('ol', 'remote-steps');
+  steps.append(...STEPS.map((step: string): HTMLLIElement => element('li', '', step)));
+  intro.append(element('p', 'settings-note', INTRO), steps);
+  return intro;
+}
 
 async function copyText(button: HTMLButtonElement, text: string): Promise<void> {
   await navigator.clipboard.writeText(text);

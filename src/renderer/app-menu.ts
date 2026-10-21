@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { BUG_ICON, GITHUB_ICON, QUESTION_ICON } from './icons';
+import { BROWSER_ICON, BUG_ICON, GITHUB_ICON, PHONE_ICON, QUESTION_ICON } from './icons';
 import { actionShortcut } from './shortcuts/shortcut-catalog';
 import { shortcutKeysText } from './shortcuts/shortcut-hint';
 
@@ -7,6 +7,12 @@ const REPOSITORY_URL: string = 'https://github.com/otaviosenne/orbit';
 const ISSUES_URL: string = `${REPOSITORY_URL}/issues`;
 const OPEN_CLASS: string = 'is-open';
 const CLOSE_KEY: string = 'Escape';
+
+// Orbit Web shortcuts, only in the desktop window: a browser already showing Orbit Web needs neither.
+export interface AppMenuWeb {
+  readonly openInBrowser: () => void;
+  readonly pairPhone: () => void;
+}
 
 interface AppMenuLink {
   readonly icon: string;
@@ -21,9 +27,9 @@ const LINKS: readonly AppMenuLink[] = [
 
 // Clicking the wordmark drops down Help and links about Orbit itself; the links open in the browser (the
 // window sends every link outside).
-export function attachAppMenu(trigger: HTMLElement, openHelp: () => void): void {
+export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null): void {
   const menu: HTMLDivElement = element('div', 'card-menu app-menu');
-  menu.append(renderHelpItem(openHelp), ...LINKS.map(renderLink));
+  menu.append(renderHelpItem(openHelp), ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
   document.body.append(menu);
   trigger.classList.add('has-menu');
   trigger.addEventListener('click', (): void => toggle(menu, trigger));
@@ -53,6 +59,19 @@ function renderHelpItem(openHelp: () => void): HTMLButtonElement {
   button.innerHTML = QUESTION_ICON;
   button.append(element('span', '', 'Help'), element('kbd', 'app-menu-key', shortcutKeysText(actionShortcut('help'))));
   button.addEventListener('click', openHelp);
+  return button;
+}
+
+function renderWebItems(web: AppMenuWeb): HTMLButtonElement[] {
+  return [renderAction(BROWSER_ICON, 'Open in browser', web.openInBrowser), renderAction(PHONE_ICON, 'Use on your phone', web.pairPhone)];
+}
+
+function renderAction(icon: string, label: string, run: () => void): HTMLButtonElement {
+  const button: HTMLButtonElement = element('button', 'card-menu-item');
+  button.type = 'button';
+  button.innerHTML = icon;
+  button.append(element('span', '', label));
+  button.addEventListener('click', run);
   return button;
 }
 

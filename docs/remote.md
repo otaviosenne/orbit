@@ -13,7 +13,7 @@ It is **off by default**. Turn it on in Settings → Orbit Web.
 ## Architecture
 
 ```
-phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4517 (Orbit main process)
+phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Orbit main process)
                                             ├─ GET  /…               static web app (dist/web)
                                             ├─ GET  /api/session     is the cookie still good?
                                             ├─ POST /api/session     token → session cookie
@@ -72,8 +72,8 @@ just back, its dot and its name); resuming past chats; and opening a chat from a
 ## Setup
 
 1. In Orbit: **Settings → Orbit Web → Allow remote access**. It listens on
-   `http://127.0.0.1:4517`. Open that address on the computer to try it.
-2. Put it behind HTTPS with one of the options below. Do not expose port 4517 directly.
+   `http://127.0.0.1:4690`. Open that address on the computer to try it.
+2. Put it behind HTTPS with one of the options below. Do not expose port 4690 directly.
 3. Type the public address into **External URL** and press **Save**. Requests to any other host
    are refused, so this step is required.
 4. Scan the **QR code** with the phone. It opens `<external url>/#token=…` and signs in. Or open
@@ -98,7 +98,7 @@ tunnel: <TUNNEL-ID>
 credentials-file: /home/<you>/.cloudflared/<TUNNEL-ID>.json
 ingress:
   - hostname: orbit.example.com
-    service: http://127.0.0.1:4517
+    service: http://127.0.0.1:4690
   - service: http_status:404
 ```
 
@@ -116,7 +116,7 @@ Cloudflare then asks for your identity before Orbit's token is ever in play.
 ### Tailscale
 
 ```bash
-tailscale serve --bg 4517      # https://<machine>.<tailnet>.ts.net, reachable from your tailnet only
+tailscale serve --bg 4690      # https://<machine>.<tailnet>.ts.net, reachable from your tailnet only
 ```
 
 Use the printed `https://…ts.net` address as the External URL. `tailscale funnel` would make it
@@ -124,15 +124,15 @@ public; prefer `serve` unless you need access from outside your tailnet.
 
 ### Any reverse proxy with TLS
 
-Proxy to `http://127.0.0.1:4517` and keep the original `Host` header. Caddy:
+Proxy to `http://127.0.0.1:4690` and keep the original `Host` header. Caddy:
 
 ```
 orbit.example.com {
-  reverse_proxy 127.0.0.1:4517
+  reverse_proxy 127.0.0.1:4690
 }
 ```
 
-nginx: `proxy_pass http://127.0.0.1:4517;` with `proxy_set_header Host $host;`, inside a TLS
+nginx: `proxy_pass http://127.0.0.1:4690;` with `proxy_set_header Host $host;`, inside a TLS
 `server` block.
 
 ## Configuration
@@ -142,7 +142,7 @@ nginx: `proxy_pass http://127.0.0.1:4517;` with `proxy_set_header Host $host;`, 
 | Key | Meaning |
 | --- | --- |
 | `enabled` | Whether the server runs (the Settings switch). |
-| `port` | Local port, `4517` by default (1024–65535). Edit it by hand while Orbit is closed. |
+| `port` | Local port, `4690` by default (1024–65535). Edit it by hand while Orbit is closed. |
 | `externalUrl` | Your public origin, set from Settings. |
 | `token` | Created on first enable, replaced by **New token**. |
 

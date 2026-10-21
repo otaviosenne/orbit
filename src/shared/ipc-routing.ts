@@ -11,6 +11,7 @@ export const REMOTE_SETTINGS_CHANNELS = [
   'GetRemoteSettings',
   'SetRemoteEnabled',
   'SetRemoteExternalUrl',
+  'SetRemotePort',
   'RegenerateRemoteToken',
 ] as const satisfies readonly ChannelKey[];
 

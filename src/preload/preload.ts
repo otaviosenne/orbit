@@ -89,6 +89,7 @@ const api: RadarApi = {
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),
   setRemoteEnabled: (enabled: boolean): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteEnabled, enabled),
   setRemoteExternalUrl: (url: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteExternalUrl, url),
+  setRemotePort: (port: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemotePort, port),
   regenerateRemoteToken: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.RegenerateRemoteToken),
 };
 

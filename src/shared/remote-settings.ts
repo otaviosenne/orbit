@@ -4,6 +4,7 @@ export interface RemoteSettings {
   // Listening right now; false with an error when the port was taken.
   readonly running: boolean;
   readonly localUrl: string;
+  readonly port: number;
   // The user's public address in front of a tunnel or proxy; empty until they type it.
   readonly externalUrl: string;
   readonly token: string;

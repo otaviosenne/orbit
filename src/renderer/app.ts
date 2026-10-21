@@ -12,6 +12,8 @@ import { resumedChatTarget } from './launch-watch';
 import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
+import type { RemoteSettings } from '../shared/remote-settings';
+import { PAIRING_HASH_KEY } from '../shared/remote-settings';
 import { GEAR_ICON } from './icons';
 import { requireElement } from './dom';
 import type { ViewName } from './nav';
@@ -212,7 +214,7 @@ function renderView(): void {
 // The settings column is rebuilt on every poll; without this a scrolled page snaps back to the top.
 function showSettings(now: number): void {
   const scrollTop: number = viewRoot.querySelector<HTMLElement>('.settings')?.scrollTop ?? 0;
-  const settings: HTMLElement = renderSettings(theme, usage, now, [resourcesSection.root, ...(remoteSection === null ? [] : [remoteSection.root])]);
+  const settings: HTMLElement = renderSettings(theme, usage, now, [...(remoteSection === null ? [] : [remoteSection.root]), resourcesSection.root]);
   viewRoot.replaceChildren(settings);
   settings.scrollTop = scrollTop;
 }
@@ -357,6 +359,19 @@ function trackViewing(now: number): void {
   seen.updateViewing(viewing, now);
 }
 
+// Signs the desktop browser in through the token, like a scanned QR; with Orbit Web off, its settings explain how.
+async function openWebInBrowser(): Promise<void> {
+  const settings: RemoteSettings = await window.radar.getRemoteSettings();
+  if (!settings.running) return showRemoteSettings();
+  window.open(settings.pairingUrl ?? `${settings.localUrl}/#${PAIRING_HASH_KEY}=${settings.token}`, '_blank');
+}
+
+// The phone pairs through the QR code in Settings' Orbit Web section.
+function showRemoteSettings(): void {
+  if (view !== 'settings') setView('settings');
+  remoteSection?.root.scrollIntoView({ block: 'start' });
+}
+
 function setView(next: ViewName): void {
   if (next === 'settings' && view !== 'settings') viewBeforeSettings = view;
   view = next;
@@ -465,7 +480,10 @@ settingsButton.innerHTML = GEAR_ICON;
 settingsButton.addEventListener('click', (): void => setView(view === 'settings' ? viewBeforeSettings : 'settings'));
 installTooltips();
 renderWordmark(requireElement('#app-title'));
-attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open());
+attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), remoteSection === null ? null : {
+  openInBrowser: (): void => void openWebInBrowser(),
+  pairPhone: showRemoteSettings,
+});
 const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(

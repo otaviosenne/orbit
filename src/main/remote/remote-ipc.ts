@@ -13,5 +13,6 @@ export function registerRemoteSettingsHandlers(controller: RemoteController): vo
   ipcMain.handle(IpcChannel.SetRemoteExternalUrl, (_event: IpcMainInvokeEvent, url: unknown): Promise<RemoteSettings> =>
     controller.setExternalUrl(url),
   );
+  ipcMain.handle(IpcChannel.SetRemotePort, (_event: IpcMainInvokeEvent, port: unknown): Promise<RemoteSettings> => controller.setPort(port));
   ipcMain.handle(IpcChannel.RegenerateRemoteToken, (): Promise<RemoteSettings> => controller.regenerateToken());
 }

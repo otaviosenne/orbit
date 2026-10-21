@@ -12,7 +12,8 @@ export interface RemoteConfig {
   readonly token: string;
 }
 
-export const DEFAULT_REMOTE_PORT: number = 4517;
+// Clear of LocalStack's 4510-4559 range, which a common dev container publishes.
+export const DEFAULT_REMOTE_PORT: number = 4690;
 // Below 1024 needs root; above 65535 is no port.
 const LOWEST_USER_PORT: number = 1024;
 const HIGHEST_PORT: number = 65535;
@@ -47,7 +48,7 @@ export function parseRemoteConfig(raw: unknown): RemoteConfig {
   };
 }
 
-function isUserPort(value: unknown): value is number {
+export function isUserPort(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= LOWEST_USER_PORT && value <= HIGHEST_PORT;
 }
 

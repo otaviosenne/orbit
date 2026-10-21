@@ -39,6 +39,7 @@ export const IpcChannel = {
   GetRemoteSettings: 'radar:get-remote-settings',
   SetRemoteEnabled: 'radar:set-remote-enabled',
   SetRemoteExternalUrl: 'radar:set-remote-external-url',
+  SetRemotePort: 'radar:set-remote-port',
   RegenerateRemoteToken: 'radar:regenerate-remote-token',
   DictationPrepare: 'radar:dictation-prepare',
   DictationStart: 'radar:dictation-start',

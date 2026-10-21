@@ -433,6 +433,8 @@ export interface RadarApi {
   getRemoteSettings(): Promise<RemoteSettings>;
   setRemoteEnabled(enabled: boolean): Promise<RemoteSettings>;
   setRemoteExternalUrl(url: string): Promise<RemoteSettings>;
+  // The local port, as typed; Orbit Web restarts on it when it is running.
+  setRemotePort(port: string): Promise<RemoteSettings>;
   // A new token signs every paired phone out.
   regenerateRemoteToken(): Promise<RemoteSettings>;
 }

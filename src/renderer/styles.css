@@ -438,6 +438,16 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .settings { height: 100%; overflow-y: auto; padding: 4px 20px 24px; }
 .settings-column { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
 .settings-heading { font-size: 13px; font-weight: 700; margin: 0 0 8px 4px; }
+/* A heading that folds its section; folded sections show only this line */
+.settings-fold {
+  display: flex; align-items: center; gap: 6px; padding: 4px 6px; margin-left: -2px; border: 0; border-radius: 7px; cursor: default;
+  background: transparent; color: var(--text); font-family: inherit; text-align: left;
+}
+.settings-fold:hover { background: var(--disclosure-hover); }
+.settings-fold-caret { display: grid; place-items: center; color: var(--tertiary); transition: transform 0.15s; }
+.settings-fold-caret svg { width: 10px; height: 10px; fill: currentColor; }
+.resources-section:not(.is-open) .settings-fold-caret { transform: rotate(-90deg); }
+.settings-fold-hint { color: var(--tertiary); font-weight: 400; }
 .settings-subheading { font-size: 12px; font-weight: 600; color: var(--secondary); margin: 14px 0 6px 4px; }
 .settings-group { border-radius: 10px; background: var(--group); box-shadow: var(--shadow-card); overflow: hidden; }
 .settings-row { display: flex; align-items: center; gap: 14px; padding: 10px 14px; }
@@ -1244,6 +1254,12 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 }
 .remote-input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 0.5px var(--accent); }
 .remote-error { color: var(--danger); }
+.remote-intro { margin: 0 4px 10px; }
+.remote-intro .settings-note { margin: 0 0 6px; }
+.remote-steps { margin: 0; padding-left: 18px; color: var(--secondary); font-size: 12px; line-height: 1.5; }
+.remote-steps li + li { margin-top: 4px; }
+.remote-host { flex: none; }
+.remote-port { flex: none; width: 80px; min-width: 0; }
 .remote-pairing { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
 /* Dark modules on a white tile in both themes: scanners expect dark-on-light */
 .remote-qr { flex: none; width: 168px; height: 168px; padding: 6px; border-radius: 10px; background: #ffffff; color: #000000; }

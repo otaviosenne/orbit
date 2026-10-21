@@ -232,7 +232,7 @@ column at a time (tap or swipe), a chat opens full screen with only back, its do
 top, and a long press on a card opens its menu. It is the
 same renderer as the desktop app, talking HTTP instead of IPC. Off by default.
 
-1. **Settings → Orbit Web → Allow remote access.** Orbit listens on `http://127.0.0.1:4517` only.
+1. **Settings → Orbit Web → Allow remote access.** Orbit listens on `http://127.0.0.1:4690` only.
 2. Put it behind HTTPS: Cloudflare Tunnel (+ Cloudflare Access), `tailscale serve`, or a reverse
    proxy. Copy-paste steps are in [docs/remote.md](docs/remote.md#setup).
 3. Type the public address into **External URL**, then scan the **QR code** with your phone.
