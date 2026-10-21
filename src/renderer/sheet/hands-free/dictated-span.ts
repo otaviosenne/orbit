@@ -1,5 +1,6 @@
 import type { DraftAnchor, PlacedText } from '../dictation-placement';
 import { placeDictation } from '../dictation-placement';
+import { wordCount, wordsAfter } from './unseen-words';
 
 export interface SpanChange {
   // What the span showed before this change (the untouched text on its first change).
@@ -12,6 +13,8 @@ export interface SpanChange {
 // so each keeps its own text and the whole span is placed again on every change.
 export class DictatedSpan {
   private readonly texts: Map<number, string> = new Map();
+  // How many of each segment's words the draft has taken over (kept or deleted by the user); never placed again.
+  private readonly settled: Map<number, number> = new Map();
   private anchor: DraftAnchor | null = null;
   private shown: string = '';
 
@@ -20,15 +23,22 @@ export class DictatedSpan {
     this.texts.set(segmentId, text);
     const joined: string = this.joined();
     if (this.anchor === null && joined.length === 0) return null;
-    const anchor: DraftAnchor = this.anchor ?? this.reanchor(anchorNow());
+    const anchor: DraftAnchor = this.anchor ?? this.takeAnchor(anchorNow());
     const placed: PlacedText = placeDictation(anchor, joined);
     const previous: string = this.shown;
     this.shown = placed.value;
     return { previous, placed };
   }
 
-  // The draft changed under the span (not by an edit of the user's): its words go where the caret is now.
-  reanchor(anchor: DraftAnchor): DraftAnchor {
+  // The draft was edited or replaced under the span: the words it showed now belong to the draft, so a deletion
+  // stays deleted, even when a segment's final text arrives. Words still to come go where the caret is then.
+  rebase(): void {
+    for (const [segmentId, text] of this.texts) this.settled.set(segmentId, wordCount(text));
+    this.anchor = null;
+    this.shown = '';
+  }
+
+  private takeAnchor(anchor: DraftAnchor): DraftAnchor {
     this.anchor = anchor;
     this.shown = `${anchor.before}${anchor.after}`;
     return anchor;
@@ -46,7 +56,7 @@ export class DictatedSpan {
   private joined(): string {
     return [...this.texts.entries()]
       .sort(([first]: [number, string], [second]: [number, string]): number => first - second)
-      .map(([, text]: [number, string]): string => text)
+      .map(([segmentId, text]: [number, string]): string => wordsAfter(text, this.settled.get(segmentId) ?? 0))
       .filter((text: string): boolean => text.length > 0)
       .join(' ');
   }

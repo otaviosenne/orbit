@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DictationTarget } from '../src/renderer/sheet/hands-free/dictation-target';
-import { planRetarget } from '../src/renderer/sheet/hands-free/dictation-target';
+import { planRetarget, startsAtDraftEnd } from '../src/renderer/sheet/hands-free/dictation-target';
 import { composerState } from '../src/renderer/sheet/hands-free/composer-state';
 
 const chatA: DictationTarget = { kind: 'chat', sessionId: 'a' };
@@ -53,6 +53,21 @@ describe('planRetarget between the side panel and the Panel tiles', () => {
   it('pauses when no tile has focus and resumes in the tile focused next', () => {
     expect(planRetarget(tileA, null)).toBe('pause');
     expect(planRetarget(null, tileB)).toBe('resume');
+  });
+});
+
+describe('startsAtDraftEnd', () => {
+  it('continues at the end of the draft hands-free moves to or comes back to', () => {
+    expect(startsAtDraftEnd('switch', true)).toBe(true);
+    expect(startsAtDraftEnd('resume', true)).toBe(true);
+  });
+
+  it('leaves the caret alone while the composer stays, and whenever hands-free is off', () => {
+    expect(startsAtDraftEnd('none', true)).toBe(false);
+    expect(startsAtDraftEnd('carry', true)).toBe(false);
+    expect(startsAtDraftEnd('pause', true)).toBe(false);
+    expect(startsAtDraftEnd('switch', false)).toBe(false);
+    expect(startsAtDraftEnd('resume', false)).toBe(false);
   });
 });
 

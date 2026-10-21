@@ -23,8 +23,9 @@ export class SpaceTyping {
     this.typed = { value: this.input.value, caret: this.input.selectionStart };
   }
 
-  // While hands-free words flow, typing counts as taking over and drops words still being refined; a space
-  // typed only to be taken back by the second tap of a double tap must not do that, so it waits that long.
+  // While hands-free words flow, typing hands the words shown so far over to the draft and moves the next ones to
+  // the caret; a space typed only to be taken back by the second tap of a double tap must not do that, so it waits
+  // that long.
   defer(): void {
     this.cancelDeferred();
     this.deferred = window.setTimeout((): void => this.flush(), DOUBLE_TAP_MS);

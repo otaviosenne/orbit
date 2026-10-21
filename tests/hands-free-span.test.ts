@@ -38,12 +38,31 @@ describe('DictatedSpan', () => {
     expect(span.lastShown).toBe('Note: hello world');
   });
 
-  it('moves its words to a new anchor when the draft was replaced under it', () => {
+  it('places only words still to come once the draft took over, at the caret then', () => {
     const span: DictatedSpan = new DictatedSpan();
     span.update(1, 'old words', anchorAt('before'));
-    span.reanchor({ before: '', after: '' });
-    expect(span.update(1, 'old words again', anchorAt('ignored'))?.placed.value).toBe('old words again');
+    span.rebase();
+    expect(span.lastShown).toBeNull();
+    expect(span.update(1, 'old words again', anchorAt('kept '))?.placed.value).toBe('kept again');
     expect(span.textOf(1)).toBe('old words again');
     expect(span.textOf(9)).toBe('');
+  });
+
+  it('never brings back deleted words, not even with a recased final text', () => {
+    const span: DictatedSpan = new DictatedSpan();
+    span.update(1, 'this is a test of', anchorAt(''));
+    span.rebase();
+    expect(span.update(1, 'this is a test of', anchorAt('this is a tes'))).toBeNull();
+    expect(span.update(1, 'This is a test of hands-free mode.', anchorAt('this is a tes'))?.placed.value).toBe('this is a tes hands-free mode.');
+  });
+
+  it('keeps every overlapping segment it showed, and the next segment streams in after the edit', () => {
+    const span: DictatedSpan = new DictatedSpan();
+    span.update(1, 'first sentence', anchorAt(''));
+    span.update(2, 'second', anchorAt(''));
+    span.rebase();
+    expect(span.update(1, 'First sentence.', anchorAt(''))).toBeNull();
+    expect(span.update(2, 'second one', anchorAt(''))?.placed.value).toBe('one');
+    expect(span.update(3, 'third', anchorAt(''))?.placed.value).toBe('one third');
   });
 });

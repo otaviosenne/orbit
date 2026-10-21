@@ -4,7 +4,7 @@ import { DictatedSpan } from './dictated-span';
 import type { DictationPlace } from '../voice/dictation-place';
 import type { VoiceField } from '../voice/voice-field';
 import type { RetargetPlan } from './dictation-target';
-import { planRetarget } from './dictation-target';
+import { planRetarget, startsAtDraftEnd } from './dictation-target';
 import { pcmLevel } from './pcm-level';
 import { SegmentClock } from './segment-clock';
 import type { LaneSegment } from './segment-lane';
@@ -108,19 +108,11 @@ export class HandsFree {
     this.cut();
   }
 
-  // The user typed in field: their edit stays, late words of the old span are dropped, new words go at the caret.
+  // The user typed or deleted in field: their edit wins. What the words showed so far is now theirs, so deleted
+  // words never come back; words the voice service has not shown yet still arrive, at the caret.
   edited(field: VoiceField): void {
-    const left: SpanBinding | null = this.attached;
-    if (left === null || !writesInto(left, field)) return;
-    left.sink = DROPPED_SINK;
-    this.attached = null;
-    if (!this.isCapturing) return;
-    const next: SpanBinding | null = this.fieldBinding();
-    this.attached = next;
-    const segment: LaneSegment | null = this.lane.active;
-    // A segment with no words yet simply moves on; typing away while silent does not open a stream per key.
-    if (next !== null && segment !== null && left.span.textOf(segment.id).length === 0) this.spans.set(segment.id, next);
-    else this.cut();
+    const attached: SpanBinding | null = this.attached;
+    if (attached !== null && writesInto(attached, field)) attached.span.rebase();
   }
 
   private retarget(next: DictationPlace | null): void {
@@ -130,6 +122,7 @@ export class HandsFree {
     if (previous !== next) this.hooks.onMoved();
     if (plan === 'none' || plan === 'carry') return;
     this.leave(previous);
+    if (next !== null && startsAtDraftEnd(plan, this.isEnabled)) caretToEnd(next.field.input);
     if (plan === 'switch' && this.isCapturing) {
       this.attached = this.fieldBinding();
       this.cut();
@@ -234,6 +227,10 @@ export class HandsFree {
     if (this.isEnabled) return this.place === null ? 'paused' : 'live';
     return this.isStopping ? 'finishing' : 'off';
   }
+}
+
+function caretToEnd(input: HTMLTextAreaElement): void {
+  input.setSelectionRange(input.value.length, input.value.length);
 }
 
 function writesInto(binding: SpanBinding, field: VoiceField): boolean {

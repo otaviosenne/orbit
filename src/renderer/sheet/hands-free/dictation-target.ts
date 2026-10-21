@@ -18,6 +18,12 @@ export function planRetarget(from: DictationTarget | null, to: DictationTarget |
   return 'switch';
 }
 
+// Hands-free words moving to a composer (another chat, another tile, the panel back after a pause) carry on from
+// the end of its draft, wherever its caret was left.
+export function startsAtDraftEnd(plan: RetargetPlan, isHandsFreeOn: boolean): boolean {
+  return isHandsFreeOn && (plan === 'switch' || plan === 'resume');
+}
+
 function isSameTarget(from: DictationTarget | null, to: DictationTarget | null): boolean {
   if (from === null || to === null) return from === to;
   if (from.kind === 'starting' || to.kind === 'starting') return from.kind === to.kind;
