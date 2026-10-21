@@ -87,7 +87,11 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   }
   .sheet.is-open { transform: none; }
   .sheet-head { padding: calc(6px + env(safe-area-inset-top)) var(--web-gutter) 8px 4px; }
-  .sheet-actions, .sheet-meta, #action-rename, .panel-resizer { display: none; }
+  .sheet-actions, .sheet-meta, .panel-resizer { display: none; }
+  /* Renaming works from the phone too: the pencil keeps a finger-sized target, and the field takes the row */
+  #action-rename { width: 36px; height: 36px; }
+  .rename-form { flex: 1; min-width: 0; gap: 6px; }
+  .rename-input { flex: 1; min-width: 0; }
   .web-sheet-back { display: grid; place-items: center; margin-right: -4px; }
   .web-sheet-back svg { width: 18px; height: 18px; }
   .sheet.is-agent .web-sheet-back { display: none; }
