@@ -1,8 +1,11 @@
-// Spoken endings that send the draft: said twice, or with "pode" between, so the word "enviar" inside a sentence
-// never sends by accident. Dictation varies case, accents and punctuation, so words are compared bare.
+// A draft ending in "enviar" is sent. Longer spoken forms come first so all of their words go, not just the last one.
+// Dictation varies case, accents and punctuation, so words are compared bare. If one word proves too easy to say by
+// accident, this list is the one place to change it.
 const SEND_PHRASES: readonly (readonly string[])[] = [
-  ['enviar', 'enviar'],
   ['enviar', 'pode', 'enviar'],
+  ['enviar', 'enviar'],
+  ['pode', 'enviar'],
+  ['enviar'],
 ];
 const WORD_PATTERN: RegExp = /[\p{L}\p{N}]+/gu;
 // What dictation leaves between the last real word and the command: spaces, commas, full stops and the like.
