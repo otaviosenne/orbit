@@ -7,8 +7,24 @@ const STEP_PX: number = 50;
 
 let frames: (() => void)[] = [];
 
-function fakeThread(scrollTop: number): HTMLElement {
-  return { clientHeight: VIEW_PX, scrollHeight: CONTENT_PX, scrollTop, addEventListener: (): void => undefined } as unknown as HTMLElement;
+// Clamps scrollTop like a real scroller, so the glide sees when it hits an end.
+function fakeThread(start: number, contentPx: number = CONTENT_PX): HTMLElement & { content: number } {
+  let top: number = start;
+  const thread = {
+    clientHeight: VIEW_PX,
+    content: contentPx,
+    get scrollHeight(): number {
+      return this.content;
+    },
+    get scrollTop(): number {
+      return top;
+    },
+    set scrollTop(value: number) {
+      top = Math.min(Math.max(Math.round(value), 0), this.content - VIEW_PX);
+    },
+    addEventListener: (): void => undefined,
+  };
+  return thread as unknown as HTMLElement & { content: number };
 }
 
 function runFrames(): void {
@@ -61,5 +77,21 @@ describe('ThreadScroller', () => {
       count += 1;
     }
     expect(count).toBeLessThanOrEqual(12);
+  });
+});
+
+describe('ThreadScroller with older pages loading above', () => {
+  it('travels only the pressed distance when the thread shifts to keep its place', () => {
+    const thread = fakeThread(100);
+    new ThreadScroller(thread).step('up');
+    // An older page lands above the view mid-glide; the feed moves scrollTop down by its height to keep the place.
+    frames.shift()?.();
+    const loadedPx: number = 2000;
+    thread.content += loadedPx;
+    thread.scrollTop += loadedPx;
+    const afterLoad: number = thread.scrollTop;
+    runFrames();
+    expect(afterLoad - thread.scrollTop).toBeLessThanOrEqual(STEP_PX);
+    expect(frames).toHaveLength(0);
   });
 });
