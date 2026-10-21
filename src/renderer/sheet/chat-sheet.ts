@@ -1,3 +1,4 @@
+import { installCopyOnSelect } from './copy-on-select';
 import { statusAge } from '../../shared/chat-time';
 import type { ChatColor } from '../../shared/chat-colors';
 import type { ActionResult, AttachmentUpload, ChatSnapshot, TurnProgress } from '../../shared/types';
@@ -102,6 +103,7 @@ export class ChatSheet {
     );
     new PanelResizer(requireElement('#panel-resizer'));
     new ThreadZoom(this.root, requireElement('#sheet-messages'));
+    installCopyOnSelect(requireElement('#sheet-messages'));
     // Saved as it is typed, so a draft also survives quitting Orbit without leaving the chat.
     requireElement('#composer-input').addEventListener('input', (): void => this.keepDraft());
     listenForSpaceToTalk(

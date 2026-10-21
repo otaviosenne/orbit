@@ -323,6 +323,13 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
    new slot: just above the board, under the chat panel (which must hide it, full screen on a phone), menus,
    tooltips and the drag's own lifted card */
 .card-flight { position: fixed; z-index: 1; margin: 0; pointer-events: none; }
+/* The "Copied" note by the pointer after selecting text in a chat (sheet/copy-on-select.ts) */
+.copy-toast {
+  position: fixed; z-index: 70; padding: 3px 9px; border-radius: 8px; pointer-events: none;
+  background: var(--text); color: var(--window); font-size: 11.5px; font-weight: 600;
+  animation: copy-toast-fade 0.9s ease-out forwards;
+}
+@keyframes copy-toast-fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
 .card.is-arriving { visibility: hidden; }
 /* Only a from step, so the fade ends on the card's own opacity (a closed pin stays faded) */
 @keyframes card-enter { from { opacity: 0; transform: scale(0.97); } }
