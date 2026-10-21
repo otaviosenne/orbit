@@ -14,7 +14,7 @@ export interface BoardColumn {
 export type UnseenCheck = (chat: ChatSnapshot) => boolean;
 
 // A finished chat you have already seen stays "Active" this long, then drops to "Idle".
-export const ACTIVE_WINDOW_MS: number = 30 * 60_000;
+export const ACTIVE_WINDOW_MS: number = 20 * 60_000;
 
 // A resting chat dragged to Active or Idle stays there for the rest of that resting stretch; null follows the clock.
 export type RestingColumn = 'active' | 'idle';
@@ -53,7 +53,7 @@ const COLUMN_RULES: readonly ColumnRule[] = [
   {
     key: 'idle',
     title: 'Idle',
-    info: 'Chats you have already seen that finished more than 30 minutes ago. Drag a card between Active and Idle to move it yourself.',
+    info: 'Chats you have already seen that finished more than 20 minutes ago. Drag a card between Active and Idle to move it yourself.',
     accepts: (chat, isUnseen, now, pin): boolean => isResting(chat, isUnseen) && restingColumn(chat, now, pin) === 'idle',
   },
 ];
