@@ -21,6 +21,8 @@ import { syncChildren } from '../views/grid/keyed-children';
 
 // Within this distance of the bottom the reader is "following" and new items keep the view pinned.
 const FOLLOW_THRESHOLD_PX: number = 48;
+// Sending scrolls to the new message only from within this many screens of the end.
+const SEND_FOLLOW_SCREENS: number = 2;
 
 // Renders a chat's transcript and remembers which collapsed rows the user opened, across refreshes.
 export class TranscriptList {
@@ -68,7 +70,8 @@ export class TranscriptList {
   // The list owns imageUrls from here on and lets go of them once the message is dropped or confirmed.
   addPending(text: string, imageUrls: readonly string[]): string {
     const id: string = this.pending.add(text, imageUrls, Date.now()).id;
-    this.render(false, true);
+    // Reading near the end, the sent message is brought into view; reading far back up, the place is kept.
+    this.render(false, this.isNearEnd(SEND_FOLLOW_SCREENS));
     return id;
   }
 
@@ -163,6 +166,10 @@ export class TranscriptList {
 
   private isFollowing(): boolean {
     return this.root.scrollHeight - this.root.scrollTop - this.root.clientHeight < FOLLOW_THRESHOLD_PX;
+  }
+
+  private isNearEnd(screens: number): boolean {
+    return this.root.scrollHeight - this.root.scrollTop - this.root.clientHeight <= this.root.clientHeight * screens;
   }
 }
 
