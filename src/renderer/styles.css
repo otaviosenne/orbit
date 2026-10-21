@@ -970,6 +970,12 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
   0% { content: '·'; } 10% { content: '✢'; } 20% { content: '✳'; } 30% { content: '✶'; } 40% { content: '✻'; }
   50% { content: '✽'; } 60% { content: '✻'; } 70% { content: '✶'; } 80% { content: '✳'; } 90% { content: '✢'; }
 }
+/* Phones draw ✳ (U+2733) as a green emoji tile; ✱ has no emoji form and keeps the same weight */
+@media (pointer: coarse) { .claude-spinner::before { animation-name: claude-spin-touch; } }
+@keyframes claude-spin-touch {
+  0% { content: '·'; } 10% { content: '✢'; } 20% { content: '✱'; } 30% { content: '✶'; } 40% { content: '✻'; }
+  50% { content: '✽'; } 60% { content: '✻'; } 70% { content: '✶'; } 80% { content: '✱'; } 90% { content: '✢'; }
+}
 @media (prefers-reduced-motion: reduce) { .claude-spinner::before { animation: none; content: '✻'; } }
 
 /* "✻ Crystallizing… (23s · ↓ 1.5k tokens)" floating just above the composer while the chat works.
