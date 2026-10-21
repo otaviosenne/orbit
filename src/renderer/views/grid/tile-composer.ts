@@ -29,10 +29,14 @@ export class TileComposer {
     this.input.rows = TEXT_ROWS;
     this.input.placeholder = 'Message';
     this.button.type = 'submit';
+    // Pressing the button must not blur the field first: that would fold it on the way down and the click would
+    // open it again, a visible flicker.
+    this.button.addEventListener('mousedown', (event: MouseEvent): void => event.preventDefault());
     this.button.addEventListener('click', (event: MouseEvent): void => {
-      if (this.isOpen) return;
+      if (this.isOpen && !this.foldsOnPress()) return;
       event.preventDefault();
-      this.expand();
+      if (this.isOpen) this.fold();
+      else this.expand();
     });
     const row: HTMLDivElement = element('div', 'tile-composer-row');
     row.append(this.input, this.button);
@@ -126,7 +130,13 @@ export class TileComposer {
   }
 
   // Folded, the button only opens the field, so it stays usable whatever the draft holds.
+  // An open, empty field that may fold: Send puts it away instead of sending nothing.
+  private foldsOnPress(): boolean {
+    return !this.isAlwaysOpen && this.input.value.trim().length === 0;
+  }
+
   private showButtonState(): void {
-    this.button.disabled = this.isOpen && (!this.isReady || this.isSending || this.input.value.trim().length === 0);
+    const hasNothingToSend: boolean = this.input.value.trim().length === 0 && !this.foldsOnPress();
+    this.button.disabled = this.isOpen && (!this.isReady || this.isSending || hasNothingToSend);
   }
 }
