@@ -284,6 +284,8 @@ export class ChatSheet {
     this.devices.clear();
     this.placeholder.clear();
     this.composer.followDictationTarget(this.dictationTarget());
+    // A hidden composer that kept the caret would make every key count as typing, so the board's arrows did nothing.
+    if (this.root.contains(document.activeElement) && document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }
 
   // Hands-free words go to the composer on screen; there is none while the panel is closed or shows an agent
