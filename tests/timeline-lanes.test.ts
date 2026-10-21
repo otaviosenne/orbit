@@ -19,7 +19,7 @@ function open(sessionId: string, repository: string, name: string = sessionId): 
     status: 'idle',
     statusSince: NOW,
     agents: [],
-    shells: [],
+    shells: [], lastReplyAt: null,
     isFocused: false,
   };
 }

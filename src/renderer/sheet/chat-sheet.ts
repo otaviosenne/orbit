@@ -1,3 +1,4 @@
+import { statusAge } from '../../shared/chat-time';
 import type { ChatColor } from '../../shared/chat-colors';
 import type { ActionResult, AttachmentUpload, ChatSnapshot, TurnProgress } from '../../shared/types';
 import { requireElement } from '../dom';
@@ -174,7 +175,7 @@ export class ChatSheet {
     const agent: AgentTitle | null = this.agentView.title(now);
     this.name.textContent = agent?.name ?? chat.name;
     if (agent !== null) return void this.meta.replaceChildren(document.createTextNode(agent.meta));
-    const status: string = `${chat.repository.name} · ${chatStatusLabel(chat.status)} for ${formatDuration(now - chat.statusSince)}`;
+    const status: string = `${chat.repository.name} · ${chatStatusLabel(chat.status)} for ${formatDuration(statusAge(chat, now))}`;
     this.meta.replaceChildren(...(chat.status === 'busy' ? [renderSpinner()] : []), document.createTextNode(status));
   }
 

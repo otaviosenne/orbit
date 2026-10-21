@@ -1,4 +1,5 @@
 import type { ChatSnapshot } from '../../shared/types';
+import { restingSince } from '../../shared/chat-time';
 import type { RestingColumn } from '../views/board-columns';
 
 const STORAGE_KEY: string = 'orbit.resting-pins';
@@ -15,11 +16,11 @@ export class RestingPins {
 
   pinOf(chat: ChatSnapshot): RestingColumn | null {
     const entry: RestingPinEntry | undefined = this.entries.get(chat.sessionId);
-    return entry !== undefined && entry.statusSince === chat.statusSince ? entry.column : null;
+    return entry !== undefined && entry.statusSince === restingSince(chat) ? entry.column : null;
   }
 
   set(chat: ChatSnapshot, column: RestingColumn): void {
-    this.entries.set(chat.sessionId, { column, statusSince: chat.statusSince });
+    this.entries.set(chat.sessionId, { column, statusSince: restingSince(chat) });
     save([...this.entries]);
   }
 }

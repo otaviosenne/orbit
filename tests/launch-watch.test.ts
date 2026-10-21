@@ -11,7 +11,7 @@ const SHORTCUT: LaunchTarget = newChatTarget(SHORTCUT_ENTRY);
 function chat(sessionId: string, name: string, startedAt: number, cwd: string = '/home/me/code/acme'): ChatSnapshot {
   return {
     sessionId, pid: 1, name, color: null, repository: { name: 'r', root: cwd }, cwd, startedAt,
-    status: 'idle', statusSince: startedAt, agents: [], shells: [], isFocused: false,
+    status: 'idle', statusSince: startedAt, agents: [], shells: [], lastReplyAt: null, isFocused: false,
   };
 }
 

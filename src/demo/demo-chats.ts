@@ -159,6 +159,7 @@ export function findDemoChat(sessionId: unknown): DemoChat | undefined {
 }
 
 function toChatSnapshot(chat: DemoChat, now: number): ChatSnapshot {
+  const status: Pick<ChatSnapshot, 'status' | 'statusSince'> = currentStatus(chat, now);
   return {
     sessionId: chat.sessionId,
     pid: chat.pid,
@@ -167,9 +168,11 @@ function toChatSnapshot(chat: DemoChat, now: number): ChatSnapshot {
     repository: chat.repository,
     cwd: chat.repository.root,
     startedAt: minutesBeforeLaunch(chat.startedMinutesAgo),
-    ...currentStatus(chat, now),
+    ...status,
     agents: [...chat.agents.map(toAgentSnapshot), ...demoSurgeAgents(chat.sessionId, now)],
     shells: [],
+    // The demo's chats last replied when their status last changed.
+    lastReplyAt: status.statusSince,
     isFocused: false,
   };
 }

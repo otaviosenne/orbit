@@ -7,6 +7,7 @@ import { FileMemo } from './file-memo';
 import { readTail } from './file-reader';
 import { isConversationLine, parseRecords } from './jsonl';
 import { normalizeStatus } from './chat-status';
+import { LastReplyTracker } from './last-reply-tracker';
 import { ColorTracker } from './color-tracker';
 import { RepositoryResolver } from './repository-resolver';
 import { listLiveSessions } from './session-registry';
@@ -24,6 +25,7 @@ import type { WindowLocator } from './window-locator';
 export class ChatRadar {
   private readonly locator: TranscriptLocator = new TranscriptLocator();
   private readonly colors: ColorTracker = new ColorTracker();
+  private readonly replies: LastReplyTracker = new LastReplyTracker();
   private readonly subagents: SubagentReader = new SubagentReader();
   private readonly shells: ShellReader = new ShellReader();
   private readonly transcriptReader: TranscriptReader = new TranscriptReader();
@@ -114,6 +116,7 @@ export class ChatRadar {
       startedAt: session.startedAt,
       status: normalizeStatus(session.status),
       statusSince: session.statusUpdatedAt,
+      lastReplyAt: transcript === null ? null : await this.replies.lastReplyAt(transcript),
       agents,
       shells,
       isFocused: activeWindow !== null && (await this.windowOf(session.pid)) === activeWindow,

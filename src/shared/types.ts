@@ -41,6 +41,8 @@ export interface ChatSnapshot {
   readonly startedAt: number;
   readonly status: ChatStatus;
   readonly statusSince: number;
+  // When Claude last wrote in this chat (null before its first reply); survives a resume, unlike statusSince.
+  readonly lastReplyAt: number | null;
   readonly agents: readonly AgentSnapshot[];
   // Commands the chat left running in the background (Bash run_in_background, or moved there mid-run).
   readonly shells: readonly ShellSnapshot[];

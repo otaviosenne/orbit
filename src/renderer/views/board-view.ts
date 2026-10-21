@@ -1,3 +1,4 @@
+import { statusAge } from '../../shared/chat-time';
 import type { ChatSnapshot } from '../../shared/types';
 import { element } from '../dom';
 import { formatDuration } from '../format';
@@ -78,7 +79,7 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   card.dataset[SESSION_ATTRIBUTE] = chat.sessionId;
   card.style.setProperty('--chat', chatColor(chat.color));
   const top: HTMLDivElement = element('div', 'card-top');
-  const time: HTMLSpanElement = element('span', 'card-time', formatDuration(now - chat.statusSince));
+  const time: HTMLSpanElement = element('span', 'card-time', formatDuration(statusAge(chat, now)));
   if (hasUnread) time.prepend(element('span', 'unseen-dot'));
   if (chat.status === 'busy') time.prepend(renderSpinner());
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());

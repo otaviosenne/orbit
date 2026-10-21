@@ -3,7 +3,7 @@ import { SeenTracker } from '../src/renderer/seen-tracker';
 import type { ChatSnapshot } from '../src/shared/types';
 
 const chat = (status: ChatSnapshot['status'], statusSince: number): ChatSnapshot => ({
-  sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince, agents: [], shells: [], isFocused: false,
+  sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince, agents: [], shells: [], lastReplyAt: statusSince, isFocused: false,
 });
 
 describe('SeenTracker', () => {
@@ -33,6 +33,17 @@ describe('SeenTracker', () => {
     seen.updateViewing(new Set(['s1']), 3000);
     expect(seen.hasUnreadReply(chat('idle', 2000))).toBe(false);
     expect(seen.isUnseen(chat('idle', 2000))).toBe(true);
+  });
+
+  it('does not light up a chat reopened after a reboot whose last reply was already read', () => {
+    const seen: SeenTracker = new SeenTracker(10_000);
+    seen.markSeen('s1', 3000);
+    const resumed: ChatSnapshot = { ...chat('idle', 12_000), lastReplyAt: 2000 };
+    expect(seen.isUnseen(resumed)).toBe(false);
+  });
+
+  it('has nothing to read in a chat that has not replied yet', () => {
+    expect(new SeenTracker(0).isUnseen({ ...chat('idle', 5000), lastReplyAt: null })).toBe(false);
   });
 
   it('never marks a chat that is still working', () => {

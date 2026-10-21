@@ -1,3 +1,4 @@
+import { restingSince } from '../../shared/chat-time';
 import type { ChatSnapshot } from '../../shared/types';
 
 export type ColumnKey = 'needs' | 'busy' | 'active' | 'idle';
@@ -37,7 +38,7 @@ function isResting(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {
 }
 
 function restingColumn(chat: ChatSnapshot, now: number, pin: RestingPin): RestingColumn {
-  return pin(chat) ?? (now - chat.statusSince < ACTIVE_WINDOW_MS ? 'active' : 'idle');
+  return pin(chat) ?? (now - restingSince(chat) < ACTIVE_WINDOW_MS ? 'active' : 'idle');
 }
 
 const COLUMN_RULES: readonly ColumnRule[] = [

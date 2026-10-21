@@ -70,6 +70,8 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
   move: (sessionId: string, to: RestingColumn): void => {
     const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
     if (chat !== undefined) restingPins.set(chat, to);
+    // Optimistic: the card lands in its new column now, not at the next poll.
+    renderView();
   },
   changed: (): void => renderView(),
 });
@@ -112,7 +114,7 @@ const launches: LaunchPanel = new LaunchPanel(new LaunchWatch((): string | null 
   canShowPanel: (): boolean => view !== 'grid',
   openChats: (): readonly ChatSnapshot[] => chats,
   openChat: (sessionId: string): void => openSheet(sessionId),
-  markSeen: (chat: ChatSnapshot, now: number): void => seen.markSeen(chat.sessionId, Math.max(now, chat.statusSince)),
+  markSeen: (chat: ChatSnapshot, now: number): void => seen.markSeen(chat.sessionId, Math.max(now, chat.lastReplyAt ?? 0)),
   render: (): void => renderView(),
 });
 

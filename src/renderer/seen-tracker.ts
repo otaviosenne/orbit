@@ -33,7 +33,10 @@ export class SeenTracker {
 
   isUnseen(chat: ChatSnapshot): boolean {
     if (chat.status === 'busy') return false;
-    return chat.statusSince > (this.seenAt.get(chat.sessionId) ?? this.startedAt);
+    // A chat with no reply yet has nothing to read; a reopened one keeps its old reply time, so a resume after
+    // a reboot does not light up chats you had already read.
+    if (chat.lastReplyAt === null) return false;
+    return chat.lastReplyAt > (this.seenAt.get(chat.sessionId) ?? this.startedAt);
   }
 }
 

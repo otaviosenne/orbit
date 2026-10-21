@@ -1,3 +1,4 @@
+import { statusAge } from '../../../shared/chat-time';
 import type { ChatSnapshot } from '../../../shared/types';
 import { element } from '../../dom';
 import { formatDuration } from '../../format';
@@ -31,7 +32,7 @@ export class TileHeader {
     this.root.title = chat.repository.name;
     showSpinner(this.spinner, chat.status === 'busy');
     setText(this.statusLabel, chatStatusLabel(chat.status));
-    setText(this.statusTime, formatDuration(now - chat.statusSince));
+    setText(this.statusTime, formatDuration(statusAge(chat, now)));
     this.status.title = chatStatusLabel(chat.status);
     this.status.classList.toggle('is-waiting', chat.status === 'waiting');
   }
