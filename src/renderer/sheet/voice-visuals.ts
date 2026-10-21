@@ -6,6 +6,8 @@ import { VoiceMeter } from './voice-meter';
 // While dictating: animated bars stand in for the caret, and the composer pulses with the voice level.
 export class VoiceVisuals {
   private readonly meter: VoiceMeter;
+  private watchFrame: number | null = null;
+  private lastLayout: string = '';
 
   constructor(
     box: HTMLElement,
@@ -26,11 +28,29 @@ export class VoiceVisuals {
     this.bars.hidden = false;
     this.placeBars();
     this.meter.start(this.readLevel);
+    this.watchCaret();
   }
 
   hide(): void {
     this.bars.hidden = true;
     this.meter.stop();
+    if (this.watchFrame !== null) cancelAnimationFrame(this.watchFrame);
+    this.watchFrame = null;
+  }
+
+  // Sending or restoring a draft sets the text from code, which fires no event; checking each frame while the bars
+  // show keeps them on the caret whatever changed the field, at the cost of a string compare when nothing did.
+  private watchCaret(): void {
+    if (this.watchFrame !== null) return;
+    const tick = (): void => {
+      const layout: string = `${this.input.value.length}:${this.input.selectionEnd}:${this.input.scrollTop}:${this.input.offsetHeight}`;
+      if (layout !== this.lastLayout) {
+        this.lastLayout = layout;
+        this.placeBars();
+      }
+      this.watchFrame = requestAnimationFrame(tick);
+    };
+    this.watchFrame = requestAnimationFrame(tick);
   }
 
   // Follows the caret as live words push it forward.
