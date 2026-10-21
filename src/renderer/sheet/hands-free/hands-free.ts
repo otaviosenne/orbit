@@ -9,6 +9,8 @@ import { pcmLevel } from './pcm-level';
 import { SegmentClock } from './segment-clock';
 import type { LaneSegment } from './segment-lane';
 import { SegmentLane } from './segment-lane';
+import { SilentMicAlarm } from './silent-mic-alarm';
+import { MUTED_MIC_MESSAGE } from '../voice/speech-presence';
 import type { SpanBinding } from './span-writer';
 import { DROPPED_SINK, SpanWriter } from './span-writer';
 
@@ -33,6 +35,8 @@ export class HandsFree {
   private readonly spans: Map<number, SpanBinding> = new Map();
   private attached: SpanBinding | null = null;
   private clock: SegmentClock | null = null;
+  // Per time hands-free is turned on, not per capture: switching chats reopens the microphone and must not warn again.
+  private alarm: SilentMicAlarm | null = null;
   private place: DictationPlace | null = null;
   private requestedPlace: DictationPlace | null = null;
   private isRetargetQueued: boolean = false;
@@ -73,6 +77,7 @@ export class HandsFree {
   turnOn(ready: Promise<void>): void {
     if (this.isEnabled) return;
     this.isEnabled = true;
+    this.alarm = new SilentMicAlarm();
     this.report();
     this.capture = this.capture.then((): Promise<void> => ready);
     this.syncCapture();
@@ -183,10 +188,13 @@ export class HandsFree {
 
   private hear(pcm: Uint8Array): void {
     this.lane.feed(pcm);
+    const level: number = pcmLevel(pcm);
+    const now: number = Date.now();
+    // A hint, not a failure: the microphone stays on in case it is unmuted.
+    if (this.alarm?.heard(level, now) === true) this.hooks.onError(MUTED_MIC_MESSAGE);
     const clock: SegmentClock | null = this.clock;
     if (clock === null) return;
-    const now: number = Date.now();
-    clock.heard(pcmLevel(pcm), now);
+    clock.heard(level, now);
     if (clock.due(now) !== null) this.cut();
   }
 

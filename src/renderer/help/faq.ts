@@ -65,12 +65,12 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'dictate',
     question: 'How do I dictate?',
-    answer: 'Hold Space in the composer, or anywhere in an open chat outside a text field, and talk; let go to stop. A quick tap still types a space, and the mic button works too.',
+    answer: 'Hold Space in the composer, or anywhere in an open chat outside a text field, and talk; let go to stop. A quick tap still types a space. A red “No speech detected” means nothing was heard: check that your microphone is on.',
   },
   {
     id: 'hands-free',
     question: 'What is hands-free?',
-    answer: 'Double-tap Space to keep the mic on: words go to the chat on screen and follow you between chats. Double-tap again, or click the mic beside the wordmark, to turn it off.',
+    answer: 'Double-tap Space, or click the mic in a composer, to keep the mic on: words go to the chat on screen and follow you between chats. Double-tap again, or click either mic, to turn it off.',
   },
   {
     id: 'chat-settings',

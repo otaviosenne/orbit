@@ -7,6 +7,8 @@ import { isTextField } from '../space-to-talk';
 import type { DictationPlace } from './dictation-place';
 import { DictationRouter } from './dictation-router';
 import { FieldVoice } from './field-voice';
+import type { MicPress } from './mic-press';
+import { micPress } from './mic-press';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
 import type { VoiceField } from './voice-field';
@@ -45,7 +47,7 @@ export class VoiceHub {
     const voice: FieldVoice = new FieldVoice(field, this.transcripts, {
       holdStart: (held: FieldVoice): void => this.holdStart(held),
       tap: (tapped: FieldVoice, pressedAt: number): void => this.tapInField(tapped, pressedAt),
-      mic: (pressed: FieldVoice): void => this.toggleFromMic(pressed),
+      mic: (): void => this.toggleFromMic(),
       edited: (edited: FieldVoice): void => this.handsFree.edited(edited.field),
       dictationChanged: (): void => this.showStates(),
     });
@@ -111,18 +113,22 @@ export class VoiceHub {
     else voice.spaces.type();
   }
 
-  // The dictation the first tap started (if any) gives way: its words stay, the mic is reopened hands-free.
+  // The first tap's space was not meant as text.
   private doubleTapped(voice: FieldVoice): void {
     voice.spaces.takeBack();
     if (this.handsFree.isOn) this.handsFree.turnOff();
-    else this.handsFree.turnOn(this.talking?.dictation.cancel() ?? Promise.resolve());
+    else this.turnHandsFreeOn();
   }
 
-  private toggleFromMic(voice: FieldVoice): void {
-    if (this.handsFree.isOn) this.handsFree.turnOff();
-    else if (this.handsFree.isBusy) return;
-    else if (voice.dictation.listening) voice.dictation.release();
-    else this.startDictation(voice);
+  private toggleFromMic(): void {
+    const press: MicPress = micPress(this.handsFree.isOn, this.handsFree.isBusy);
+    if (press === 'turn-off') this.handsFree.turnOff();
+    else if (press === 'turn-on') this.turnHandsFreeOn();
+  }
+
+  // A push-to-talk dictation in progress gives way: its words stay, and the microphone reopens hands-free.
+  private turnHandsFreeOn(): void {
+    this.handsFree.turnOn(this.talking?.dictation.cancel() ?? Promise.resolve());
   }
 
   // One dictation at a time: one started in another field gives the microphone back first.

@@ -1,7 +1,10 @@
 import type { DictationStart, DictationTranscript, TranscriptionResult } from '../../shared/types';
 import type { DraftAnchor, PlacedText } from './dictation-placement';
 import { placeDictation } from './dictation-placement';
+import { pcmLevel } from './hands-free/pcm-level';
 import { PcmRecorder } from './pcm-recorder';
+import { noSpeechNotice } from './voice/no-speech-notice';
+import { SpeechPresence } from './voice/speech-presence';
 import type { TranscriptFeed } from './voice/transcript-feed';
 
 export type DictationState = 'idle' | 'listening' | 'refining';
@@ -24,6 +27,9 @@ export class Dictation {
   private session: number | null = null;
   private anchor: DraftAnchor | null = null;
   private isListening: boolean = false;
+  // What this take heard, to tell a muted microphone or an unheard voice apart from a take that only sounded quiet.
+  private presence: SpeechPresence = new SpeechPresence();
+  private sawWords: boolean = false;
   private readonly unsubscribe: () => void;
 
   constructor(private readonly input: HTMLTextAreaElement, transcripts: TranscriptFeed, private readonly handlers: DictationHandlers) {
@@ -95,6 +101,8 @@ export class Dictation {
   private begin(ready: Promise<void>): void {
     if (this.isListening || this.opening !== null) return;
     this.isListening = true;
+    this.presence = new SpeechPresence();
+    this.sawWords = false;
     this.anchor = { before: this.input.value.slice(0, this.input.selectionStart), after: this.input.value.slice(this.input.selectionEnd) };
     this.handlers.onState('listening');
     this.opening = ready.then((): Promise<boolean> => this.open());
@@ -106,6 +114,7 @@ export class Dictation {
     const early: Uint8Array[] = [];
     let session: number | null = null;
     const capture: Promise<void> = this.recorder.start((pcm: Uint8Array): void => {
+      this.presence.heard(pcmLevel(pcm), Date.now());
       if (session === null) early.push(pcm);
       else window.radar.feedDictation(session, pcm);
     });
@@ -130,7 +139,9 @@ export class Dictation {
 
   // Live words only count for the dictation that is still being held.
   private showLive(transcript: DictationTranscript): void {
-    if (this.isListening && transcript.session === this.session) this.showDraft(transcript.text);
+    if (!this.isListening || transcript.session !== this.session) return;
+    if (transcript.text.trim().length > 0) this.sawWords = true;
+    this.showDraft(transcript.text);
   }
 
   private async finish(): Promise<void> {
@@ -152,8 +163,15 @@ export class Dictation {
     // An empty final result keeps whatever the live preview showed.
     if (result.ok && result.text.length > 0) this.showDraft(result.text);
     else if (!result.ok) this.handlers.onError(`Transcription failed: ${result.error ?? 'unknown error'}`);
+    else this.reportNoSpeech();
     this.anchor = null;
     this.handlers.onState('idle');
+  }
+
+  // Talking into a muted microphone otherwise ends with nothing at all, as if the key had not been held.
+  private reportNoSpeech(): void {
+    const notice: string | null = noSpeechNotice(this.presence, this.sawWords);
+    if (notice !== null) this.handlers.onError(notice);
   }
 
   private showDraft(text: string): void {

@@ -47,7 +47,11 @@ export class TileComposer {
       else this.expand();
     });
     this.field = new TileVoiceField(this.input, this.root, hub, {
-      draftChanged: (): void => this.showButtonState(),
+      // Dictated words fire no input event, but like typing they leave an earlier problem behind.
+      draftChanged: (): void => {
+        setText(this.problem, '');
+        this.showButtonState();
+      },
       showError: (message: string): void => setText(this.problem, message),
     });
     const row: HTMLDivElement = element('div', 'tile-composer-row');

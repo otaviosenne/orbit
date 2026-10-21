@@ -6,7 +6,7 @@ import { PushToTalk } from '../push-to-talk';
 import type { TranscriptFeed } from './transcript-feed';
 import type { VoiceField } from './voice-field';
 
-export const MIC_TITLE: string = 'Talk (or hold Space)';
+export const MIC_TITLE: string = 'Keep the mic on hands-free (or hold Space to talk)';
 
 // What a field's keys and mic ask of the voice shared by every composer (the double tap, hands-free, the one
 // dictation at a time).
