@@ -14,13 +14,15 @@ export function parseQuestions(input: UnknownRecord): Question[] | null {
 
 function parseQuestion(raw: unknown): Question | null {
   if (!isRecord(raw) || typeof raw['question'] !== 'string' || !Array.isArray(raw['options'])) return null;
-  const options: QuestionOption[] = raw['options'].filter(isRecord).map(parseOption);
+  const rawOptions: UnknownRecord[] = raw['options'].filter(isRecord);
+  const options: QuestionOption[] = rawOptions.map(parseOption);
   if (options.length === 0) return null;
   return {
     question: raw['question'],
     header: stringOr(raw['header'], ''),
     options,
     multiSelect: raw['multiSelect'] === true,
+    hasPreviews: rawOptions.some((option: UnknownRecord) => stringOr(option['preview'], '').length > 0),
   };
 }
 

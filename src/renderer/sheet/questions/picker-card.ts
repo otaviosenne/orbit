@@ -1,32 +1,39 @@
-import type { ActionResult, PickerQuestionView, PickerReviewView, PickerTab, QuestionAnswer, QuestionPicker } from '../../../shared/types';
+import type { ActionResult, PickerQuestionView, PickerReviewView, PickerTab, PickerUnreadableView, QuestionAnswer } from '../../../shared/types';
 import { element } from '../../dom';
 import { QuestionFieldset } from './question-fieldset';
 import { renderReviewLines } from './picker-review';
+import { ProblemLine } from './problem-line';
+import { settleAction } from './settle-action';
 
 // What the card can do in the chat's terminal; each resolves once the picker moved on, or with why not.
 export interface PickerActions {
   answer(fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   submit(fingerprint: string): Promise<ActionResult>;
+  answerSet(questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
   // Called after a successful step so the next tab (or the answered summary) shows without waiting for a poll.
   moved(): void;
+  // Brings up the chat's own window, for an answer that could not go through from here.
+  goToChat(): void;
 }
 
 const TITLE: string = 'Claude is asking';
-const TERMINAL_HINT: string = 'Answer it in the chat\'s terminal (Go to chat)';
-const UNREADABLE_HINT: string = 'Orbit cannot read this question. Answer it in the chat\'s terminal (Go to chat)';
+// Nothing on screen or in the transcript says what the question is, so the chat's own window is the way to it.
+const UNREADABLE_HINT: string = 'Claude is waiting on a question this window cannot show.';
 const SENDING_LABEL: string = 'Sending…';
 
-// The question picker on the chat's terminal, as a card at the end of the thread; read-only without actions.
+// The question picker read off the chat's terminal, as a card at the end of the thread.
 export class PickerCard {
   readonly root: HTMLElement = element('section', 'question-card is-pending');
   private readonly button: HTMLButtonElement = element('button', 'button button-primary question-submit');
-  private readonly problem: HTMLSpanElement = element('span', 'question-problem');
+  private readonly problem: ProblemLine;
   private fieldset: QuestionFieldset | null = null;
   private isSending: boolean = false;
 
-  constructor(view: QuestionPicker, private readonly actions: PickerActions | null) {
+  constructor(view: PickerQuestionView | PickerReviewView | PickerUnreadableView, private readonly actions: PickerActions) {
+    this.problem = new ProblemLine((): void => actions.goToChat());
     if (view.kind === 'unreadable') {
-      this.root.append(cardHead(TITLE, null), element('span', 'question-hint', UNREADABLE_HINT));
+      this.problem.show(UNREADABLE_HINT);
+      this.root.append(cardHead(TITLE, null), this.problem.root);
       return;
     }
     this.root.append(cardHead(TITLE, view.kind === 'question' ? stepLabel(view) : 'Review your answers'), ...this.body(view), this.foot(view));
@@ -36,21 +43,16 @@ export class PickerCard {
   private body(view: PickerQuestionView | PickerReviewView): HTMLElement[] {
     if (view.kind === 'review') return [renderReviewLines(view)];
     const header: string | null = view.current === null ? null : (view.tabs[view.current]?.header ?? null);
-    this.fieldset = new QuestionFieldset({ ...view, header }, `picker-${view.fingerprint}`, (): void => this.refresh());
+    this.fieldset = new QuestionFieldset({ ...view, header, allowsOther: true }, `picker-${view.fingerprint}`, (): void => this.refresh());
     return [this.fieldset.root];
   }
 
   private foot(view: PickerQuestionView | PickerReviewView): HTMLElement {
     const foot: HTMLElement = element('footer', 'question-foot');
-    if (this.actions === null) {
-      this.fieldset?.setDisabled(true);
-      foot.append(element('span', 'question-hint', TERMINAL_HINT));
-      return foot;
-    }
     this.button.type = 'button';
     this.button.textContent = buttonLabel(view);
     this.button.addEventListener('click', (): void => void this.send(view));
-    foot.append(this.problem, this.button);
+    foot.append(this.problem.root, this.button);
     return foot;
   }
 
@@ -59,13 +61,14 @@ export class PickerCard {
   }
 
   private async send(view: PickerQuestionView | PickerReviewView): Promise<void> {
-    const actions: PickerActions | null = this.actions;
+    const actions: PickerActions = this.actions;
     const answer: QuestionAnswer | null = this.fieldset?.read() ?? null;
-    if (actions === null || this.isSending || (view.kind === 'question' && answer === null)) return;
+    if (this.isSending || (view.kind === 'question' && answer === null)) return;
     const label: string = this.button.textContent ?? '';
     this.setSending(true, SENDING_LABEL);
-    const result: ActionResult = await settle(view.kind === 'review' || answer === null ? actions.submit(view.fingerprint) : actions.answer(view.fingerprint, answer));
-    this.problem.textContent = result.ok ? '' : (result.error ?? 'Could not send the answer');
+    const result: ActionResult = await settleAction(view.kind === 'review' || answer === null ? actions.submit(view.fingerprint) : actions.answer(view.fingerprint, answer));
+    if (result.ok) this.problem.clear();
+    else this.problem.show(result.error ?? 'Could not send the answer');
     // On success the card stays locked: the picker moved on, and the next read replaces this card.
     if (result.ok) return actions.moved();
     this.setSending(false, label);
@@ -98,12 +101,4 @@ function stepLabel(view: PickerQuestionView): string | null {
 function buttonLabel(view: PickerQuestionView | PickerReviewView): string {
   if (view.kind === 'review') return 'Submit answers';
   return view.hasReview ? 'Next' : 'Submit';
-}
-
-async function settle(result: Promise<ActionResult>): Promise<ActionResult> {
-  try {
-    return await result;
-  } catch (error: unknown) {
-    return { ok: false, method: null, error: error instanceof Error ? error.message : String(error) };
-  }
 }

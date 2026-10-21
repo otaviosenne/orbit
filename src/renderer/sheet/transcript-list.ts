@@ -1,4 +1,4 @@
-import type { TranscriptItem } from '../../shared/types';
+import type { QuestionItem, TranscriptItem } from '../../shared/types';
 import { DISCLOSURE_KEY_ATTRIBUTE } from './transcript/disclosure';
 import type { TranscriptEntry } from './transcript/group-tools';
 import { groupTools } from './transcript/group-tools';
@@ -6,7 +6,6 @@ import type { PendingMessage, Reconciliation } from './pending-messages';
 import { PendingMessages } from './pending-messages';
 import type { QuestionPickerApi } from './questions/live-picker';
 import { LivePicker } from './questions/live-picker';
-import { renderPendingQuestion } from './questions/pending-question-card';
 import { renderQuestionSummary } from './questions/question-summary';
 import type { Lightbox } from '../lightbox';
 import { ThreadImages } from './thread-images';
@@ -38,7 +37,7 @@ export class TranscriptList {
   private readonly entries: ElementCache<TranscriptEntry> = new ElementCache(
     {
       id: (entry: TranscriptEntry): string => entry.id,
-      version: (entry: TranscriptEntry): string => entryVersion(entry, this.picker?.needsStandIn === true),
+      version: (entry: TranscriptEntry): string => entryVersion(entry),
     },
     (entry: TranscriptEntry): HTMLElement => this.renderEntry(entry),
   );
@@ -87,7 +86,8 @@ export class TranscriptList {
   private render(isNewChat: boolean, scrollToEnd: boolean = false): void {
     // Messages sent from the panel belong to the chat's own thread, not to its agents'.
     const waiting: PendingMessage[] = this.thread === this.sessionId ? this.reconcilePending() : [];
-    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key ?? ''}|${this.picker?.needsStandIn === true}`;
+    const asked: QuestionItem | null = this.pendingQuestion();
+    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key(asked) ?? ''}`;
     if (key === this.renderedKey) return;
     const keepsEnd: boolean = isNewChat || scrollToEnd || this.isFollowing();
     const anchor: ScrollAnchor | null = keepsEnd ? null : captureScrollAnchor(this.root);
@@ -96,7 +96,7 @@ export class TranscriptList {
     syncChildren(this.root, [
       ...this.entries.build(groupTools(this.items)),
       ...waiting.map((message: PendingMessage) => renderPendingMessage(message)),
-      ...(this.thread === this.sessionId ? (this.picker?.render(this.items.some(isPendingQuestion)) ?? []) : []),
+      ...(this.thread === this.sessionId ? (this.picker?.render(asked) ?? []) : []),
     ]);
     if (anchor === null) this.root.scrollTop = this.root.scrollHeight;
     else restoreScrollAnchor(this.root, anchor);
@@ -136,10 +136,14 @@ export class TranscriptList {
       case 'turn':
         return renderTurn(entry);
       case 'question':
-        // The live card answers it; without one, the transcript's copy shows every question and option.
-        if (entry.state === 'pending' && this.picker?.needsStandIn === true) return renderPendingQuestion(entry);
+        // A waiting question is answered from the card at the end of the thread; here it is one line.
         return renderQuestionSummary(entry, isOpen);
     }
+  }
+
+  // The newest question the transcript shows as still waiting, which the card can answer from its own copy.
+  private pendingQuestion(): QuestionItem | null {
+    return this.thread === this.sessionId ? (this.items.filter(isPendingQuestion).at(-1) ?? null) : null;
   }
 
   // Claude Code writes a question into the transcript only once answered, so a waiting one is read off the terminal.
@@ -162,7 +166,7 @@ export class TranscriptList {
   }
 }
 
-function isPendingQuestion(item: TranscriptItem): boolean {
+function isPendingQuestion(item: TranscriptItem): item is QuestionItem {
   return item.kind === 'question' && item.state === 'pending';
 }
 

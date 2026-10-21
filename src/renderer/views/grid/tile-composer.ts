@@ -1,7 +1,12 @@
 import type { ActionResult } from '../../../shared/types';
 import { element } from '../../dom';
 import { CHAT_ICON } from '../../icons';
+import type { DictationPlace } from '../../sheet/voice/dictation-place';
+import type { FieldVoice } from '../../sheet/voice/field-voice';
+import type { VoiceHub } from '../../sheet/voice/voice-hub';
 import { setText } from './in-place';
+import { FOCUS_SETTLE_MS } from './tile-focus';
+import { TileVoiceField } from './tile-voice-field';
 
 export type TileSend = (text: string) => Promise<ActionResult>;
 
@@ -14,18 +19,21 @@ const WRITE_LABEL: string = 'Write to this chat';
 
 // A plain text field at the foot of a tile: Enter sends, Shift+Enter adds a line. The draft clears at once and
 // comes back if delivery fails. In short tiles (two or more rows) it folds into a round button where Send sits;
-// pressing it opens the field to its left, and Escape folds it again, keeping the draft.
+// pressing it opens the field to its left, and Escape folds it again, keeping the draft. The mic in the field,
+// a held Space and the hands-free mode dictate into it like into the side panel's composer.
 export class TileComposer {
   readonly root: HTMLFormElement = element('form', 'tile-composer');
   private readonly input: HTMLTextAreaElement = element('textarea', 'tile-composer-input');
   private readonly button: HTMLButtonElement = element('button', 'button button-primary tile-composer-send', 'Send');
   private readonly problem: HTMLElement = element('p', 'tile-composer-problem');
+  private readonly field: TileVoiceField;
+  private readonly voice: FieldVoice;
   private isReady: boolean = false;
   private isSending: boolean = false;
   private isExpanded: boolean = false;
   private isAlwaysOpen: boolean = true;
 
-  constructor(private readonly onSend: TileSend) {
+  constructor(private readonly onSend: TileSend, private readonly hub: VoiceHub) {
     this.input.rows = TEXT_ROWS;
     this.input.placeholder = 'Message';
     this.button.type = 'submit';
@@ -38,10 +46,15 @@ export class TileComposer {
       if (this.isOpen) this.fold();
       else this.expand();
     });
+    this.field = new TileVoiceField(this.input, this.root, hub, {
+      draftChanged: (): void => this.showButtonState(),
+      showError: (message: string): void => setText(this.problem, message),
+    });
     const row: HTMLDivElement = element('div', 'tile-composer-row');
-    row.append(this.input, this.button);
+    row.append(this.field.box, this.button);
     this.root.append(this.problem, row);
     this.listen();
+    this.voice = hub.attach(this.field);
     this.showOpenState();
   }
 
@@ -49,11 +62,35 @@ export class TileComposer {
     return this.isAlwaysOpen || this.isExpanded;
   }
 
-  // Tall tiles (one row) have room for the field all the time; short ones fold it behind the button.
+  get hasFocus(): boolean {
+    return this.field.hasFocus;
+  }
+
+  // Tall tiles (one row) have room for the field all the time; short ones fold it behind the button. A field in use
+  // stays open through the change, so neither the caret nor dictated words end up hidden.
   setAlwaysOpen(isAlwaysOpen: boolean): void {
     if (this.isAlwaysOpen === isAlwaysOpen) return;
     this.isAlwaysOpen = isAlwaysOpen;
+    if (!isAlwaysOpen && this.isInUse()) this.isExpanded = true;
     this.showOpenState();
+  }
+
+  // Hands-free words are about to come in here; a folded field opens for them.
+  becomeTarget(): void {
+    if (!this.isOpen) this.expand();
+  }
+
+  dictationPlace(sessionId: string): DictationPlace {
+    return this.field.place(sessionId);
+  }
+
+  // The tile was taken out of the Panel.
+  dispose(): void {
+    this.hub.detach(this.voice);
+  }
+
+  private isInUse(): boolean {
+    return this.hasFocus || this.field.isDictating;
   }
 
   private expand(): void {
@@ -102,18 +139,23 @@ export class TileComposer {
       void this.submit();
     });
     // Leaving an empty field folds it back, so the button does not need a second press to put it away.
-    this.input.addEventListener('blur', (): void => {
-      if (!this.isAlwaysOpen && this.input.value.trim().length === 0) this.fold();
-    });
+    this.input.addEventListener('blur', (): void => void window.setTimeout((): void => this.foldIfLeft(), FOCUS_SETTLE_MS));
     this.input.addEventListener('input', (): void => {
       setText(this.problem, '');
       this.showButtonState();
     });
   }
 
+  // Switching to another window blurs the field but leaves it focused here: it stays open for words still coming.
+  private foldIfLeft(): void {
+    if (this.isInUse() || !this.foldsOnPress()) return;
+    this.fold();
+  }
+
   private async submit(): Promise<void> {
     const text: string = this.input.value;
     if (text.trim().length === 0 || !this.isReady || this.isSending) return;
+    this.hub.messageSent(this.voice);
     this.input.value = '';
     setText(this.problem, '');
     this.isSending = true;

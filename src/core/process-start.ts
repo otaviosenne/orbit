@@ -4,7 +4,7 @@ import type { ProcessStat } from './process-identity';
 
 const SECOND_MS: number = 1000;
 // /proc reports start times in USER_HZ ticks, which Linux fixes at 100 whatever the kernel's own tick rate.
-const USER_HZ: number = 100;
+export const USER_HZ: number = 100;
 const BOOT_TIME_LINE: RegExp = /^btime\s+(\d+)$/m;
 
 let bootTimeMs: Promise<number | null> | null = null;

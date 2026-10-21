@@ -1,0 +1,18 @@
+──────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☐ Fruits  ☐ Size  ✔ Submit  →
+
+Which fruits do you like?
+
+  1. [ ] Apple
+         Crisp and sweet or tart.
+❯ 2. [✔] Banana
+         Soft and sweet.
+  3. [ ] Cherry
+         Small and juicy.
+  4. [ ] Type something
+     Next
+──────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+
+Enter to select · Tab/Arrow keys to navigate ·
+Esc to cancel

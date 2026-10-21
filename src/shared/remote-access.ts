@@ -36,6 +36,7 @@ export const REMOTE_ACCESS = {
   GetQuestionPicker: 'read',
   AnswerQuestion: 'action',
   SubmitAnswers: 'action',
+  AnswerQuestionSet: 'action',
   StopAgent: 'action',
   GetShellOutput: 'read',
   // The route finds the command's processes itself, from the session and task ids, under that chat only.
@@ -53,6 +54,8 @@ export const REMOTE_ACCESS = {
   // Dictation streams microphone audio over IPC; Orbit Web leaves it out of its first version.
   DictationStart: 'desktop',
   DictationFinish: 'desktop',
+  // CPU and memory of the open chats' own process trees; the server picks the processes, never the caller.
+  GetChatResources: 'read',
 } as const satisfies Record<InvokeChannel, RemoteAccess>;
 
 type AccessTable = typeof REMOTE_ACCESS;

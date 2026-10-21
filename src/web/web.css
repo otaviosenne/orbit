@@ -14,7 +14,7 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
 
 /* ---------- Desktop-only controls (see REMOTE_ACCESS in src/shared/remote-access.ts) ---------- */
 /* Focus or pop out a desktop window, attach a folder, dictate: none of it reaches a phone */
-#action-focus, #action-window, #sheet-devices, #composer-mic, #voice-bars, #hands-free-indicator,
+#action-focus, #action-window, #sheet-devices, #composer-mic, #voice-bars, #hands-free-indicator, .tile-composer-mic, .tile-composer .voice-bars,
 .new-chat-add, .new-chat-separator { display: none !important; }
 /* The phone's own back button, shown only on narrow screens */
 .web-sheet-back { display: none; }

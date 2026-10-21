@@ -100,7 +100,14 @@ export class ChatSettingsPopover {
     this.clearPolled();
   }
 
-  private toggle(): void {
+  // The Close chat confirmation, shown where it always is: inside the open popover.
+  askToClose(): void {
+    if (this.chat === null) return;
+    if (!this.isOpen) this.toggle();
+    this.closeAction.ask();
+  }
+
+  toggle(): void {
     if (this.isOpen || this.chat === null) return this.hide();
     this.root.hidden = false;
     this.button.classList.add(ACTIVE_CLASS);

@@ -1,4 +1,5 @@
 import type { ChatRadar } from '../../core/chat-radar';
+import type { ResourceSampler } from '../../core/resources/resource-sampler';
 import type { PastChatCatalog } from '../../core/past-chats/past-chat-catalog';
 import type { TimelineHistory } from '../../core/timeline-history/timeline-history';
 import type { UsageService } from '../../core/usage-service';
@@ -9,4 +10,5 @@ export interface RouteServices {
   readonly usage: UsageService;
   readonly pastChats: PastChatCatalog;
   readonly timelineHistory: TimelineHistory;
+  readonly resources: ResourceSampler;
 }

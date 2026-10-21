@@ -4,6 +4,8 @@ import type { CardDeviceKind } from '../../board/card-devices';
 import { openCardDevice } from '../../board/card-devices';
 import { element } from '../../dom';
 import type { Lightbox } from '../../lightbox';
+import { sharedVoiceHub } from '../../sheet/voice/shared-voice-hub';
+import type { VoiceHub } from '../../sheet/voice/voice-hub';
 import { GridLayoutStore } from './grid-layout-store';
 import { GridSidebar } from './grid-sidebar';
 import { SidebarCollapse } from './sidebar-collapse';
@@ -15,6 +17,7 @@ import { GridTile } from './grid-tile';
 import { GridControls } from './grid-controls';
 import { syncChildren } from './keyed-children';
 import { TileDrag } from './tile-drag';
+import { TileFocus } from './tile-focus';
 import { TileZoom } from './tile-zoom';
 import { isTileInView } from './tile-visibility';
 import { formatZoom } from './zoom-level';
@@ -39,6 +42,8 @@ export class GridView {
   private readonly drag: TileDrag;
   private readonly zoom: TileZoom;
   private readonly collapse: SidebarCollapse = new SidebarCollapse();
+  private readonly voice: VoiceHub = sharedVoiceHub();
+  private readonly focus: TileFocus<GridTile>;
   // Tiles a poll skipped for being scrolled out of view; scrolling one back in fetches it without waiting a poll.
   private readonly unpolled: Set<GridTile> = new Set();
   // Asked about only while the Panel is shown, since only update() follows it; the board keeps its own.
@@ -70,6 +75,7 @@ export class GridView {
       this.store.move(sessionId, targetId);
       this.render();
     });
+    this.focus = new TileFocus(this.area, (): Iterable<GridTile> => this.tiles.values(), (tile: GridTile | null): void => this.followFocus(tile));
     this.scroller.append(this.area);
     this.scroller.addEventListener('scroll', (): void => this.refreshUncovered(), { passive: true });
     const main: HTMLElement = element('section', 'grid-main');
@@ -84,6 +90,11 @@ export class GridView {
     if (this.root.parentElement === host) return;
     host.replaceChildren(this.root);
     this.tiles.forEach((tile: GridTile): void => tile.followEnd());
+  }
+
+  // Hands-free words go to the focused tile while the Panel is the view on screen.
+  setShown(isShown: boolean): void {
+    this.voice.showSurface(isShown ? 'panel' : 'drawer');
   }
 
   update(chats: readonly ChatSnapshot[], now: number): void {
@@ -139,13 +150,15 @@ export class GridView {
       if (order.includes(sessionId)) continue;
       this.tiles.delete(sessionId);
       this.unpolled.delete(tile);
+      tile.dispose();
     }
+    if (this.focus.tile !== null && !this.tiles.has(this.focus.tile.sessionId)) this.focus.settle();
   }
 
   private tileFor(chat: ChatSnapshot): GridTile {
     const existing: GridTile | undefined = this.tiles.get(chat.sessionId);
     if (existing !== undefined) return existing;
-    const tile: GridTile = new GridTile(chat, this.lightbox, {
+    const tile: GridTile = new GridTile(chat, this.lightbox, this.voice, {
       remove: (sessionId: string): void => this.toggle(sessionId),
       openDevice: (kind: CardDeviceKind, sessionId: string): void => void openCardDevice(kind, sessionId, this.devices),
     });
@@ -153,6 +166,10 @@ export class GridView {
     // Fetched at once rather than on the next poll, so the tile is not empty for up to a poll.
     void tile.refresh();
     return tile;
+  }
+
+  private followFocus(tile: GridTile | null): void {
+    this.voice.followTile(tile === null ? null : tile.becomeDictationTarget());
   }
 
   private toggle(sessionId: string): void {

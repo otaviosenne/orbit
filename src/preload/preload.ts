@@ -3,6 +3,7 @@ import type { ChatColor } from '../shared/chat-colors';
 import type { EffortLevel, ModelChoice } from '../shared/chat-settings';
 import type { CycledPermissionMode } from '../shared/permission-modes';
 import type { RemoteSettings } from '../shared/remote-settings';
+import type { ResourceSnapshot } from '../shared/chat-resources';
 import { IpcChannel } from '../shared/ipc-channels';
 import type { IpcRendererEvent } from 'electron';
 import type {
@@ -69,6 +70,8 @@ const api: RadarApi = {
   answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.AnswerQuestion, sessionId, fingerprint, answer),
   submitAnswers: (sessionId: string, fingerprint: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SubmitAnswers, sessionId, fingerprint),
+  answerQuestionSet: (sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> =>
+    ipcRenderer.invoke(IpcChannel.AnswerQuestionSet, sessionId, questionId, answers),
   stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.StopAgent, sessionId, agentId),
   getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => ipcRenderer.invoke(IpcChannel.GetShellOutput, sessionId, taskId),
   interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptShell, sessionId, taskId),
@@ -82,6 +85,7 @@ const api: RadarApi = {
   getChatDevices: (sessionId: string): Promise<ChatDevices> => ipcRenderer.invoke(IpcChannel.GetChatDevices, sessionId),
   focusChatEmulator: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatEmulator, sessionId),
   focusChatBrowser: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatBrowser, sessionId),
+  getChatResources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IpcChannel.GetChatResources),
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),
   setRemoteEnabled: (enabled: boolean): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteEnabled, enabled),
   setRemoteExternalUrl: (url: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteExternalUrl, url),

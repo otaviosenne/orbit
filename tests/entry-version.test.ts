@@ -11,21 +11,21 @@ const group = (...tools: ToolItem[]): TranscriptEntry => ({ kind: 'tools', id: t
 describe('entryVersion', () => {
   it('stays the same for a message, so its markdown is not built again', () => {
     const message: TranscriptEntry = { kind: 'message', id: 'm', timestamp: 0, role: 'assistant', text: 'hi', images: [] };
-    expect(entryVersion(message, false)).toBe(entryVersion(message, true));
+    expect(entryVersion(message)).toBe(entryVersion({ ...message }));
   });
 
   it('changes when a tool joins the group or its result arrives', () => {
     const versions: Set<string> = new Set([
-      entryVersion(group(tool('a', null)), false),
-      entryVersion(group(tool('a', 'ok')), false),
-      entryVersion(group(tool('a', 'ok'), tool('b', null)), false),
-      entryVersion(group(tool('a', 'boom', true), tool('b', null)), false),
+      entryVersion(group(tool('a', null))),
+      entryVersion(group(tool('a', 'ok'))),
+      entryVersion(group(tool('a', 'ok'), tool('b', null))),
+      entryVersion(group(tool('a', 'boom', true), tool('b', null))),
     ]);
     expect(versions.size).toBe(4);
   });
 
-  it('changes for a pending question when the stand-in card comes or goes', () => {
+  it('changes when a question gets its answer', () => {
     const question: QuestionItem = { kind: 'question', id: 'q', timestamp: 0, state: 'pending', questions: [], answers: [], note: null };
-    expect(entryVersion(question, true)).not.toBe(entryVersion(question, false));
+    expect(entryVersion(question)).not.toBe(entryVersion({ ...question, state: 'answered' }));
   });
 });

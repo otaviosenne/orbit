@@ -2,6 +2,7 @@ import type { ChatColor } from './chat-colors';
 import type { EffortLevel, ModelChoice } from './chat-settings';
 import type { CycledPermissionMode, PermissionMode } from './permission-modes';
 import type { RemoteSettings } from './remote-settings';
+import type { ResourceSnapshot } from './chat-resources';
 
 export type ChatStatus = 'busy' | 'waiting' | 'idle' | 'shell' | 'unknown';
 
@@ -132,6 +133,8 @@ export interface Question {
   readonly header: string;
   readonly options: readonly QuestionOption[];
   readonly multiSelect: boolean;
+  // Options with previews are drawn beside a preview box, a layout Orbit cannot drive with keys.
+  readonly hasPreviews: boolean;
 }
 
 // 'expired': the conversation moved on without an answer being recorded (an old, interrupted session).
@@ -199,7 +202,16 @@ export interface PickerUnreadableView {
   readonly kind: 'unreadable';
 }
 
-export type QuestionPicker = PickerQuestionView | PickerReviewView | PickerUnreadableView;
+// The whole question set, known from the transcript while its picker is on the chat's terminal (even cut off):
+// the card steps through every question and sends all the answers at once.
+export interface PickerSetView {
+  readonly kind: 'set';
+  // The AskUserQuestion tool_use id.
+  readonly questionId: string;
+  readonly questions: readonly Question[];
+}
+
+export type QuestionPicker = PickerQuestionView | PickerReviewView | PickerUnreadableView | PickerSetView;
 
 export type TranscriptItem = MessageItem | ToolItem | PeerItem | NoticeItem | TurnItem | QuestionItem;
 
@@ -390,6 +402,8 @@ export interface RadarApi {
   getQuestionPicker(sessionId: string): Promise<QuestionPicker | null>;
   // Answers the question on screen (matched by fingerprint); a lone question resolves once the chat recorded it.
   answerQuestion(sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
+  // Answers every question of a set (PickerSetView) in the terminal and submits; resolves once the chat recorded it.
+  answerQuestionSet(sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
   // Confirms the picker's review step; resolves once the chat recorded the answers.
   submitAnswers(sessionId: string, fingerprint: string): Promise<ActionResult>;
   // Stops one running agent of the chat; resolves once the chat marked that agent stopped.
@@ -413,6 +427,8 @@ export interface RadarApi {
   focusChatEmulator(sessionId: string): Promise<DeviceFocus>;
   // Brings the chat's Chrome tab to front when Chrome allows it, otherwise the Chrome window most likely to hold it.
   focusChatBrowser(sessionId: string): Promise<DeviceFocus>;
+  // CPU and memory of every open chat's process tree, measured since the previous call.
+  getChatResources(): Promise<ResourceSnapshot>;
   // ---------- Orbit Web (remote access); desktop window only ----------
   getRemoteSettings(): Promise<RemoteSettings>;
   setRemoteEnabled(enabled: boolean): Promise<RemoteSettings>;

@@ -16,6 +16,7 @@ import type {
   TurnProgress,
   UsageSnapshot,
 } from '../shared/types';
+import type { ResourceSnapshot } from '../shared/chat-resources';
 import type { InvokeChannel, Route } from '../shared/ipc-routing';
 import { demoChatPermissions, demoChatSettings, demoSkills } from './demo-chat-settings';
 import { demoChatSnapshot, demoChatSnapshots, findDemoChat } from './demo-chats';
@@ -23,6 +24,7 @@ import { demoChatDevices } from './demo-devices';
 import { demoLaunchers } from './demo-launchers';
 import { demoPastChatColor, demoPastChats } from './demo-past-chats';
 import { demoQuestionPicker } from './demo-question-picker';
+import { demoResources } from './demo-resources';
 import { demoTimelineHistory } from './demo-timeline';
 import { demoTurnProgress } from './demo-turn-progress';
 import { demoUsage } from './demo-usage';
@@ -64,6 +66,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetQuestionPicker: (sessionId: unknown): QuestionPicker | null => demoQuestionPicker(sessionId),
   AnswerQuestion: (): ActionResult => DONE,
   SubmitAnswers: (): ActionResult => DONE,
+  AnswerQuestionSet: (): ActionResult => DONE,
   StopAgent: (): ActionResult => DONE,
   GetShellOutput: (): null => null,
   InterruptShell: (): ActionResult => DONE,
@@ -79,4 +82,5 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   FocusChatBrowser: (): DeviceFocus => 'exact',
   DictationStart: (): DictationStart => ({ session: ++dictationSession, error: null }),
   DictationFinish: (): TranscriptionResult => EMPTY_TRANSCRIPTION,
+  GetChatResources: (): ResourceSnapshot => demoResources(Date.now()),
 };

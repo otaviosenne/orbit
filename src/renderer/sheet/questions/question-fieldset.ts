@@ -11,6 +11,8 @@ export interface FieldsetQuestion {
   readonly multiSelect: boolean;
   readonly options: readonly PickerChoice[];
   readonly other: string | null;
+  // False where the picker has no "Type something" field (options with previews).
+  readonly allowsOther: boolean;
 }
 
 // One question of the card: its header chip, the options as radio rows (checkboxes when several may be picked),
@@ -38,7 +40,8 @@ export class QuestionFieldset {
     });
     this.root.addEventListener('input', onChange);
     this.root.addEventListener('change', onChange);
-    this.root.append(this.legend(), ...question.options.map((option: PickerChoice, index: number) => optionRow(this.choices[index], option)), this.otherRow());
+    this.root.append(this.legend(), ...question.options.map((option: PickerChoice, index: number) => optionRow(this.choices[index], option)));
+    if (question.allowsOther) this.root.append(this.otherRow());
   }
 
   // null until the question has a usable answer: something picked, and text typed when "Other" is picked.

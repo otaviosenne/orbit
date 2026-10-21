@@ -15,7 +15,7 @@ import { attachAppMenu } from './app-menu';
 import { GEAR_ICON } from './icons';
 import { requireElement } from './dom';
 import type { ViewName } from './nav';
-import { VIEW_ATTRIBUTE, renderNav, viewForKey } from './nav';
+import { VIEW_ATTRIBUTE, renderNav } from './nav';
 import type { ChatPatch } from './pending-edits';
 import { NewChatButton } from './new-chat-button';
 import { LaunchPanel } from './launch-panel';
@@ -55,6 +55,15 @@ import { TimelineLinesView } from './views/timeline-lines/timeline-lines-view';
 import { renderWordmark } from './wordmark';
 import { isWebHost } from './host';
 import { RemoteSection } from './views/remote-section';
+import { ResourcesSection } from './views/resources-section';
+import { BoardFocus } from './board/board-focus';
+import { HelpModal } from './help/help-modal';
+import { FAQ } from './help/faq';
+import { availableShortcuts } from './shortcuts/shortcut-catalog';
+import { installShortcutDispatcher } from './shortcuts/shortcut-dispatcher';
+import { appShortcutBindings } from './shortcuts/bindings/app-bindings';
+import { isOverlayOpen } from './shortcuts/overlay-guard';
+import { installShortcutTooltips } from './shortcuts/shortcut-tooltips';
 
 const CHATS_POLL_MS: number = 2000;
 const USAGE_POLL_MS: number = 30_000;
@@ -64,12 +73,15 @@ const PRIMARY_BUTTON: number = 0;
 const nav: HTMLElement = requireElement('#nav');
 const settingsButton: HTMLButtonElement = requireElement('#settings-button');
 const viewRoot: HTMLElement = requireElement('#view');
+const boardFocus: BoardFocus = new BoardFocus(viewRoot);
+const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: FAQ });
 const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] =>
   toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
 );
 const pendingEdits: PendingEdits = new PendingEdits();
 // Orbit Web's own settings exist only in the desktop window: a phone must not be able to read or change its token.
 const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSection();
+const resourcesSection: ResourcesSection = new ResourcesSection((): readonly ChatSnapshot[] => chats);
 const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
@@ -184,13 +196,25 @@ function renderView(): void {
   const now: number = Date.now();
   nav.replaceChildren(...renderNav(view));
   settingsButton.classList.toggle('is-active', view === 'settings');
+  resourcesSection.setActive(view === 'settings');
   // A card being renamed holds an open text field; rebuilding the board would throw the typing away.
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
   if (view === 'settings' && remoteSection?.isEditing === true) return;
-  if (view === 'board') viewRoot.replaceChildren(renderBoard(chats, boardMarks(), now));
+  if (view === 'board') {
+    viewRoot.replaceChildren(renderBoard(chats, boardMarks(), now));
+    boardFocus.paint();
+  }
   else if (view === 'grid') showGrid(now);
   else if (view === 'timeline') showTimeline(now);
-  else viewRoot.replaceChildren(renderSettings(theme, usage, now, remoteSection === null ? [] : [remoteSection.root]));
+  else showSettings(now);
+}
+
+// The settings column is rebuilt on every poll; without this a scrolled page snaps back to the top.
+function showSettings(now: number): void {
+  const scrollTop: number = viewRoot.querySelector<HTMLElement>('.settings')?.scrollTop ?? 0;
+  const settings: HTMLElement = renderSettings(theme, usage, now, [resourcesSection.root, ...(remoteSection === null ? [] : [remoteSection.root])]);
+  viewRoot.replaceChildren(settings);
+  settings.scrollTop = scrollTop;
 }
 
 // Tiles hold scroll, open rows and drafts, so the grid is mounted once and updated in place instead of rebuilt.
@@ -336,6 +360,7 @@ function trackViewing(now: number): void {
 function setView(next: ViewName): void {
   if (next === 'settings' && view !== 'settings') viewBeforeSettings = view;
   view = next;
+  grid.setShown(view === 'grid');
   // The Panel's tiles already show each chat, so the side panel has no place there.
   if (view === 'grid' && sheet.sessionId !== null) closeSheet();
   else renderView();
@@ -427,19 +452,11 @@ nav.addEventListener('click', (event: MouseEvent): void => {
   if (name !== undefined) setView(name as ViewName);
 });
 
+// Escape is listed in the shortcut registry but handled here: the menu, then the panel's sub-action, then the
+// panel itself backs out, also while typing in the composer.
 document.addEventListener('keydown', (event: KeyboardEvent): void => {
-  if (event.key === CLOSE_KEY) {
-    if (!cardMenu.dismiss() && !sheet.dismissSubAction()) closeSheet();
-    return;
-  }
-  if (isTyping(event.target)) return;
-  const next: ViewName | null = viewForKey(event.key);
-  if (next !== null) setView(next);
+  if (event.key === CLOSE_KEY && !cardMenu.dismiss() && !sheet.dismissSubAction()) closeSheet();
 });
-
-function isTyping(target: EventTarget | null): boolean {
-  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
-}
 
 requireElement('#reopen-chat').addEventListener('click', (): void => {
   if (sheet.sessionId !== null) void reopenClosed(sheet.sessionId);
@@ -448,9 +465,43 @@ settingsButton.innerHTML = GEAR_ICON;
 settingsButton.addEventListener('click', (): void => setView(view === 'settings' ? viewBeforeSettings : 'settings'));
 installTooltips();
 renderWordmark(requireElement('#app-title'));
-attachAppMenu(requireElement('#app-title .wordmark'));
-new ResumeButton(requireElement('#resume-chat'), launches);
-new NewChatButton(requireElement('#new-chat'), launches);
+attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open());
+const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches);
+const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
+installShortcutDispatcher(
+  appShortcutBindings({
+    setView,
+    newChat: newChatButton,
+    resume: resumeButton,
+    help,
+    isBoardShown: (): boolean => view === 'board',
+    isPanelOpen: (): boolean => document.body.classList.contains('panel-open'),
+    canOpenChats: (): boolean => view !== 'grid',
+    boardFocus,
+    openChat: openSheet,
+    pinnedOrder: (): readonly string[] => pins.order,
+    sheet,
+    togglePin: (sessionId: string): void => {
+      pins.toggle(sessionId);
+      renderView();
+    },
+    openWindow: (sessionId: string): void => void window.radar.openChatWindow(sessionId),
+    goToTerminal: (sessionId: string): void => {
+      const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+      if (chat !== undefined) void window.radar.focusChat(chat.pid);
+    },
+    isTimelineShown: (): boolean => view === 'timeline',
+    timelineMode: (): TimelineMode => timelineMode,
+    setTimelineMode,
+    timelineScope: (): TimelineScope => timelineHistory.scope,
+    setTimelineScope,
+    timelineRange: (): TimelineRange => timelineRange,
+    setTimelineRange,
+  }),
+  isOverlayOpen,
+  isWebHost(),
+);
+installShortcutTooltips();
 applyTheme(theme);
 void refreshChats();
 void refreshUsage();

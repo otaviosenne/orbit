@@ -1,7 +1,9 @@
-// What the key counts depend on: how many options the tab lists and whether several may be ticked.
+// What the key counts depend on: how many options the tab lists and whether several may be ticked; previews
+// decide whether an answer of one's own is offered.
 export interface PickerShape {
   readonly options: readonly unknown[];
   readonly multiSelect: boolean;
+  readonly hasPreviews?: boolean;
 }
 
 // One input to Claude Code's question picker: named keys go through `kitty @ send-key`, text through send-text.
@@ -59,4 +61,9 @@ export function submitReview(): PickerStep {
 
 function rowsBelowOptions(question: PickerShape): number {
   return question.multiSelect ? ROWS_BELOW_OPTIONS_MULTI : ROWS_BELOW_OPTIONS_SINGLE;
+}
+
+// Orbit offers no "Other" for options with previews: a wide window draws them without the "Type something" field.
+export function offersOther(question: PickerShape): boolean {
+  return question.hasPreviews !== true;
 }

@@ -25,13 +25,22 @@ export class WorkingIndicator {
   private outputTokens: number = 0;
 
   // onInterrupt: stops the chat's current turn, as Escape does in its terminal; asked for confirmation first.
-  constructor(private readonly root: HTMLElement, onInterrupt: () => void) {
+  constructor(private readonly root: HTMLElement, private readonly onInterrupt: () => void) {
     root.hidden = true;
     this.stop.type = 'button';
     this.stop.title = 'Interrupt Claude';
     this.stop.setAttribute('aria-label', 'Interrupt Claude');
     this.stop.innerHTML = STOP_ICON;
-    this.stop.addEventListener('click', (): void => this.confirm.open(this.stop, { confirmLabel: 'Interrupt', onConfirm: onInterrupt }));
+    this.stop.addEventListener('click', (): void => this.askToInterrupt());
+  }
+
+  get isShown(): boolean {
+    return !this.root.hidden;
+  }
+
+  // The stop button's own confirmation, also opened by the I shortcut.
+  askToInterrupt(): void {
+    if (this.isShown) this.confirm.open(this.stop, { confirmLabel: 'Interrupt', onConfirm: this.onInterrupt });
   }
 
   show(progress: TurnProgress | null, fallbackStart: number): void {

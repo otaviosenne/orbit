@@ -3,10 +3,11 @@ import { element } from '../dom';
 import { HISTORY_ICON } from '../icons';
 import type { LaunchListener } from '../launch-watch';
 import { resumedChatTarget } from '../launch-watch';
+import { withShortcut } from '../shortcuts/shortcut-hint';
 import { ResumePopover } from './resume-popover';
 
 const IDLE_LABEL: string = 'Resume';
-const IDLE_TITLE: string = 'Reopen a past chat from any project';
+const IDLE_TITLE: string = withShortcut('Reopen a past chat from any project', 'resume');
 // Long enough to read "Opening…" before the new kitty window takes focus.
 const FEEDBACK_MS: number = 1500;
 
@@ -36,7 +37,7 @@ export class ResumeButton {
     });
   }
 
-  private toggle(): void {
+  toggle(): void {
     if (this.popover.isOpen) return this.popover.close();
     this.popover.open();
     void this.load();

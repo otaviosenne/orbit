@@ -2,6 +2,7 @@ import type { DictationStart, DictationTranscript, TranscriptionResult } from '.
 import type { DraftAnchor, PlacedText } from './dictation-placement';
 import { placeDictation } from './dictation-placement';
 import { PcmRecorder } from './pcm-recorder';
+import type { TranscriptFeed } from './voice/transcript-feed';
 
 export type DictationState = 'idle' | 'listening' | 'refining';
 
@@ -10,20 +11,31 @@ export interface DictationHandlers {
   readonly onError: (message: string) => void;
   // The draft text changed under the caret (live words or the final text).
   readonly onDraft: () => void;
+  // Whether the final text may bring the focus back to this field; it must not steal it from another composer.
+  readonly mayRefocus: () => boolean;
 }
 
-// One push-to-talk dictation: words stream in while you talk and the final text lands on release, like Claude Code.
+// One field's push-to-talk dictation: words stream in while you talk and the final text lands on release, like
+// Claude Code. Each composer field has its own, so a final text still being refined in one field keeps its place
+// while another field starts talking.
 export class Dictation {
   private readonly recorder: PcmRecorder = new PcmRecorder();
   private opening: Promise<boolean> | null = null;
   private session: number | null = null;
   private anchor: DraftAnchor | null = null;
   private isListening: boolean = false;
+  private readonly unsubscribe: () => void;
 
-  constructor(private readonly input: HTMLTextAreaElement, private readonly handlers: DictationHandlers) {
+  constructor(private readonly input: HTMLTextAreaElement, transcripts: TranscriptFeed, private readonly handlers: DictationHandlers) {
     input.addEventListener('focus', (): void => window.radar.prepareDictation());
     input.addEventListener('input', (): void => this.abandonRefinement());
-    window.radar.onDictationTranscript((transcript: DictationTranscript): void => this.showLive(transcript));
+    this.unsubscribe = transcripts.subscribe((transcript: DictationTranscript): void => this.showLive(transcript));
+  }
+
+  // The field is gone for good: the microphone is released and no transcript reaches this dictation again.
+  dispose(): void {
+    void this.cancel();
+    this.unsubscribe();
   }
 
   // Called when the draft is sent or cleared: the microphone turns off and nothing from this
@@ -55,8 +67,14 @@ export class Dictation {
     return this.isListening;
   }
 
-  start(): void {
-    this.begin();
+  // Listening, or still holding the microphone; another field must wait for it to be released.
+  get isRecording(): boolean {
+    return this.isListening || this.opening !== null;
+  }
+
+  // ready: what has to end first, such as another field's dictation that still holds the microphone.
+  start(ready: Promise<void> = Promise.resolve()): void {
+    this.begin(ready);
   }
 
   // Space released after a hold, or tapped while listening: the final text lands.
@@ -65,21 +83,21 @@ export class Dictation {
   }
 
   // For the mic button: starts dictation, or finishes the one in progress.
-  toggle(): void {
+  toggle(ready: Promise<void> = Promise.resolve()): void {
     if (this.isListening) void this.finish();
-    else this.begin();
+    else this.begin(ready);
   }
 
   level(): number {
     return this.recorder.level();
   }
 
-  private begin(): void {
+  private begin(ready: Promise<void>): void {
     if (this.isListening || this.opening !== null) return;
     this.isListening = true;
     this.anchor = { before: this.input.value.slice(0, this.input.selectionStart), after: this.input.value.slice(this.input.selectionEnd) };
     this.handlers.onState('listening');
-    this.opening = this.open();
+    this.opening = ready.then((): Promise<boolean> => this.open());
   }
 
   // Resolves false when dictation could not start; the reason has already been reported.
@@ -128,7 +146,7 @@ export class Dictation {
     }
     const anchor: DraftAnchor | null = this.anchor;
     this.handlers.onState('refining');
-    this.input.focus();
+    if (this.handlers.mayRefocus()) this.input.focus();
     const result: TranscriptionResult = await window.radar.finishDictation(this.session ?? 0);
     if (this.anchor !== anchor) return;
     // An empty final result keeps whatever the live preview showed.

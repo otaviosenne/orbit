@@ -1,38 +1,40 @@
 import type { TranscriptionResult } from '../../../shared/types';
 import { PcmRecorder } from '../pcm-recorder';
 import { DictatedSpan } from './dictated-span';
-import type { DictationTarget, RetargetPlan } from './dictation-target';
+import type { DictationPlace } from '../voice/dictation-place';
+import type { VoiceField } from '../voice/voice-field';
+import type { RetargetPlan } from './dictation-target';
 import { planRetarget } from './dictation-target';
 import { pcmLevel } from './pcm-level';
 import { SegmentClock } from './segment-clock';
 import type { LaneSegment } from './segment-lane';
 import { SegmentLane } from './segment-lane';
-import type { KeptDrafts, SpanBinding } from './span-writer';
-import { COMPOSER_SINK, DROPPED_SINK, SpanWriter } from './span-writer';
+import type { SpanBinding } from './span-writer';
+import { DROPPED_SINK, SpanWriter } from './span-writer';
 
-// off; live (listening into the composer on screen); paused (on, but no composer on screen);
+// off; live (listening into the target composer); paused (on, but there is no target composer);
 // finishing (turned off, the last words are still being refined).
 export type HandsFreeState = 'off' | 'live' | 'paused' | 'finishing';
 
 export interface HandsFreeHooks {
   readonly onState: (state: HandsFreeState) => void;
-  readonly onDraft: () => void;
+  // The target composer changed (or went away), even while the state stayed the same.
+  readonly onMoved: () => void;
   readonly onError: (message: string) => void;
-  readonly drafts: KeptDrafts;
 }
 
-// "Mic always on": the microphone stays live without holding Space, and words go into the composer of
-// whichever chat is on screen. The audio is cut into segments (one voice session each) at pauses, at a
+// "Mic always on": the microphone stays live without holding Space, and words go into the target composer: the
+// side panel's chat, or the focused Panel tile. The audio is cut into segments (one voice session each) at pauses, at a
 // maximum length and whenever the words change destination, so every utterance is finalized on the way.
 export class HandsFree {
   private readonly recorder: PcmRecorder = new PcmRecorder();
   private readonly lane: SegmentLane;
-  private readonly writer: SpanWriter;
+  private readonly writer: SpanWriter = new SpanWriter();
   private readonly spans: Map<number, SpanBinding> = new Map();
   private attached: SpanBinding | null = null;
   private clock: SegmentClock | null = null;
-  private target: DictationTarget | null = null;
-  private requestedTarget: DictationTarget | null = null;
+  private place: DictationPlace | null = null;
+  private requestedPlace: DictationPlace | null = null;
   private isRetargetQueued: boolean = false;
   private isEnabled: boolean = false;
   private isCapturing: boolean = false;
@@ -41,14 +43,12 @@ export class HandsFree {
   private capture: Promise<void> = Promise.resolve();
   private reported: HandsFreeState = 'off';
 
-  constructor(input: HTMLTextAreaElement, private readonly hooks: HandsFreeHooks) {
-    this.writer = new SpanWriter(input, hooks.drafts, hooks.onDraft);
+  constructor(private readonly hooks: HandsFreeHooks) {
     this.lane = new SegmentLane(window.radar, {
       onText: (segment: LaneSegment, text: string): void => this.showWords(segment, text),
       onFinal: (segment: LaneSegment, result: TranscriptionResult): void => this.settle(segment, result),
       onFailure: (message: string): void => this.fail(`Voice dictation unavailable: ${message}`),
     });
-    input.addEventListener('input', (): void => this.takeOver());
   }
 
   get isOn(): boolean {
@@ -58,6 +58,11 @@ export class HandsFree {
   // On, or still refining what was said before it was turned off: push-to-talk must wait for the microphone.
   get isBusy(): boolean {
     return this.isEnabled || this.isStopping;
+  }
+
+  // The field of the target composer, which shows the hands-free state.
+  get field(): VoiceField | null {
+    return this.place?.field ?? null;
   }
 
   level(): number {
@@ -81,59 +86,63 @@ export class HandsFree {
     this.report();
   }
 
-  // The panel moves its target in several steps while opening a chat; only where it ends up counts.
-  follow(target: DictationTarget | null): void {
-    this.requestedTarget = target;
+  // The panel moves its target in several steps while opening a chat, and focus passes through no tile on its way
+  // from one tile to another; only where it ends up counts.
+  follow(place: DictationPlace | null): void {
+    this.requestedPlace = place;
     if (this.isRetargetQueued) return;
     this.isRetargetQueued = true;
     queueMicrotask((): void => {
       this.isRetargetQueued = false;
-      this.retarget(this.requestedTarget);
+      this.retarget(this.requestedPlace);
     });
   }
 
-  // The draft was sent: words said so far never come back, and what follows starts the next message.
-  discard(): void {
-    if (this.attached === null) return;
+  // The draft in field was sent: words said so far never come back, and what follows starts the next message.
+  discard(field: VoiceField): void {
+    if (this.attached === null || !writesInto(this.attached, field)) return;
     this.attached.sink = DROPPED_SINK;
     this.attached = null;
     if (!this.isCapturing) return;
-    this.attached = composerBinding();
+    this.attached = this.fieldBinding();
     this.cut();
   }
 
-  // The user typed: their edit stays, late words of the old span are dropped, new words go at the caret.
-  private takeOver(): void {
+  // The user typed in field: their edit stays, late words of the old span are dropped, new words go at the caret.
+  edited(field: VoiceField): void {
     const left: SpanBinding | null = this.attached;
-    if (left === null) return;
+    if (left === null || !writesInto(left, field)) return;
     left.sink = DROPPED_SINK;
     this.attached = null;
     if (!this.isCapturing) return;
-    this.attached = composerBinding();
+    const next: SpanBinding | null = this.fieldBinding();
+    this.attached = next;
     const segment: LaneSegment | null = this.lane.active;
     // A segment with no words yet simply moves on; typing away while silent does not open a stream per key.
-    if (segment !== null && left.span.textOf(segment.id).length === 0) this.spans.set(segment.id, this.attached);
+    if (next !== null && segment !== null && left.span.textOf(segment.id).length === 0) this.spans.set(segment.id, next);
     else this.cut();
   }
 
-  private retarget(next: DictationTarget | null): void {
-    const previous: DictationTarget | null = this.target;
-    const plan: RetargetPlan = planRetarget(previous, next);
-    this.target = next;
+  private retarget(next: DictationPlace | null): void {
+    const previous: DictationPlace | null = this.place;
+    const plan: RetargetPlan = planRetarget(previous?.target ?? null, next?.target ?? null);
+    this.place = next;
+    if (previous !== next) this.hooks.onMoved();
     if (plan === 'none' || plan === 'carry') return;
     this.leave(previous);
     if (plan === 'switch' && this.isCapturing) {
-      this.attached = composerBinding();
+      this.attached = this.fieldBinding();
       this.cut();
     }
     this.syncCapture();
     this.report();
   }
 
-  // What was said for the chat being left finishes in its kept draft.
-  private leave(previous: DictationTarget | null): void {
+  // What was said for the composer being left finishes in its kept draft.
+  private leave(previous: DictationPlace | null): void {
     if (this.attached === null) return;
-    this.attached.sink = previous?.kind === 'chat' ? { kind: 'draft', sessionId: previous.sessionId } : DROPPED_SINK;
+    const kept: DictationPlace['kept'] = previous?.kept ?? null;
+    this.attached.sink = kept === null ? DROPPED_SINK : { kind: 'kept', draft: kept };
     this.attached = null;
   }
 
@@ -152,14 +161,14 @@ export class HandsFree {
   }
 
   private async applyCapture(): Promise<void> {
-    const wanted: boolean = this.isEnabled && this.target !== null;
+    const wanted: boolean = this.isEnabled && this.place !== null;
     if (wanted && !this.isCapturing) await this.startCapture();
     else if (!wanted && this.isCapturing) await this.stopCapture();
   }
 
   private async startCapture(): Promise<void> {
     this.isCapturing = true;
-    this.attached = composerBinding();
+    this.attached = this.fieldBinding();
     this.cut();
     await this.recorder.start((pcm: Uint8Array): void => this.hear(pcm));
   }
@@ -203,6 +212,12 @@ export class HandsFree {
     if (binding !== undefined && result.text.length > 0) this.writer.write(binding, segment.id, result.text);
   }
 
+  // New words go into the target composer's field as it is now; a later move does not take this span along.
+  private fieldBinding(): SpanBinding | null {
+    const place: DictationPlace | null = this.place;
+    return place === null ? null : { span: new DictatedSpan(), sink: { kind: 'field', field: place.field } };
+  }
+
   private fail(message: string): void {
     this.hooks.onError(message);
     this.turnOff();
@@ -216,11 +231,11 @@ export class HandsFree {
   }
 
   private currentState(): HandsFreeState {
-    if (this.isEnabled) return this.target === null ? 'paused' : 'live';
+    if (this.isEnabled) return this.place === null ? 'paused' : 'live';
     return this.isStopping ? 'finishing' : 'off';
   }
 }
 
-function composerBinding(): SpanBinding {
-  return { span: new DictatedSpan(), sink: COMPOSER_SINK };
+function writesInto(binding: SpanBinding, field: VoiceField): boolean {
+  return binding.sink.kind === 'field' && binding.sink.field === field;
 }

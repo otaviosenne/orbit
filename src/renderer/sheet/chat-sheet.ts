@@ -16,6 +16,7 @@ import { DraftStore } from './draft-store';
 import { Composer } from './composer';
 import type { DictationTarget } from './hands-free/dictation-target';
 import { PanelResizer } from './panel-resizer';
+import type { Direction } from './message-navigator';
 import { MessageNavigator } from './message-navigator';
 import { ThreadZoom } from './thread-zoom';
 import { WorkingIndicator } from './working-indicator';
@@ -78,6 +79,7 @@ export class ChatSheet {
   private readonly devices: DeviceLinks = new DeviceLinks((text: string, isError: boolean): void => this.showStatus(text, isError));
   private chat: ChatSnapshot | null = null;
   private statusTimer: number | undefined;
+  private readonly navigator: MessageNavigator;
 
   // onThreadChange: the panel switched between the chat and one of its agents, so its transcript must be fetched.
   // onCloseChat: closes a chat the way the board does, so its card and this panel go at once.
@@ -105,7 +107,7 @@ export class ChatSheet {
       (): boolean => !isWebHost() && this.chat !== null && this.agentView.agentId === null && !this.lightbox.isOpen && !this.rename.isOpen,
       (): void => this.composer.startDictation(),
     );
-    new MessageNavigator({
+    this.navigator = new MessageNavigator({
       thread: requireElement('#sheet-messages'),
       up: requireElement('#jump-previous'),
       down: requireElement('#jump-next'),
@@ -138,6 +140,36 @@ export class ChatSheet {
   // Shows one of the open chat's agents instead of the chat; call after open() so its agents are known.
   openAgent(agentId: string): void {
     this.agentView.open(agentId);
+  }
+
+  // A chat that is live and shown as itself: not still starting, closed, or showing one of its agents.
+  get showsLiveChat(): boolean {
+    return this.chat !== null && !this.isShowingClosed && this.agentView.agentId === null;
+  }
+
+  get isWorking(): boolean {
+    return this.working.isShown;
+  }
+
+  // The keyboard's way into the header's own actions, each with the confirmation its button asks for.
+  startRename(): void {
+    if (this.showsLiveChat) void this.withChat((chat) => this.rename.open(chat.name));
+  }
+
+  toggleSettings(): void {
+    if (this.showsLiveChat) this.settings.toggle();
+  }
+
+  askToClose(): void {
+    if (this.showsLiveChat) this.settings.askToClose();
+  }
+
+  askToInterrupt(): void {
+    if (this.showsLiveChat) this.working.askToInterrupt();
+  }
+
+  jumpToOwnMessage(direction: Direction): void {
+    void this.navigator.jump(direction);
   }
 
   // Escape first backs out of an open sub-action, then out of an agent, then closes the sheet.

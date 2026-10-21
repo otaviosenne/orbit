@@ -5,6 +5,8 @@ import type { LaunchListener } from './launch-watch';
 import { newChatTarget } from './launch-watch';
 import { renderLauncherMenu } from './new-chat/launcher-menu';
 import { ShortcutForm } from './new-chat/shortcut-form';
+import { actionShortcut } from './shortcuts/shortcut-catalog';
+import { shortcutKeysText, withShortcut } from './shortcuts/shortcut-hint';
 
 const LAST_LAUNCHER_KEY: string = 'orbit.lastLauncher';
 const CLOSE_KEY: string = 'Escape';
@@ -31,7 +33,7 @@ export class NewChatButton {
     this.main.append(this.label);
     const more: HTMLButtonElement = element('button', 'new-chat-more');
     more.type = 'button';
-    more.title = 'Choose a project';
+    more.title = withShortcut('Choose a project', 'new-chat-menu');
     more.innerHTML = CARET_DOWN_ICON;
     this.menu.hidden = true;
     root.append(this.main, more, this.menu);
@@ -51,6 +53,11 @@ export class NewChatButton {
     void this.load();
   }
 
+  // What N does: the same as clicking the button.
+  openLast(): void {
+    if (!this.main.disabled) void this.open(this.last());
+  }
+
   private async load(): Promise<void> {
     this.entries = await window.radar.listLaunchers();
     this.showTarget();
@@ -66,7 +73,8 @@ export class NewChatButton {
   private showTarget(): void {
     const last: string | null = this.last();
     this.label.textContent = 'New chat';
-    this.main.title = last === null ? 'No projects found' : `Open a new chat in ${last} (right-click for all projects)`;
+    const allProjects: string = `right-click or ${shortcutKeysText(actionShortcut('new-chat-menu'))} for all projects`;
+    this.main.title = last === null ? 'No projects found' : `${withShortcut(`Open a new chat in ${last}`, 'new-chat')}; ${allProjects}`;
   }
 
   // The watcher is told before launching, so the chat is recognized even if it registers before the launch call returns.
@@ -90,7 +98,7 @@ export class NewChatButton {
     }, FEEDBACK_MS);
   }
 
-  private async toggleMenu(): Promise<void> {
+  async toggleMenu(): Promise<void> {
     if (!this.menu.hidden) return this.closeMenu();
     await this.showList();
     this.menu.hidden = false;

@@ -13,7 +13,7 @@ const POSITION_EPSILON_PX: number = 4;
 const END_THRESHOLD_PX: number = 24;
 const USER_MESSAGE: string = '.message-user';
 
-type Direction = 'up' | 'down';
+export type Direction = 'up' | 'down';
 
 export interface NavigatorElements {
   readonly thread: HTMLElement;
@@ -71,8 +71,8 @@ export class MessageNavigator {
   }
 
   // Up and down skip to your message above or below. Down with none below goes to the end of the thread;
-  // up with none left anywhere goes to the oldest item.
-  private async jump(direction: Direction): Promise<void> {
+  // up with none left anywhere goes to the oldest item. Also what [ and ] do.
+  async jump(direction: Direction): Promise<void> {
     const { thread } = this.elements;
     this.hidePreview();
     const target: HTMLElement | null = await this.find(direction);

@@ -7,6 +7,8 @@ import { isAtThreadEnd } from '../../sheet/thread-end';
 import { TILE_PAGE_ITEMS } from '../../sheet/paging/page-sizes';
 import { ThreadFeed } from '../../sheet/paging/thread-feed';
 import { TranscriptList } from '../../sheet/transcript-list';
+import type { DictationPlace } from '../../sheet/voice/dictation-place';
+import type { VoiceHub } from '../../sheet/voice/voice-hub';
 import { TileComposer } from './tile-composer';
 import { TileHeader } from './tile-header';
 
@@ -31,11 +33,11 @@ export class GridTile {
   private readonly composer: TileComposer;
   private isFetching: boolean = false;
 
-  constructor(private chat: ChatSnapshot, lightbox: Lightbox, handlers: GridTileHandlers) {
+  constructor(private chat: ChatSnapshot, lightbox: Lightbox, voice: VoiceHub, handlers: GridTileHandlers) {
     this.root.dataset[TILE_SESSION_ATTRIBUTE] = chat.sessionId;
     this.transcript = new TranscriptList(this.thread, lightbox, window.radar);
     this.feed = new ThreadFeed(this.thread, this.transcript, TILE_PAGE_ITEMS);
-    this.composer = new TileComposer((text: string): Promise<ActionResult> => this.send(text));
+    this.composer = new TileComposer((text: string): Promise<ActionResult> => this.send(text), voice);
     this.header = new TileHeader({
       remove: (): void => handlers.remove(this.chat.sessionId),
       openDevice: (kind: CardDeviceKind): void => handlers.openDevice(kind, this.chat.sessionId),
@@ -81,6 +83,21 @@ export class GridTile {
 
   setComposerAlwaysOpen(isAlwaysOpen: boolean): void {
     this.composer.setAlwaysOpen(isAlwaysOpen);
+  }
+
+  get hasComposerFocus(): boolean {
+    return this.composer.hasFocus;
+  }
+
+  // The composer as the Panel's hands-free target; a folded one opens for the words.
+  becomeDictationTarget(): DictationPlace {
+    this.composer.becomeTarget();
+    return this.composer.dictationPlace(this.chat.sessionId);
+  }
+
+  // Taken out of the grid for good.
+  dispose(): void {
+    this.composer.dispose();
   }
 
   // Optimistic like the panel: the message shows at once, then as delivered, or leaves again if sending failed.

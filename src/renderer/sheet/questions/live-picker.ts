@@ -1,8 +1,8 @@
-import type { ActionResult, QuestionAnswer, QuestionPicker, RadarApi } from '../../../shared/types';
+import type { ActionResult, ChatSnapshot, QuestionAnswer, QuestionItem, QuestionPicker, RadarApi } from '../../../shared/types';
 import type { PickerActions } from './picker-card';
 import { QuestionCards, pickerKey } from './question-cards';
 
-export type QuestionPickerApi = Pick<RadarApi, 'getQuestionPicker' | 'answerQuestion' | 'submitAnswers'>;
+export type QuestionPickerApi = Pick<RadarApi, 'getQuestionPicker' | 'answerQuestion' | 'submitAnswers' | 'answerQuestionSet' | 'getChats' | 'focusChat'>;
 
 // The question picker showing in a chat's terminal, kept in step with each poll of the thread.
 export class LivePicker {
@@ -16,18 +16,9 @@ export class LivePicker {
   // onChange: the card appeared, changed or went away, so the thread must render again.
   constructor(private readonly api: QuestionPickerApi, private readonly onChange: () => void) {}
 
-  get key(): string {
-    return pickerKey(this.picker);
-  }
-
-  // A question or review read off the screen, which the card can answer.
-  get isReadable(): boolean {
-    return this.picker !== null && this.picker.kind !== 'unreadable';
-  }
-
-  // The chat waits on the user but its picker could not be read; the transcript's copy has to stand in.
-  get needsStandIn(): boolean {
-    return this.isWaiting && !this.isReadable;
+  // asked: the newest question the transcript shows as waiting; it is part of what the card looks like.
+  key(asked: QuestionItem | null): string {
+    return pickerKey(this.view(asked));
   }
 
   // The terminal is only read while the chat waits on the user; any other state hides the card.
@@ -37,17 +28,22 @@ export class LivePicker {
     if (this.requestedFor !== sessionId) return;
     const waitingChanged: boolean = isWaiting !== this.isWaiting;
     this.isWaiting = isWaiting;
-    if (sessionId === this.shownFor && pickerKey(picker) === this.key && !waitingChanged) return;
+    if (sessionId === this.shownFor && pickerKey(picker) === pickerKey(this.picker) && !waitingChanged) return;
     this.shownFor = sessionId;
     this.picker = picker;
     this.onChange();
   }
 
-  // knowsQuestion: the transcript already shows the waiting question, which beats a card saying it cannot be read.
-  render(knowsQuestion: boolean): HTMLElement[] {
-    const { picker, shownFor } = this;
-    if (picker === null || shownFor === null || (knowsQuestion && !this.isReadable)) return [];
-    return [this.cards.render(picker, this.actionsFor(shownFor))];
+  render(asked: QuestionItem | null): HTMLElement[] {
+    const view: QuestionPicker | null = this.view(asked);
+    return view === null || this.shownFor === null ? [] : [this.cards.render(view, this.actionsFor(this.shownFor))];
+  }
+
+  // While the chat waits, a question the transcript already has is always answerable, even if the terminal could
+  // not be read; anything in the way of delivering it shows after Submit.
+  private view(asked: QuestionItem | null): QuestionPicker | null {
+    if (this.picker?.kind === 'set' || !this.isWaiting || asked === null) return this.picker;
+    return { kind: 'set', questionId: asked.id, questions: asked.questions };
   }
 
   clear(): void {
@@ -56,6 +52,11 @@ export class LivePicker {
     this.requestedFor = null;
     this.isWaiting = false;
     this.cards.clear();
+  }
+
+  private async goToChat(sessionId: string): Promise<void> {
+    const chat: ChatSnapshot | undefined = (await this.api.getChats()).find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+    if (chat !== undefined) await this.api.focusChat(chat.pid);
   }
 
   private async read(sessionId: string): Promise<QuestionPicker | null> {
@@ -71,7 +72,9 @@ export class LivePicker {
     return {
       answer: (fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> => this.api.answerQuestion(sessionId, fingerprint, answer),
       submit: (fingerprint: string): Promise<ActionResult> => this.api.submitAnswers(sessionId, fingerprint),
+      answerSet: (questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> => this.api.answerQuestionSet(sessionId, questionId, answers),
       moved: (): void => void this.sync(sessionId, true),
+      goToChat: (): void => void this.goToChat(sessionId),
     };
   }
 }

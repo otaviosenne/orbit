@@ -23,6 +23,7 @@ export const IpcChannel = {
   GetQuestionPicker: 'radar:get-question-picker',
   AnswerQuestion: 'radar:answer-question',
   SubmitAnswers: 'radar:submit-answers',
+  AnswerQuestionSet: 'radar:answer-question-set',
   StopAgent: 'radar:stop-agent',
   GetShellOutput: 'radar:get-shell-output',
   InterruptShell: 'radar:interrupt-shell',
@@ -45,4 +46,5 @@ export const IpcChannel = {
   DictationFinish: 'radar:dictation-finish',
   DictationCancel: 'radar:dictation-cancel',
   DictationTranscript: 'radar:dictation-transcript',
+  GetChatResources: 'radar:get-chat-resources',
 } as const;

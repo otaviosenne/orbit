@@ -1,14 +1,14 @@
 import type { PickerChoice } from '../../../shared/types';
 
-// "❯ 2. [✔] Banana": the cursor, the option number, then its label (with a checkbox in a multi-select).
-const NUMBERED_ROW: RegExp = /^\s*(?:❯\s*)?(\d+)\.\s+(.*)$/;
+// "❯ 2. [✔] Banana": the cursor (or a scroll arrow in a list cut to fit), the number, then the label.
+const NUMBERED_ROW: RegExp = /^\s*(?:[❯↑↓]\s*)?(\d+)\.\s+(.*)$/;
 const CHECKBOX: RegExp = /^\[(.)\]\s?(.*)$/;
 const UNTICKED: string = ' ';
 // A single-select marks the option picked on an earlier visit with a trailing check.
 const EARLIER_PICK: RegExp = /\s+✔$/;
 const CURSOR: RegExp = /^❯\s*/;
-// The multi-select's own "Submit" row, drawn under the "Type something" field.
-const SUBMIT_ROW: string = 'Submit';
+// The multi-select's own row under the "Type something" field: "Next" on earlier tabs, "Submit" on the last.
+const MOVE_ON_ROWS: ReadonlySet<string> = new Set(['Submit', 'Next']);
 const FIELD_PLACEHOLDERS: ReadonlySet<string> = new Set(['Type something.', 'Type something']);
 // Options with previews are drawn beside a box; their rows cannot be counted the usual way.
 const PREVIEW_BOX: RegExp = /[│┌└┐┘]/;
@@ -51,7 +51,7 @@ function readRows(lines: readonly string[]): Row[] | null {
     }
   }
   const field: Row | undefined = rows.at(-1);
-  if (field !== undefined && field.details.at(-1) === SUBMIT_ROW) field.details.pop();
+  if (field !== undefined && MOVE_ON_ROWS.has(field.details.at(-1) ?? '')) field.details.pop();
   return rows;
 }
 

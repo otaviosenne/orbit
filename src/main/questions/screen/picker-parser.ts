@@ -3,12 +3,14 @@ import type { StyledLine } from './ansi-line';
 import { parseStyledLine } from './ansi-line';
 import type { QuestionBody } from './question-body';
 import { parseQuestionBody } from './question-body';
+import { showsPicker, squeeze } from './picker-evidence';
 import { parseReviewBody } from './review-body';
 import type { TabBar } from './tab-bar';
 import { isTabBar, parseTabBar } from './tab-bar';
 
 // Only the picker's own block at the bottom of the screen is read, never numbered lists earlier in the chat.
-const PICKER_FOOTER: RegExp = /Esc to cancel/;
+// A narrow terminal wraps the footer too, so it is looked for with the whitespace removed.
+const PICKER_FOOTER: string = 'Esctocancel';
 const CHAT_ROW: RegExp = /^\s*(?:❯\s*)?\d+\.\s+Chat about this\s*$/;
 const SUBMIT_ANSWERS_ROW: RegExp = /^\s*(?:❯\s*)?1\.\s+Submit answers\s*$/;
 const SEPARATOR: RegExp = /^─+$/;
@@ -21,8 +23,9 @@ export function parsePicker(ansiScreen: string): QuestionPicker | null {
   const texts: string[] = lines.map((line: StyledLine) => line.text.trimEnd());
   const review: PickerReviewView | null = readReview(lines, texts);
   if (review !== null) return review;
-  if (lastIndex(texts, (text: string) => PICKER_FOOTER.test(text)) === -1) return null;
-  return readQuestion(lines, texts) ?? (hasTabBarNearEnd(texts) ? { kind: 'unreadable' } : null);
+  if (!squeeze(texts.join('')).includes(PICKER_FOOTER)) return null;
+  // A picker cut off by a small window, or in a layout this parser does not know, is still a picker.
+  return readQuestion(lines, texts) ?? (hasTabBarNearEnd(texts) || showsPicker(texts.join('\n')) ? { kind: 'unreadable' } : null);
 }
 
 function readQuestion(lines: readonly StyledLine[], texts: readonly string[]): PickerQuestionView | null {

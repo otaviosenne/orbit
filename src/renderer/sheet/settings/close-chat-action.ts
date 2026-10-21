@@ -8,11 +8,17 @@ export class CloseChatAction {
   readonly root: HTMLDivElement = element('div', 'chat-settings-danger');
   private readonly confirm: ConfirmPopover = new ConfirmPopover();
 
-  constructor(onConfirm: () => void) {
-    const button: HTMLButtonElement = element('button', 'chat-settings-close', CLOSE_LABEL);
-    button.type = 'button';
-    button.addEventListener('click', (): void => this.confirm.open(button, { confirmLabel: CLOSE_LABEL, onConfirm }));
-    this.root.append(button);
+  private readonly button: HTMLButtonElement = element('button', 'chat-settings-close', CLOSE_LABEL);
+
+  constructor(private readonly onConfirm: () => void) {
+    this.button.type = 'button';
+    this.button.addEventListener('click', (): void => this.ask());
+    this.root.append(this.button);
+  }
+
+  // Anchored on the button, so the popover holding it must be open first.
+  ask(): void {
+    this.confirm.open(this.button, { confirmLabel: CLOSE_LABEL, onConfirm: this.onConfirm });
   }
 
   dismiss(): void {

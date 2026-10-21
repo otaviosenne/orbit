@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import { ChatRadar } from '../core/chat-radar';
 import { PastChatCatalog } from '../core/past-chats/past-chat-catalog';
+import { ResourceSampler } from '../core/resources/resource-sampler';
 import { TimelineHistory } from '../core/timeline-history/timeline-history';
 import { UsageService } from '../core/usage-service';
 import { pruneOldAttachments } from './attachments';
@@ -35,7 +36,7 @@ async function start(): Promise<void> {
   });
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);
-  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), pastChats, timelineHistory };
+  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), pastChats, timelineHistory, resources: new ResourceSampler() };
   // One table answers the desktop window over IPC and Orbit Web over HTTP.
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);

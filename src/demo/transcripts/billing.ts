@@ -21,6 +21,7 @@ export function stripeWebhooksTranscript(): TranscriptItem[] {
           question: 'Where should failed payments be reported?',
           header: 'Alerts',
           multiSelect: false,
+          hasPreviews: false,
           options: [
             { label: 'Email the account owner', description: 'One email per failed invoice' },
             { label: 'Slack #billing', description: 'Post to the team channel' },

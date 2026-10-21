@@ -7,6 +7,7 @@ import { interruptChat } from '../chat-interrupt';
 import { resumeChat } from '../chat-resumer';
 import { openLauncher } from '../launcher';
 import { answerQuestion, submitAnswers } from '../questions/question-answerer';
+import { answerQuestionSet } from '../questions/set-answerer';
 import { failure } from '../terminal-input';
 import { isAttachmentList, isPid, textArg } from './route-args';
 import type { RouteServices } from './route-services';
@@ -20,6 +21,7 @@ type ActionChannel =
   | 'InterruptChat'
   | 'AnswerQuestion'
   | 'SubmitAnswers'
+  | 'AnswerQuestionSet'
   | 'StopAgent'
   | 'InterruptShell';
 
@@ -38,6 +40,8 @@ export function actionRoutes({ radar, pastChats }: RouteServices): Readonly<Reco
     AnswerQuestion: (sessionId: unknown, fingerprint: unknown, answer: unknown): Promise<ActionResult> =>
       answerQuestion(radar, sessionId, fingerprint, answer),
     SubmitAnswers: (sessionId: unknown, fingerprint: unknown): Promise<ActionResult> => submitAnswers(radar, sessionId, fingerprint),
+    AnswerQuestionSet: (sessionId: unknown, questionId: unknown, answers: unknown): Promise<ActionResult> =>
+      answerQuestionSet(radar, sessionId, questionId, answers),
     StopAgent: (sessionId: unknown, agentId: unknown): Promise<ActionResult> => stopAgent(radar, sessionId, agentId),
     InterruptShell: (sessionId: unknown, taskId: unknown): Promise<ActionResult> => interruptShell(radar, sessionId, taskId),
   };

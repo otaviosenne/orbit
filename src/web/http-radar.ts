@@ -2,6 +2,7 @@ import type { ChatColor } from '../shared/chat-colors';
 import type { EffortLevel, ModelChoice } from '../shared/chat-settings';
 import type { CycledPermissionMode } from '../shared/permission-modes';
 import type { RemoteSettings } from '../shared/remote-settings';
+import type { ResourceSnapshot } from '../shared/chat-resources';
 import type {
   ActionResult,
   AttachmentUpload,
@@ -71,6 +72,8 @@ export function createHttpRadar(call: RemoteCall): RadarApi {
     answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>
       call('AnswerQuestion', [sessionId, fingerprint, answer]),
     submitAnswers: (sessionId: string, fingerprint: string): Promise<ActionResult> => call('SubmitAnswers', [sessionId, fingerprint]),
+    answerQuestionSet: (sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> =>
+      call('AnswerQuestionSet', [sessionId, questionId, answers]),
     stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => call('StopAgent', [sessionId, agentId]),
     getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => call('GetShellOutput', [sessionId, taskId]),
     interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => call('InterruptShell', [sessionId, taskId]),
@@ -84,6 +87,7 @@ export function createHttpRadar(call: RemoteCall): RadarApi {
     getChatDevices: (): Promise<ChatDevices> => Promise.resolve(NO_DEVICES),
     focusChatEmulator: (): Promise<DeviceFocus> => Promise.resolve('missing'),
     focusChatBrowser: (): Promise<DeviceFocus> => Promise.resolve('missing'),
+    getChatResources: (): Promise<ResourceSnapshot> => call('GetChatResources', []),
     getRemoteSettings: (): Promise<RemoteSettings> => desktopOnly(),
     setRemoteEnabled: (): Promise<RemoteSettings> => desktopOnly(),
     setRemoteExternalUrl: (): Promise<RemoteSettings> => desktopOnly(),

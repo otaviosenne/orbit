@@ -1,12 +1,11 @@
 import type { AttachmentUpload } from '../../shared/types';
 import { requireElement } from '../dom';
-import { IMAGE_ICON, MICROPHONE_ICON } from '../icons';
+import { IMAGE_ICON } from '../icons';
 import type { Lightbox } from '../lightbox';
 import type { ComposerDraft } from './draft-store';
 import { AttachmentTray } from './attachment-tray';
 import type { DictationState } from './dictation';
 import type { DictationTarget } from './hands-free/dictation-target';
-import type { KeptDrafts } from './hands-free/span-writer';
 import type { OrderedDraft } from './draft-image-tokens';
 import { orderByTokens } from './draft-image-tokens';
 import { ImageMarkers } from './image-markers';
@@ -14,8 +13,14 @@ import { AtomicMarkers } from './atomic-markers';
 import { MarkerChipClicks } from './marker-chip-clicks';
 import { MarkerHighlight } from './marker-highlight';
 import { keepingThreadEnd } from './thread-end';
-import { VoiceControls } from './voice-controls';
-import { VoiceVisuals } from './voice-visuals';
+import { DictationDisplay } from './voice/dictation-display';
+import type { DictationPlace } from './voice/dictation-place';
+import type { FieldVoice } from './voice/field-voice';
+import type { KeptDrafts } from './voice/kept-draft';
+import { keptDraftOf } from './voice/kept-draft';
+import { sharedVoiceHub } from './voice/shared-voice-hub';
+import type { VoiceField } from './voice/voice-field';
+import type { VoiceHub } from './voice/voice-hub';
 
 export type MessageSubmitted = (text: string, attachments: readonly AttachmentUpload[]) => Promise<boolean>;
 export type ComposerProblem = (message: string) => void;
@@ -33,10 +38,17 @@ export class Composer {
   private readonly mic: HTMLButtonElement = requireElement('#composer-mic');
   private readonly markers: ImageMarkers = new ImageMarkers(this.input);
   private readonly tray: AttachmentTray;
-  private readonly voice: VoiceControls;
-  private readonly visuals: VoiceVisuals;
+  private readonly hub: VoiceHub = sharedVoiceHub();
+  private readonly display: DictationDisplay;
+  private readonly field: VoiceField;
+  private readonly voice: FieldVoice;
 
-  constructor(private readonly onSubmit: MessageSubmitted, onProblem: ComposerProblem, lightbox: Lightbox, drafts: KeptDrafts) {
+  constructor(
+    private readonly onSubmit: MessageSubmitted,
+    onProblem: ComposerProblem,
+    lightbox: Lightbox,
+    private readonly drafts: KeptDrafts,
+  ) {
     this.tray = new AttachmentTray(requireElement('#attachment-tray'), lightbox, this.markers);
     this.markers.connect(this.tray);
     this.setUpAttachments();
@@ -50,18 +62,20 @@ export class Composer {
       event.preventDefault();
       void this.submit();
     });
-    this.voice = new VoiceControls(this.input, this.mic, {
-      onState: (state: DictationState): void => this.showDictation(state),
-      onError: onProblem,
-      onDraft: (): void => this.visuals.placeBars(),
-      drafts,
-    });
-    this.visuals = new VoiceVisuals(requireElement('#composer-box'), this.input, requireElement('#voice-bars'), (): number =>
-      this.voice.level(),
+    this.display = new DictationDisplay(
+      { host: this.form, box: requireElement('#composer-box'), input: this.input, bars: requireElement('#voice-bars') },
+      (): number => this.hub.level(),
     );
-    this.setUpMic();
+    this.field = {
+      input: this.input,
+      mic: this.mic,
+      showState: (state: DictationState): void => this.display.show(state),
+      draftChanged: (): void => this.display.placeBars(),
+      showError: onProblem,
+      mayRefocus: (): boolean => true,
+    };
+    this.voice = this.hub.attach(this.field);
     this.reserveSpaceInThread();
-    this.showDictation('idle');
   }
 
   // Dictation from outside the field: the caret goes to the end of the draft, where the words will land.
@@ -70,12 +84,17 @@ export class Composer {
       this.input.focus();
       this.input.setSelectionRange(this.input.value.length, this.input.value.length);
     }
-    this.voice.pressOutside();
+    this.hub.pressOutside(this.voice);
   }
 
   // Hands-free words follow the chat on screen; null pauses them.
   followDictationTarget(target: DictationTarget | null): void {
-    this.voice.follow(target);
+    this.hub.followDrawer(target === null ? null : this.placeOf(target));
+  }
+
+  // Words still being refined for a chat that was left finish in its kept draft; a starting chat keeps none.
+  private placeOf(target: DictationTarget): DictationPlace {
+    return { target, field: this.field, kept: target.kind === 'chat' ? keptDraftOf(this.drafts, target.sessionId) : null };
   }
 
   // The unsent text and images, to keep while another chat is open.
@@ -102,7 +121,7 @@ export class Composer {
 
   // The images go with the draft, since their markers in it say where each one belongs.
   reset(): void {
-    this.voice.cancel();
+    this.hub.cancel(this.voice);
     this.input.value = '';
     this.tray.clear();
   }
@@ -150,22 +169,10 @@ export class Composer {
     new MarkerChipClicks(this.input, highlight, (number: number): void => this.tray.preview(number - 1));
   }
 
-  private setUpMic(): void {
-    this.mic.innerHTML = MICROPHONE_ICON;
-    // Keep focus (and the caret) in the text field when the mic is pressed.
-    this.mic.addEventListener('mousedown', (event: MouseEvent): void => event.preventDefault());
-  }
-
-  private showDictation(state: DictationState): void {
-    this.form.dataset['dictation'] = state;
-    if (state === 'listening') this.visuals.show();
-    else this.visuals.hide();
-  }
-
   private async submit(): Promise<void> {
     const hasText: boolean = this.input.value.trim().length > 0;
     if ((!hasText && this.tray.count === 0) || this.button.disabled) return;
-    this.voice.messageSent();
+    this.hub.messageSent(this.voice);
     const draft: OrderedDraft = orderByTokens(this.input.value, this.tray.count);
     const uploads: AttachmentUpload[] = inOrder(await this.tray.uploads(), draft.order);
     const files: File[] = inOrder(this.tray.files(), draft.order);

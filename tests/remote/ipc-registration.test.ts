@@ -24,7 +24,7 @@ import { PUSH_CHANNELS } from '../../src/shared/ipc-routing';
 
 describe('real app IPC wiring', () => {
   it('answers every channel the renderer can call, each exactly once', () => {
-    const services: RadarServices = { radar: {}, usage: {}, dictation: {}, chatWindows: {}, pastChats: {}, timelineHistory: {} } as unknown as RadarServices;
+    const services: RadarServices = { radar: {}, usage: {}, dictation: {}, chatWindows: {}, pastChats: {}, timelineHistory: {}, resources: {} } as unknown as RadarServices;
     registerIpcHandlers(services, buildSharedRoutes(services));
     registerRemoteSettingsHandlers({} as RemoteController);
     const expected: string[] = Object.entries(IpcChannel)
