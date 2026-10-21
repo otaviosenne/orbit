@@ -32,6 +32,8 @@ const LEADING_COMMAND: RegExp = /^\s*(\/[\w:.-]+(?:\s|$))?/;
 
 // Enter sends, Shift+Enter adds a line (on a touch screen return only adds lines), holding Space (or the mic)
 // dictates, a double tap of Space keeps the mic on hands-free; the draft is kept if sending fails.
+const LEFT_KEY: string = 'ArrowLeft';
+
 export class Composer {
   private readonly form: HTMLFormElement = requireElement('#composer');
   private readonly input: HTMLTextAreaElement = requireElement('#composer-input');
@@ -140,6 +142,16 @@ export class Composer {
   }
 
   // Images come in by pasting, dropping files on the composer, or the image button.
+  // Left arrow in an empty composer has nowhere to go, so it backs out of the chat, like going back a page.
+  closeOnLeftWhenEmpty(close: () => void): void {
+    this.input.addEventListener('keydown', (event: KeyboardEvent): void => {
+      const plain: boolean = !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+      if (event.key !== LEFT_KEY || !plain || this.input.value.length > 0 || this.tray.count > 0) return;
+      event.preventDefault();
+      close();
+    });
+  }
+
   private setUpAttachments(): void {
     const picker: HTMLInputElement = requireElement('#composer-file');
     const attach: HTMLButtonElement = requireElement('#composer-attach');

@@ -118,6 +118,7 @@ export class ChatSheet {
     const close: HTMLElement = requireElement('#sheet-close');
     close.innerHTML = CLOSE_ICON;
     close.addEventListener('click', onClose);
+    this.composer.closeOnLeftWhenEmpty(onClose);
     // "Go to chat" leaves the radar for the chat's own window, hence the open-outside icon.
     // Its own Orbit window is the main way out of the panel; the terminal is one quiet icon by the name.
     requireElement('#action-window').insertAdjacentHTML('beforeend', OPEN_OUTSIDE_ICON);
