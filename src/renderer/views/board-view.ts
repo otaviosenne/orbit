@@ -112,7 +112,7 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   card.style.setProperty('--on-chat', textOnChatColor(chat.color));
   const top: HTMLDivElement = element('div', 'card-top');
   const time: HTMLSpanElement = element('span', 'card-time', formatDuration(statusAge(chat, now)));
-  if (hasUnread) time.prepend(renderUnseenDot());
+  if (hasUnread) time.prepend(renderUnseenDot(chat.status === 'waiting'));
   if (chat.status === 'busy') time.prepend(renderSpinner());
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());
   top.append(renderTitle(chat.name, marks.devicesOf(chat.sessionId)), time);

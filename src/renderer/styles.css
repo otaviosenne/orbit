@@ -374,6 +374,14 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green);
   animation: unseen-pulse 1.8s ease-out infinite;
 }
+/* Waiting on an answer: a darker green, its halo pulsing in the same shade */
+.unseen-dot.is-waiting { --unseen-color: color-mix(in srgb, var(--tag-green) 55%, #000000); background: var(--unseen-color); animation-name: unseen-pulse-waiting; }
+@keyframes unseen-pulse-waiting {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 85%, transparent); transform: scale(1); }
+  30% { transform: scale(1.18); }
+  70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--unseen-color) 0%, transparent); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 0%, transparent); transform: scale(1); }
+}
 @keyframes unseen-pulse {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tag-green) 80%, transparent); transform: scale(1); }
   30% { transform: scale(1.18); }
