@@ -1,3 +1,5 @@
+import { isWebHost } from '../../host';
+import { rememberHandsFree, wasHandsFreeOn } from '../hands-free/hands-free-memory';
 import { composerState } from '../hands-free/composer-state';
 import { DoubleTap } from '../hands-free/double-tap';
 import { HandsFree } from '../hands-free/hands-free';
@@ -42,6 +44,8 @@ export class VoiceHub {
     this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place));
     this.listenForOtherKeys();
     this.listenForDoubleTapAnywhere();
+    // Orbit Web has no dictation; the desktop window picks the mode up where the last run left it.
+    if (!isWebHost() && wasHandsFreeOn()) this.handsFree.turnOn(Promise.resolve());
   }
 
   attach(field: VoiceField): FieldVoice {
@@ -187,6 +191,8 @@ export class VoiceHub {
 
   private showHandsFree(state: HandsFreeState): void {
     this.handsFreeState = state;
+    // Finishing is the tail of turning off; paused is still on, only with no composer to write to.
+    if (state !== 'finishing') rememberHandsFree(state !== 'off');
     this.indicator.show(state);
     this.showStates();
     this.focusTarget();
