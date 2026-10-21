@@ -1,11 +1,8 @@
-// A draft ending in "enviar" is sent. Longer spoken forms come first so all of their words go, not just the last one.
-// Dictation varies case, accents and punctuation, so words are compared bare. If one word proves too easy to say by
-// accident, this list is the one place to change it.
+// A draft ending in "chinelo" is sent: a word no prompt ends with by accident. Said twice it still goes out whole.
+// Dictation varies case, accents and punctuation, so words are compared bare. This list is the one place to change it.
 const SEND_PHRASES: readonly (readonly string[])[] = [
-  ['enviar', 'pode', 'enviar'],
-  ['enviar', 'enviar'],
-  ['pode', 'enviar'],
-  ['enviar'],
+  ['chinelo', 'chinelo'],
+  ['chinelo'],
 ];
 const WORD_PATTERN: RegExp = /[\p{L}\p{N}]+/gu;
 // What dictation leaves between the last real word and the command: spaces, commas, full stops and the like.
