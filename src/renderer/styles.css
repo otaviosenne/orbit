@@ -359,7 +359,21 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card-device svg { width: 14px; height: 14px; fill: currentColor; }
 .card-time { display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* Finished since you last looked */
-.unseen-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-green) 22%, transparent); }
+/* Unread reply: a green dot whose halo swells and fades, so it catches the eye across the board (unseen-dot.ts keeps
+   the phase across rebuilds) */
+.unseen-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green);
+  animation: unseen-pulse 1.8s ease-out infinite;
+}
+@keyframes unseen-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tag-green) 80%, transparent); transform: scale(1); }
+  30% { transform: scale(1.18); }
+  70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--tag-green) 0%, transparent); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tag-green) 0%, transparent); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .unseen-dot { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-green) 22%, transparent); }
+}
 .card.is-unseen .card-name { font-weight: 700; }
 .card-pin { display: grid; place-items: center; width: 14px; height: 14px; color: var(--chat); }
 .card-pin svg { width: 13px; height: 13px; fill: currentColor; }
