@@ -79,7 +79,9 @@
   .tab[data-view='list'] { --tab-icon: url(tab-list.svg); }
 
   /* The chat covers the tab bar; menus, the lightbox and Help still come above it */
-  .sheet { z-index: 15; }
+  /* Full screen, the desktop panel's slight see-through shows the board and tab bar behind it; the solid card color
+     under the panel tint makes it opaque without changing its shade */
+  .sheet { z-index: 15; background: linear-gradient(var(--panel), var(--panel)), var(--card); }
   /* Dragged in from the left edge (swipe-back.ts): it follows the finger at once, its edge shadowed over the board */
   .sheet.is-swiping { transition: none; box-shadow: -10px 0 30px rgb(0 0 0 / 0.18); }
 
