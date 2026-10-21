@@ -1494,7 +1494,8 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .list-status-active { --status: var(--secondary); }
 /* Idle is outlined rather than tinted: the tertiary gray would be too faint to read on a dark row */
 .list-status-idle { --status: var(--secondary); background: transparent; box-shadow: inset 0 0 0 0.5px var(--control-border); }
-.list-row-grip { display: grid; place-items: center; color: var(--tertiary); cursor: grab; }
+/* The grip lifts its row at once, so a finger on it must never start a scroll; padding makes it a 44 px target */
+.list-row-grip { display: grid; place-items: center; align-self: stretch; margin: -8px -10px -8px 0; padding: 0 12px; color: var(--tertiary); cursor: grab; touch-action: none; }
 .list-row-grip svg { width: 18px; height: 18px; fill: currentColor; }
 /* The held row floats above the others like an iOS row being moved */
 .list-row.is-lifted { z-index: 2; border-radius: 12px; background: var(--card); scale: 1.02; box-shadow: 0 12px 32px rgb(0 0 0 / 0.2), 0 0 0 0.5px var(--control-border); }

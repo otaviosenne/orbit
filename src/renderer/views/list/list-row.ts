@@ -13,6 +13,7 @@ import type { ListStatus } from './list-status';
 export const LIST_SESSION_ATTRIBUTE: string = 'listSession';
 export const ROW_SELECTOR: string = '[data-list-session]';
 export const ROW_BUTTON_CLASS: string = 'list-row-button';
+export const GRIP_SELECTOR: string = '.list-row-grip';
 
 // One chat's place in the list. The item and its button outlive every poll, so keyboard focus and a press in
 // progress survive the 2 s refresh; only what is inside the button is redrawn.

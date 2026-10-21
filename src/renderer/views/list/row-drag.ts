@@ -1,6 +1,6 @@
 import { EdgeScroll } from './edge-scroll';
 import { slotShift, targetIndex } from './drop-slot';
-import { LIST_SESSION_ATTRIBUTE, ROW_SELECTOR } from './list-row';
+import { GRIP_SELECTOR, LIST_SESSION_ATTRIBUTE, ROW_SELECTOR } from './list-row';
 
 export interface RowDragHost {
   // The <ol> holding the rows, and the element that scrolls them.
@@ -53,6 +53,7 @@ interface Lift {
 
 // Press and hold a row, then drag it up or down: the other rows step aside, and letting go puts it there. A mouse
 // may also start dragging by simply moving, but a finger that moves before the hold is scrolling the list.
+// The grip at the row's side lifts it at once: pressing it can only mean moving the row, so there is no hold.
 export class RowDrag {
   private press: Press | null = null;
   private lift: Lift | null = null;
@@ -91,6 +92,11 @@ export class RowDrag {
     const startInList: number = event.clientY - this.host.list.getBoundingClientRect().top;
     this.press = { pointerId: event.pointerId, pointerType: event.pointerType, sessionId, item, startX: event.clientX, startY: event.clientY, startInList, downAt: event.timeStamp, timer, lastY: event.clientY };
     this.host.changed();
+    if (isOnGrip(event) && this.host.canReorder()) {
+      // Without this the browser would read the finger as the start of a scroll and take the pointer away.
+      event.preventDefault();
+      this.pickUp(this.press);
+    }
   }
 
   private follow(event: PointerEvent): void {
@@ -193,4 +199,8 @@ export class RowDrag {
       row.style.transform = '';
     }
   }
+}
+
+function isOnGrip(event: PointerEvent): boolean {
+  return (event.target as HTMLElement).closest(GRIP_SELECTOR) !== null;
 }
