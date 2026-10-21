@@ -14,10 +14,12 @@ import { ColorPicker } from './color-picker';
 import type { ComposerDraft } from './draft-store';
 import { DraftStore } from './draft-store';
 import { Composer } from './composer';
+import type { DictationTarget } from './hands-free/dictation-target';
 import { PanelResizer } from './panel-resizer';
 import { MessageNavigator } from './message-navigator';
 import { ThreadZoom } from './thread-zoom';
 import { WorkingIndicator } from './working-indicator';
+import { DeviceLinks } from './device-links';
 import { ChatSettingsPopover } from './settings/chat-settings-popover';
 import { RenameForm } from './rename-form';
 import { listenForSpaceToTalk } from './space-to-talk';
@@ -54,6 +56,10 @@ export class ChatSheet {
     (text: string, attachments: readonly AttachmentUpload[]): Promise<boolean> => this.send(text, attachments),
     (problem: string): void => this.showStatus(problem, true),
     this.lightbox,
+    {
+      text: (sessionId: string): string => this.drafts.get(sessionId).text,
+      replace: (sessionId: string, expected: string, next: string): void => this.replaceKeptDraft(sessionId, expected, next),
+    },
   );
   private readonly working: WorkingIndicator = new WorkingIndicator(requireElement('#working-indicator'), (): void => void this.interrupt());
   private readonly agentView: AgentView;
@@ -65,12 +71,21 @@ export class ChatSheet {
   private readonly settings: ChatSettingsPopover = new ChatSettingsPopover(requireElement('#action-settings'), requireElement('#chat-settings'), {
     insertSkill: (name: string): void => this.composer.insertCommand(`/${name} `),
     report: (result: ActionResult, successText: string): void => this.report(result, successText),
+    closeChat: (sessionId: string): void => this.onCloseChat(sessionId),
   });
+  // The Emulator and Browser pills, for a chat that tests on an emulator or in Chrome.
+  private readonly devices: DeviceLinks = new DeviceLinks((text: string, isError: boolean): void => this.showStatus(text, isError));
   private chat: ChatSnapshot | null = null;
   private statusTimer: number | undefined;
 
   // onThreadChange: the panel switched between the chat and one of its agents, so its transcript must be fetched.
-  constructor(onClose: () => void, private readonly edits: OptimisticEdits, onThreadChange: () => void) {
+  // onCloseChat: closes a chat the way the board does, so its card and this panel go at once.
+  constructor(
+    onClose: () => void,
+    private readonly edits: OptimisticEdits,
+    onThreadChange: () => void,
+    private readonly onCloseChat: (sessionId: string) => void,
+  ) {
     this.placeholder = new PendingPlaceholder(this.root, onClose);
     this.agentView = new AgentView(
       this.root,
@@ -144,6 +159,7 @@ export class ChatSheet {
     this.root.classList.add('is-open');
     document.body.classList.add(PANEL_OPEN_CLASS);
     this.placeholder.show(chat);
+    this.composer.followDictationTarget(this.dictationTarget());
   }
 
   recolorPending(launchedAt: number, color: string | null): void {
@@ -188,7 +204,11 @@ export class ChatSheet {
     this.root.style.setProperty('--on-chat', textOnChatColor(chat.color));
     const now: number = Date.now();
     this.settings.follow(chat);
+    // A closed chat drives nothing any more, so it gets no device buttons.
+    if (this.isShowingClosed) this.devices.clear();
+    else this.devices.follow(chat.sessionId);
     this.agentView.update(chat, now);
+    this.composer.followDictationTarget(this.dictationTarget());
     const agent: AgentTitle | null = this.agentView.title(now);
     this.name.textContent = agent?.name ?? chat.name;
     if (agent !== null) return void this.meta.replaceChildren(document.createTextNode(agent.meta));
@@ -227,7 +247,22 @@ export class ChatSheet {
     this.rename.close();
     this.colors.hide();
     this.settings.forget();
+    this.devices.clear();
     this.placeholder.clear();
+    this.composer.followDictationTarget(this.dictationTarget());
+  }
+
+  // Hands-free words go to the composer on screen; there is none while the panel is closed or shows an agent
+  // or a closed chat.
+  private dictationTarget(): DictationTarget | null {
+    if (!this.root.classList.contains('is-open') || this.isShowingClosed || this.agentView.agentId !== null) return null;
+    if (this.chat !== null) return { kind: 'chat', sessionId: this.chat.sessionId };
+    return this.placeholder.isActive ? { kind: 'starting' } : null;
+  }
+
+  // The words a chat was left with arrive after it; the chat on screen keeps its own text instead.
+  private replaceKeptDraft(sessionId: string, expected: string, next: string): void {
+    if (sessionId !== this.chat?.sessionId) this.drafts.replaceText(sessionId, expected, next);
   }
 
   // Whatever was typed for the chat being left waits for it to be opened again.
@@ -241,6 +276,7 @@ export class ChatSheet {
     this.rename.close();
     this.colors.hide();
     this.settings.forget();
+    this.devices.clear();
     this.composer.reset();
     this.status.textContent = '';
   }

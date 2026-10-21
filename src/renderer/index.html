@@ -8,7 +8,7 @@
   </head>
   <body>
     <header class="topbar">
-      <div id="app-title" class="app-title"></div>
+      <div id="app-title" class="app-title"><button id="hands-free-indicator" class="hands-free-indicator" type="button" hidden></button></div>
       <nav id="nav" class="nav"></nav>
       <div class="topbar-info">
         <div id="resume-chat" class="resume-chat"></div>
@@ -35,6 +35,10 @@
             </form>
           </div>
           <p id="sheet-meta" class="sheet-meta"></p>
+        </div>
+        <div id="sheet-devices" class="sheet-devices" hidden>
+          <button id="action-emulator" class="link-button device-link" type="button" hidden>Emulator</button>
+          <button id="action-browser" class="link-button device-link" type="button" hidden>Browser</button>
         </div>
         <div class="sheet-actions">
           <button id="action-settings" class="icon-button" type="button" title="Model, effort and skills" aria-label="Chat settings" aria-haspopup="dialog"></button>

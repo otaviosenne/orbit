@@ -3,6 +3,8 @@ import type { CycledPermissionMode } from '../../../shared/permission-modes';
 import { PERMISSION_MODE_TITLES } from '../../../shared/permission-modes';
 import type { ActionResult, ChatPermissions, ChatSettings, ChatSnapshot } from '../../../shared/types';
 import { SLIDERS_ICON } from '../../icons';
+import { CloseChatAction } from './close-chat-action';
+import type { SectionKey } from './disclosure';
 import { choiceLabel, effortLabel } from './model-label';
 import type { SettingField } from './pending-settings';
 import { PendingSettings } from './pending-settings';
@@ -15,6 +17,8 @@ export interface SettingsPopoverHost {
   // Puts "/<name> " into the composer for the user to finish; nothing is sent.
   readonly insertSkill: (name: string) => void;
   readonly report: (result: ActionResult, successText: string) => void;
+  // Closes the chat the way the board's card menu does: it leaves the board and the panel at once.
+  readonly closeChat: (sessionId: string) => void;
 }
 
 type SettingSender = (chat: ChatSnapshot) => Promise<ActionResult>;
@@ -22,18 +26,30 @@ type SettingSender = (chat: ChatSnapshot) => Promise<ActionResult>;
 const UNKNOWN_SETTINGS: ChatSettings = { model: null, effort: null };
 const UNKNOWN_PERMISSIONS: ChatPermissions = { mode: null, lockedReason: null };
 const ACTIVE_CLASS: string = 'is-active';
+// The confirmation floats outside the popover; a click on it must not count as a click elsewhere.
+const CONFIRM_SELECTOR: string = '.confirm-popover';
 
-// The header's sliders button and its popover: the chat's model and effort, and its skills.
+// The header's sliders button and its popover: collapsed Model, Effort, Permissions and Skills rows (one open at a
+// time, all closed on every open), and Close chat at the bottom.
 export class ChatSettingsPopover {
-  private readonly values: SettingsValues = new SettingsValues({
-    model: (model: ModelChoice): void => void this.setModel(model),
-    effort: (effort: EffortLevel): void => void this.setEffort(effort),
-  });
+  private readonly values: SettingsValues = new SettingsValues(
+    {
+      model: (model: ModelChoice): void => void this.setModel(model),
+      effort: (effort: EffortLevel): void => void this.setEffort(effort),
+    },
+    (key: SectionKey): void => this.toggleSection(key),
+  );
   private readonly permissions: PermissionsSection = new PermissionsSection({
     pick: (mode: CycledPermissionMode): void => void this.setPermissionMode(mode),
     openTerminal: (): void => this.openTerminal(),
+    toggle: (): void => this.toggleSection('permissions'),
   });
-  private readonly skills: SkillsSection = new SkillsSection((name: string): void => this.pickSkill(name));
+  private readonly skills: SkillsSection = new SkillsSection(
+    (name: string): void => this.pickSkill(name),
+    (): void => this.toggleSection('skills'),
+  );
+  private readonly closeAction: CloseChatAction = new CloseChatAction((): void => this.closeChat());
+  private expanded: SectionKey | null = null;
   private readonly pending: PendingSettings = new PendingSettings();
   private chat: ChatSnapshot | null = null;
   private polled: ChatSettings = UNKNOWN_SETTINGS;
@@ -47,7 +63,13 @@ export class ChatSettingsPopover {
   ) {
     button.innerHTML = SLIDERS_ICON;
     button.addEventListener('click', (): void => this.toggle());
-    root.append(this.values.root, this.permissions.root, this.skills.root);
+    root.append(
+      this.values.model.root,
+      this.values.effort.root,
+      this.permissions.disclosure.root,
+      this.skills.disclosure.root,
+      this.closeAction.root,
+    );
     document.addEventListener('pointerdown', (event: PointerEvent): void => this.dismissOutside(event), true);
   }
 
@@ -66,6 +88,7 @@ export class ChatSettingsPopover {
   }
 
   hide(): void {
+    this.closeAction.dismiss();
     this.root.hidden = true;
     this.button.classList.remove(ACTIVE_CLASS);
   }
@@ -81,15 +104,30 @@ export class ChatSettingsPopover {
     if (this.isOpen || this.chat === null) return this.hide();
     this.root.hidden = false;
     this.button.classList.add(ACTIVE_CLASS);
+    this.expanded = null;
+    this.showExpanded();
     this.showValues();
     void this.refresh();
     void this.skills.load(this.chat.sessionId);
-    this.skills.focusSearch();
+  }
+
+  private toggleSection(key: SectionKey): void {
+    this.expanded = this.expanded === key ? null : key;
+    this.showExpanded();
+    if (this.expanded === 'skills') this.skills.focusSearch();
+  }
+
+  private showExpanded(): void {
+    this.values.model.setOpen(this.expanded === 'model');
+    this.values.effort.setOpen(this.expanded === 'effort');
+    this.permissions.disclosure.setOpen(this.expanded === 'permissions');
+    this.skills.disclosure.setOpen(this.expanded === 'skills');
   }
 
   private dismissOutside(event: PointerEvent): void {
     const target: Node = event.target as Node;
-    if (this.isOpen && !this.root.contains(target) && !this.button.contains(target)) this.hide();
+    const isInConfirm: boolean = target instanceof Element && target.closest(CONFIRM_SELECTOR) !== null;
+    if (this.isOpen && !isInConfirm && !this.root.contains(target) && !this.button.contains(target)) this.hide();
   }
 
   // Polls overlap when the disk is slow; one read at a time is enough.
@@ -158,6 +196,12 @@ export class ChatSettingsPopover {
       this.showValues();
     }
     this.host.report(result, successText);
+  }
+
+  private closeChat(): void {
+    const chat: ChatSnapshot | null = this.chat;
+    this.hide();
+    if (chat !== null) this.host.closeChat(chat.sessionId);
   }
 
   private pickSkill(name: string): void {

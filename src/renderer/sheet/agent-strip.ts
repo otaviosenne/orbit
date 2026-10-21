@@ -4,21 +4,26 @@ import { formatDuration } from '../format';
 import { CLOSE_ICON } from '../icons';
 import { activeAgents } from '../views/agent-rows';
 import { renderAgentDot } from './agent-dot';
-import { AgentStopPopover } from './agent-stop-popover';
 import { PendingStops } from './pending-stops';
-import { renderShellRow } from './shell-row';
+import { ShellColumn } from './shell-column';
+import type { ProblemReporter } from './shell-column';
 import type { StripColumnKind } from './strip-column';
 import { renderStripColumn, toggledColumn } from './strip-column';
+import { StripConfirmPopover } from './strip-confirm-popover';
 
-export type AgentOpened = (agentId: string) => void;
-export type AgentStopConfirmed = (agentId: string) => void;
+// What the strip asks of its owner: open an agent's transcript, stop an agent, and show a problem.
+export interface StripActions {
+  readonly openAgent: (agentId: string) => void;
+  readonly stopAgent: (agentId: string) => void;
+  readonly report: ProblemReporter;
+}
 
 const PRIMARY_BUTTON: number = 0;
 // A click with no pointer behind it came from the keyboard.
 const KEYBOARD_CLICK_DETAIL: number = 0;
 const AGENT_ATTRIBUTE: string = 'agent';
 const STOP_ATTRIBUTE: string = 'agentStop';
-const CONFIRMING_CLASS: string = 'is-confirming';
+const CONFIRM_KEY_PREFIX: string = 'agent:';
 // Agents and background shells side by side; with only one kind the strip stays a single column.
 const SPLIT_CLASS: string = 'is-split';
 // Matches the panel's other open/close transitions; long enough to read as sliding, short enough not to wait on.
@@ -30,26 +35,19 @@ const REDUCED_MOTION: string = '(prefers-reduced-motion: reduce)';
 export class AgentStrip {
   private listed: readonly AgentSnapshot[] = [];
   private agents: readonly AgentSnapshot[] = [];
-  private shells: readonly ShellSnapshot[] = [];
   private currentAgentId: string | null = null;
   private now: number = 0;
   private readonly expanded: Set<StripColumnKind> = new Set();
   private readonly stopping: PendingStops = new PendingStops();
-  private readonly popover: AgentStopPopover;
+  // Closing only drops the highlight: rebuilding rows here would detach the X being pressed before it is measured.
+  private readonly confirm: StripConfirmPopover = new StripConfirmPopover((): void => this.clearConfirming());
+  private readonly shells: ShellColumn;
 
   // Rows are rebuilt every poll, so a full click (down + up) could straddle a rebuild and be lost.
-  constructor(private readonly root: HTMLElement, onOpen: AgentOpened, onStop: AgentStopConfirmed) {
-    this.popover = new AgentStopPopover(onStop, (): void => this.markConfirming(null));
+  constructor(private readonly root: HTMLElement, private readonly actions: StripActions) {
+    this.shells = new ShellColumn(this.confirm, (): void => this.render(), actions.report);
     root.addEventListener('pointerdown', (event: PointerEvent): void => {
-      if (event.button !== PRIMARY_BUTTON) return;
-      const target: HTMLElement = event.target as HTMLElement;
-      // Checked first: the X sits inside the agent's item, which would otherwise open the agent.
-      const stop: HTMLElement | null = target.closest<HTMLElement>(`[data-agent-stop]`);
-      if (stop !== null) return this.askToStop(stop);
-      const column: StripColumnKind | null = toggledColumn(target);
-      if (column !== null) return this.toggle(column);
-      const agentId: string | undefined = target.closest<HTMLElement>(`[data-${AGENT_ATTRIBUTE}]`)?.dataset[AGENT_ATTRIBUTE];
-      if (agentId !== undefined) onOpen(agentId);
+      if (event.button === PRIMARY_BUTTON) this.press(event.target as HTMLElement);
     });
     root.addEventListener('click', (event: MouseEvent): void => {
       const stop: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>(`[data-agent-stop]`);
@@ -57,9 +55,9 @@ export class AgentStrip {
     });
   }
 
-  show(agents: readonly AgentSnapshot[], shells: readonly ShellSnapshot[], currentAgentId: string | null, now: number): void {
+  show(sessionId: string, agents: readonly AgentSnapshot[], shells: readonly ShellSnapshot[], currentAgentId: string | null, now: number): void {
     this.listed = activeAgents(agents);
-    this.shells = [...shells].sort((a: ShellSnapshot, b: ShellSnapshot) => a.startedAt - b.startedAt);
+    this.shells.update(sessionId, shells, now);
     this.currentAgentId = currentAgentId;
     this.now = now;
     this.render();
@@ -68,7 +66,8 @@ export class AgentStrip {
   // A different chat starts folded again.
   reset(): void {
     this.expanded.clear();
-    this.popover.dismiss();
+    this.confirm.dismiss();
+    this.shells.reset();
   }
 
   // Hidden at once; it stays hidden while the chat confirms, and comes back if it never does.
@@ -82,19 +81,30 @@ export class AgentStrip {
     this.render();
   }
 
+  // An X is checked before its row: it sits inside the row's item, which would otherwise open the agent.
+  private press(target: HTMLElement): void {
+    const stop: HTMLElement | null = target.closest<HTMLElement>(`[data-agent-stop]`);
+    if (stop !== null) return this.askToStop(stop);
+    if (this.shells.handlePress(target)) return;
+    const column: StripColumnKind | null = toggledColumn(target);
+    if (column !== null) return this.toggle(column);
+    const agentId: string | undefined = target.closest<HTMLElement>(`[data-${AGENT_ATTRIBUTE}]`)?.dataset[AGENT_ATTRIBUTE];
+    if (agentId !== undefined) this.actions.openAgent(agentId);
+  }
+
   private askToStop(button: HTMLElement): void {
     const agentId: string | undefined = button.dataset[STOP_ATTRIBUTE];
     const agent: AgentSnapshot | undefined = this.agents.find((candidate: AgentSnapshot) => candidate.id === agentId);
-    if (agent === undefined) return;
-    this.popover.open(agent.id, agent.description, button.getBoundingClientRect());
-    this.markConfirming(agent.id);
+    if (agent === undefined || this.confirm.justClosed(confirmKey(agent.id))) return;
+    this.confirm.open(
+      { key: confirmKey(agent.id), title: agent.description, action: 'Stop agent', run: (): void => this.actions.stopAgent(agent.id) },
+      button.getBoundingClientRect(),
+    );
+    this.render();
   }
 
-  // Keeps the X of the agent being confirmed showing while the pointer is away on the popover.
-  private markConfirming(agentId: string | null): void {
-    for (const item of this.root.querySelectorAll<HTMLElement>('.agent-strip-item')) {
-      item.classList.toggle(CONFIRMING_CLASS, agentId !== null && item.dataset[AGENT_ATTRIBUTE] === agentId);
-    }
+  private clearConfirming(): void {
+    for (const item of this.root.querySelectorAll<HTMLElement>('.agent-strip-item.is-confirming')) item.classList.remove('is-confirming');
   }
 
   // The strip slides from its old height to its new one, so "more" rolls open and "less" rolls closed.
@@ -110,11 +120,13 @@ export class AgentStrip {
   private render(): void {
     this.agents = this.stopping.visible(this.listed, this.now);
     // An agent that finished while its stop was being confirmed has nothing left to stop.
-    const confirming: string | null = this.popover.openFor;
-    if (confirming !== null && !this.agents.some((agent: AgentSnapshot) => agent.id === confirming)) this.popover.dismiss();
+    const confirming: string | null = this.confirm.openFor;
+    const isAgentConfirm: boolean = confirming?.startsWith(CONFIRM_KEY_PREFIX) === true;
+    if (isAgentConfirm && !this.agents.some((agent: AgentSnapshot) => confirmKey(agent.id) === confirming)) this.confirm.dismiss();
+    const shellRows: HTMLElement[] = this.shells.rows();
     const columns: HTMLElement[] = [];
     if (this.agents.length > 0) columns.push(this.renderColumn('agents', this.agents.map((agent: AgentSnapshot) => this.renderItem(agent))));
-    if (this.shells.length > 0) columns.push(this.renderColumn('shells', this.shells.map((shell: ShellSnapshot) => renderShellRow(shell, this.now))));
+    if (shellRows.length > 0) columns.push(this.renderColumn('shells', shellRows));
     this.root.hidden = columns.length === 0;
     this.root.classList.toggle(SPLIT_CLASS, columns.length > 1);
     this.root.replaceChildren(...columns);
@@ -126,8 +138,7 @@ export class AgentStrip {
 
   // The row and its X are siblings: a button cannot hold another button.
   private renderItem(agent: AgentSnapshot): HTMLElement {
-    const item: HTMLDivElement = element('div', `agent-strip-item${agent.id === this.popover.openFor ? ` ${CONFIRMING_CLASS}` : ''}`);
-    item.dataset[AGENT_ATTRIBUTE] = agent.id;
+    const item: HTMLDivElement = element('div', `agent-strip-item${this.confirm.openFor === confirmKey(agent.id) ? ' is-confirming' : ''}`);
     item.append(this.renderRow(agent), renderStopButton(agent));
     return item;
   }
@@ -144,6 +155,10 @@ export class AgentStrip {
     );
     return row;
   }
+}
+
+function confirmKey(agentId: string): string {
+  return `${CONFIRM_KEY_PREFIX}${agentId}`;
 }
 
 function renderStopButton(agent: AgentSnapshot): HTMLButtonElement {

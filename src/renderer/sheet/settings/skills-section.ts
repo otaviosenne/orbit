@@ -1,6 +1,7 @@
 import type { SkillEntry } from '../../../shared/types';
 import { element } from '../../dom';
 import { SEARCH_ICON } from '../../icons';
+import { Disclosure } from './disclosure';
 import { filterSkills } from './skill-filter';
 
 export type SkillPicked = (name: string) => void;
@@ -8,16 +9,19 @@ export type SkillPicked = (name: string) => void;
 const PICK_KEY: string = 'Enter';
 const LOADING_TEXT: string = 'Loading skills…';
 const EMPTY_TEXT: string = 'No skills match';
+const LOADING_VALUE: string = '…';
 
 // The chat's skills with a search field; picking one hands its name over, it never sends anything.
 export class SkillsSection {
-  readonly root: HTMLElement = element('section', 'chat-settings-section chat-settings-skills');
+  readonly disclosure: Disclosure;
   private readonly search: HTMLInputElement = element('input', 'chat-settings-search-input');
   private readonly list: HTMLDivElement = element('div', 'chat-settings-skill-list');
   private skills: readonly SkillEntry[] = [];
   private loadingFor: string | null = null;
 
-  constructor(private readonly onPick: SkillPicked) {
+  constructor(private readonly onPick: SkillPicked, toggle: () => void) {
+    this.disclosure = new Disclosure('Skills', toggle);
+    this.disclosure.root.classList.add('chat-settings-skills');
     this.search.type = 'search';
     this.search.placeholder = 'Search skills';
     this.search.spellcheck = false;
@@ -31,19 +35,19 @@ export class SkillsSection {
     const field: HTMLLabelElement = element('label', 'chat-settings-search');
     field.innerHTML = SEARCH_ICON;
     field.append(this.search);
-    const head: HTMLDivElement = element('div', 'chat-settings-head');
-    head.append(element('span', 'chat-settings-title', 'Skills'));
-    this.root.append(head, field, this.list);
+    this.disclosure.body.append(field, this.list);
   }
 
   // Re-read on every open: a skill added in the meantime belongs in the list.
   async load(sessionId: string): Promise<void> {
     this.loadingFor = sessionId;
     this.search.value = '';
+    this.disclosure.setValue(LOADING_VALUE);
     this.list.replaceChildren(element('p', 'chat-settings-empty', LOADING_TEXT));
     const skills: SkillEntry[] = await window.radar.listSkills(sessionId);
     if (this.loadingFor !== sessionId) return;
     this.skills = skills;
+    this.disclosure.setValue(String(skills.length));
     this.render();
   }
 

@@ -27,6 +27,12 @@ export class DraftStore {
     else this.drafts.set(sessionId, draft);
     save(this.drafts);
   }
+
+  // Late dictated words for a chat that is not on screen; skipped once its draft changed in any other way.
+  replaceText(sessionId: string, expected: string, next: string): void {
+    const kept: ComposerDraft = this.get(sessionId);
+    if (kept.text === expected) this.set(sessionId, { text: next, files: kept.files });
+  }
 }
 
 function isEmpty(draft: ComposerDraft): boolean {

@@ -1,41 +1,57 @@
 import { element } from '../dom';
 
-export type StopConfirmed = (agentId: string) => void;
+// What a strip X asks before acting: the thing it names, the destructive word, and what to run on yes.
+export interface StripConfirmRequest {
+  // Which row asked, so that row's X can stay shown while the popover is open.
+  readonly key: string;
+  readonly title: string;
+  readonly action: string;
+  readonly run: () => void;
+}
+
+export type ConfirmClosed = () => void;
 
 const CLOSE_KEY: string = 'Escape';
 // Space between the X and the popover, and the least the popover keeps from the window's edges.
 const ANCHOR_GAP_PX: number = 4;
 const EDGE_MARGIN_PX: number = 6;
 
-// A tiny confirmation beside an agent's X, in the card menu's look; any click elsewhere or Escape cancels it.
-export class AgentStopPopover {
-  private readonly root: HTMLDivElement = element('div', 'card-menu agent-stop-menu');
-  private agentId: string | null = null;
+// A tiny confirmation beside a strip row's X, in the card menu's look; any click elsewhere or Escape cancels it.
+export class StripConfirmPopover {
+  private readonly root: HTMLDivElement = element('div', 'card-menu strip-confirm');
+  private request: StripConfirmRequest | null = null;
+  // The popover the press under way closed, so pressing its own X again closes it instead of reopening it.
+  private closedByPress: string | null = null;
 
-  constructor(private readonly onConfirm: StopConfirmed, private readonly onDismiss: () => void) {
+  constructor(private readonly onClose: ConfirmClosed) {
     document.body.append(this.root);
     document.addEventListener('pointerdown', (event: PointerEvent): void => {
-      if (!this.root.contains(event.target as Node)) this.dismiss();
+      const key: string | null = this.openFor;
+      this.closedByPress = !this.root.contains(event.target as Node) && this.dismiss() ? key : null;
     }, true);
     window.addEventListener('blur', (): void => void this.dismiss());
     // Captured before the app's own Escape, which would otherwise also leave the agent or close the panel.
     window.addEventListener('keydown', (event: KeyboardEvent): void => {
-      if (event.key !== CLOSE_KEY || this.agentId === null) return;
+      if (event.key !== CLOSE_KEY || this.request === null) return;
       event.stopPropagation();
       this.dismiss();
     }, true);
   }
 
   get openFor(): string | null {
-    return this.agentId;
+    return this.request?.key ?? null;
   }
 
-  open(agentId: string, description: string, anchor: DOMRect): void {
-    this.agentId = agentId;
+  justClosed(key: string): boolean {
+    return this.closedByPress === key;
+  }
+
+  open(request: StripConfirmRequest, anchor: DOMRect): void {
+    this.request = request;
     this.root.replaceChildren(
-      element('div', 'agent-stop-title', description),
+      element('div', 'strip-confirm-title', request.title),
       this.renderItem('Cancel', false, (): void => void this.dismiss()),
-      this.renderItem('Stop agent', true, (): void => this.confirm()),
+      this.renderItem(request.action, true, (): void => this.confirm()),
     );
     this.root.classList.add('is-open');
     this.place(anchor);
@@ -43,17 +59,17 @@ export class AgentStopPopover {
 
   // Returns whether there was a popover to dismiss.
   dismiss(): boolean {
-    if (this.agentId === null) return false;
-    this.agentId = null;
+    if (this.request === null) return false;
+    this.request = null;
     this.root.classList.remove('is-open');
-    this.onDismiss();
+    this.onClose();
     return true;
   }
 
   private confirm(): void {
-    const agentId: string | null = this.agentId;
+    const request: StripConfirmRequest | null = this.request;
     this.dismiss();
-    if (agentId !== null) this.onConfirm(agentId);
+    request?.run();
   }
 
   // Under the X with right edges lined up; above it when the window has no room below.

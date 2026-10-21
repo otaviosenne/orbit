@@ -1,9 +1,11 @@
 import type {
   ActionResult,
+  ChatDevices,
   ChatPermissions,
   ChatSettings,
   ChatSnapshot,
   ClosedChatActivity,
+  DeviceFocus,
   DictationStart,
   LauncherEntry,
   PastChat,
@@ -14,9 +16,10 @@ import type {
   TurnProgress,
   UsageSnapshot,
 } from '../shared/types';
-import type { IpcChannel } from '../shared/ipc-channels';
+import type { InvokeChannel, Route } from '../shared/ipc-routing';
 import { demoChatPermissions, demoChatSettings, demoSkills } from './demo-chat-settings';
 import { demoChatSnapshot, demoChatSnapshots, findDemoChat } from './demo-chats';
+import { demoChatDevices } from './demo-devices';
 import { demoLaunchers } from './demo-launchers';
 import { demoPastChatColor, demoPastChats } from './demo-past-chats';
 import { demoQuestionPicker } from './demo-question-picker';
@@ -25,14 +28,7 @@ import { demoTurnProgress } from './demo-turn-progress';
 import { demoUsage } from './demo-usage';
 import { demoAgentTranscript } from './transcripts/agents';
 
-type ChannelKey = keyof typeof IpcChannel;
-
-// Sent with ipcRenderer.send rather than invoked, so they get listeners instead of routes.
-export const LISTENER_CHANNELS = ['DictationPrepare', 'DictationAudio', 'DictationCancel'] as const satisfies readonly ChannelKey[];
-// Main pushes on this one; the renderer listens.
-type PushChannel = 'DictationTranscript';
-export type InvokeChannel = Exclude<ChannelKey, (typeof LISTENER_CHANNELS)[number] | PushChannel>;
-export type DemoRoute = (...args: unknown[]) => unknown;
+export type DemoRoute = Route;
 
 // Actions pretend to succeed and change nothing: no terminal, file or network is ever touched.
 const DONE: ActionResult = { ok: true, method: 'socket', error: null };
@@ -69,12 +65,18 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   AnswerQuestion: (): ActionResult => DONE,
   SubmitAnswers: (): ActionResult => DONE,
   StopAgent: (): ActionResult => DONE,
+  GetShellOutput: (): null => null,
+  InterruptShell: (): ActionResult => DONE,
   GetChatSettings: (): ChatSettings => demoChatSettings(),
   ListSkills: (): SkillEntry[] => demoSkills(),
   SetChatModel: (): ActionResult => DONE,
   SetChatEffort: (): ActionResult => DONE,
   GetChatPermissions: (): ChatPermissions => demoChatPermissions(),
   SetPermissionMode: (): ActionResult => DONE,
+  GetChatDevices: (sessionId: unknown): ChatDevices => demoChatDevices(sessionId),
+  // Focusing would move the user's own screen to a window the demo only pretends exists.
+  FocusChatEmulator: (): DeviceFocus => 'exact',
+  FocusChatBrowser: (): DeviceFocus => 'exact',
   DictationStart: (): DictationStart => ({ session: ++dictationSession, error: null }),
   DictationFinish: (): TranscriptionResult => EMPTY_TRANSCRIPTION,
 };

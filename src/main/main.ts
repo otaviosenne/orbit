@@ -8,6 +8,10 @@ import { ChatWindows } from './chat-windows';
 import { DictationService } from './dictation-service';
 import { activeWindowPid, findTerminalWindowPid } from './terminal-window';
 import { registerIpcHandlers } from './ipc';
+import type { RadarServices } from './ipc';
+import { startRemoteAccess } from './remote/start-remote';
+import { buildSharedRoutes } from './routes/shared-routes';
+import type { SharedRoutes } from './routes/shared-routes';
 import { claimSingleInstance } from './single-instance';
 import { createRadarWindow } from './window';
 import { isDemoMode } from '../demo/demo-mode';
@@ -31,7 +35,11 @@ async function start(): Promise<void> {
   });
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);
-  registerIpcHandlers({ radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), pastChats, timelineHistory });
+  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), pastChats, timelineHistory };
+  // One table answers the desktop window over IPC and Orbit Web over HTTP.
+  const routes: SharedRoutes = buildSharedRoutes(services);
+  registerIpcHandlers(services, routes);
+  await startRemoteAccess(routes, false);
   createRadarWindow();
   void pruneOldAttachments(Date.now());
 }

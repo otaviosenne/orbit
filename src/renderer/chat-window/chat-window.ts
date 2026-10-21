@@ -1,4 +1,4 @@
-import type { ChatSnapshot } from '../../shared/types';
+import type { ActionResult, ChatSnapshot } from '../../shared/types';
 import { requireElement } from '../dom';
 import type { ChatPatch } from '../pending-edits';
 import { PendingEdits } from '../pending-edits';
@@ -45,7 +45,7 @@ class ChatWindow {
         this.pendingEdits.drop(id, field);
         this.show();
       },
-    }, (): void => void this.refresh());
+    }, (): void => void this.refresh(), (): void => void this.closeChat());
     requireElement('#sheet-close').title = CLOSE_TOOLTIP;
     listenForBackKey(this.sheet);
   }
@@ -53,6 +53,13 @@ class ChatWindow {
   start(): void {
     void this.refresh();
     setInterval((): void => void this.refresh(), CHATS_POLL_MS);
+  }
+
+  // No board here to hide a card from: the window shows its "ended" notice once the chat is gone.
+  private async closeChat(): Promise<void> {
+    if (this.polled === null) return;
+    const result: ActionResult = await window.radar.closeChat(this.polled.pid);
+    if (!result.ok) console.error(`Could not close ${this.polled.name}: ${result.error ?? 'unknown error'}`);
   }
 
   private async refresh(): Promise<void> {

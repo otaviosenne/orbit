@@ -1,6 +1,7 @@
 import type { ChatColor } from './chat-colors';
 import type { EffortLevel, ModelChoice } from './chat-settings';
 import type { CycledPermissionMode, PermissionMode } from './permission-modes';
+import type { RemoteSettings } from './remote-settings';
 
 export type ChatStatus = 'busy' | 'waiting' | 'idle' | 'shell' | 'unknown';
 
@@ -16,13 +17,26 @@ export interface AgentSnapshot {
   readonly endedAt: number | null;
 }
 
-// A background shell of a chat, from its Bash call until Claude Code reports it ended.
+// "killed" covers TaskStop and Orbit's own interrupts; Claude Code reports a shell killed from outside as failed.
+export type ShellStatus = 'running' | 'completed' | 'failed' | 'killed';
+
+// A background shell of a chat, from its Bash call until a few minutes after Claude Code reports it ended.
 export interface ShellSnapshot {
   // Claude Code's background task id, as its task notifications and TaskStop name it.
   readonly id: string;
   readonly command: string;
   readonly description: string | null;
   readonly startedAt: number;
+  readonly status: ShellStatus;
+  readonly endedAt: number | null;
+  readonly exitCode: number | null;
+}
+
+// The end of a background shell's output file, cleaned up for display.
+export interface ShellOutput {
+  readonly text: string;
+  // The file was longer than what was read, so earlier lines are missing.
+  readonly isTruncated: boolean;
 }
 
 export interface Repository {
@@ -208,7 +222,8 @@ export interface UsageSnapshot {
 }
 
 // 'socket' reached the chat through kitty remote control; 'typed' had to focus the window and type.
-export type DeliveryMethod = 'socket' | 'typed';
+// 'signal': the action was a signal sent straight to a process, such as interrupting a background command.
+export type DeliveryMethod = 'socket' | 'typed' | 'signal';
 
 export interface ActionResult {
   readonly ok: boolean;
@@ -314,6 +329,29 @@ export interface SkillEntry {
   readonly source: SkillSource;
 }
 
+// ---------- Devices a chat tests on (Android emulator, Claude in Chrome tab) ----------
+
+// The emulator window the chat used last that is still open, named "<avd>:<port>" like its window title.
+export interface EmulatorLink {
+  readonly label: string;
+}
+
+// The Claude in Chrome tab the chat used last; title is its last known title (null when never reported).
+export interface BrowserLink {
+  readonly title: string | null;
+  readonly url: string | null;
+}
+
+// What the panel's Emulator and Browser buttons lead to; null hides that button.
+export interface ChatDevices {
+  readonly emulator: EmulatorLink | null;
+  readonly browser: BrowserLink | null;
+}
+
+// 'exact': the emulator or the very tab is in front now. 'window': only a Chrome window could be focused,
+// the tab may sit behind another one. 'missing': nothing to focus any more.
+export type DeviceFocus = 'exact' | 'window' | 'missing';
+
 export interface RadarApi {
   getImage(sessionId: string, key: string): Promise<string | null>;
   getTurnProgress(sessionId: string): Promise<TurnProgress | null>;
@@ -356,6 +394,10 @@ export interface RadarApi {
   submitAnswers(sessionId: string, fingerprint: string): Promise<ActionResult>;
   // Stops one running agent of the chat; resolves once the chat marked that agent stopped.
   stopAgent(sessionId: string, agentId: string): Promise<ActionResult>;
+  // The end of a background command's output; null when it has none or the chat no longer lists it.
+  getShellOutput(sessionId: string, taskId: string): Promise<ShellOutput | null>;
+  // Ends a running background command by signalling its processes; resolves once the chat reports it ended.
+  interruptShell(sessionId: string, taskId: string): Promise<ActionResult>;
   // The chat's current model and effort; changes typed in its terminal show up too.
   getChatSettings(sessionId: string): Promise<ChatSettings>;
   // The skills /skills lists for the chat: its project's, the user's and enabled plugins'.
@@ -365,4 +407,16 @@ export interface RadarApi {
   getChatPermissions(sessionId: string): Promise<ChatPermissions>;
   // Resolves once the chat's footer shows the mode, or fails when the chat does not offer it.
   setPermissionMode(sessionId: string, mode: CycledPermissionMode): Promise<ActionResult>;
+  // The emulator and browser tab the chat worked with that are still open, for the panel's device buttons.
+  getChatDevices(sessionId: string): Promise<ChatDevices>;
+  // Focuses the chat's emulator window, switching to its workspace.
+  focusChatEmulator(sessionId: string): Promise<DeviceFocus>;
+  // Brings the chat's Chrome tab to front when Chrome allows it, otherwise the Chrome window most likely to hold it.
+  focusChatBrowser(sessionId: string): Promise<DeviceFocus>;
+  // ---------- Orbit Web (remote access); desktop window only ----------
+  getRemoteSettings(): Promise<RemoteSettings>;
+  setRemoteEnabled(enabled: boolean): Promise<RemoteSettings>;
+  setRemoteExternalUrl(url: string): Promise<RemoteSettings>;
+  // A new token signs every paired phone out.
+  regenerateRemoteToken(): Promise<RemoteSettings>;
 }

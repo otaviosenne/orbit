@@ -11,6 +11,6 @@ export function listenForSpaceToTalk(isActive: () => boolean, start: () => void)
   });
 }
 
-function isTextField(target: EventTarget | null): boolean {
+export function isTextField(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || (target instanceof HTMLElement && target.isContentEditable);
 }

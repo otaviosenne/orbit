@@ -77,6 +77,11 @@ answer re-reads the screen first and refuses if the question changed.
 In demo mode `src/demo/demo-ipc.ts` registers the same channels instead. Its route table is typed
 over every channel, so a channel added without a demo answer fails the type check.
 
+Every channel Orbit Web may also call is answered by one table, `src/main/routes/shared-routes.ts`,
+which `ipc.ts` registers over IPC and the remote server serves over HTTP. `REMOTE_ACCESS`
+(`src/shared/remote-access.ts`) decides each channel's web access, and the type check fails until a
+new channel is decided. See [remote.md](remote.md).
+
 ## Code layout
 
 | Folder | Holds |

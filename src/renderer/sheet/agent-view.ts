@@ -4,13 +4,14 @@ import { formatDuration } from '../format';
 import { CARET_LEFT_ICON } from '../icons';
 import { renderAgentDot } from './agent-dot';
 import { AgentStrip } from './agent-strip';
+import type { ProblemReporter } from './shell-column';
 
 export interface AgentTitle {
   readonly name: string;
   readonly meta: string;
 }
 
-export type ProblemReporter = (problem: string) => void;
+export type { ProblemReporter } from './shell-column';
 
 const AGENT_MODE_CLASS: string = 'is-agent';
 
@@ -27,11 +28,11 @@ export class AgentView {
   constructor(private readonly root: HTMLElement, private readonly onChange: () => void, private readonly report: ProblemReporter) {
     this.back.innerHTML = CARET_LEFT_ICON;
     this.back.addEventListener('click', (): void => void this.close());
-    this.strip = new AgentStrip(
-      requireElement('#agent-strip'),
-      (agentId: string): void => this.open(agentId),
-      (agentId: string): void => void this.stop(agentId),
-    );
+    this.strip = new AgentStrip(requireElement('#agent-strip'), {
+      openAgent: (agentId: string): void => this.open(agentId),
+      stopAgent: (agentId: string): void => void this.stop(agentId),
+      report,
+    });
   }
 
   get agentId(): string | null {
@@ -42,7 +43,7 @@ export class AgentView {
     this.sessionId = chat.sessionId;
     this.agents = chat.agents;
     if (this.agent !== null) this.agent = chat.agents.find((agent: AgentSnapshot) => agent.id === this.agent?.id) ?? this.agent;
-    this.strip.show(chat.agents, chat.shells, this.agentId, now);
+    this.strip.show(chat.sessionId, chat.agents, chat.shells, this.agentId, now);
     if (this.agent !== null) this.dot.replaceChildren(renderAgentDot(this.agent));
   }
 

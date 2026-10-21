@@ -1,5 +1,8 @@
-import type { AgentSnapshot, ChatSettings, ChatSnapshot, ShellSnapshot, TranscriptItem, TurnProgress } from '../shared/types';
+import type { AgentSnapshot, ChatSettings, ChatSnapshot, ShellOutput, ShellSnapshot, TranscriptItem, TurnProgress } from '../shared/types';
 import { ChatSettingsReader } from './chat-settings/chat-settings-reader';
+import { DeviceReferenceReader } from './devices/device-reader';
+import type { DeviceReferences } from './devices/device-references';
+import { NO_DEVICE_REFERENCES } from './devices/device-references';
 import { PermissionRecordReader } from './chat-settings/permission-reader';
 import type { PermissionMode } from '../shared/permission-modes';
 import { AGENT_READ_BYTES, TRANSCRIPT_ITEM_LIMIT } from './config';
@@ -13,7 +16,8 @@ import { RepositoryResolver } from './repository-resolver';
 import { listLiveSessions } from './session-registry';
 import type { SessionRecord } from './session-registry';
 import { readAgentMeta } from './agent-meta';
-import { ShellReader } from './shells/shell-reader';
+import type { ShellRecord } from './shells/background-shells';
+import { ChatShells } from './shells/chat-shells';
 import { SubagentReader, subagentMetaPath, subagentTranscriptPath } from './subagent-reader';
 import type { ChatNameResolver } from './transcript-extractor';
 import { TranscriptLocator } from './transcript-locator';
@@ -21,13 +25,23 @@ import { TranscriptReader } from './transcript-reader';
 import { extractTurnProgress } from './turn-progress';
 import type { WindowLocator } from './window-locator';
 
+export interface LiveShell {
+  readonly chatPid: number;
+  readonly shell: ShellRecord;
+}
+
+interface LiveTranscript {
+  readonly session: SessionRecord;
+  readonly transcript: string;
+}
+
 // Facade that turns the files Claude Code writes under ~/.claude into chat snapshots.
 export class ChatRadar {
   private readonly locator: TranscriptLocator = new TranscriptLocator();
   private readonly colors: ColorTracker = new ColorTracker();
   private readonly replies: LastReplyTracker = new LastReplyTracker();
   private readonly subagents: SubagentReader = new SubagentReader();
-  private readonly shells: ShellReader = new ShellReader();
+  private readonly shells: ChatShells = new ChatShells();
   private readonly transcriptReader: TranscriptReader = new TranscriptReader();
   private readonly repositories: RepositoryResolver = new RepositoryResolver();
   // A chat's window never changes while its process lives, so the lookup is done once per pid.
@@ -35,6 +49,7 @@ export class ChatRadar {
   private readonly progress: FileMemo<TurnProgress | null> = new FileMemo();
   private readonly settingsReader: ChatSettingsReader = new ChatSettingsReader();
   private readonly permissionReader: PermissionRecordReader = new PermissionRecordReader();
+  private readonly deviceReader: DeviceReferenceReader = new DeviceReferenceReader();
 
   constructor(private readonly windowLocator: WindowLocator | null = null) {}
 
@@ -49,6 +64,23 @@ export class ChatRadar {
   async transcript(sessionId: string, limit: number = TRANSCRIPT_ITEM_LIMIT): Promise<TranscriptItem[]> {
     const transcript: string | null = await this.locator.locate(sessionId);
     return transcript === null ? [] : this.transcriptReader.read(transcript, liveChatNames, 'chat', limit);
+  }
+
+  // The end of a background shell's output, read from the file its own transcript names.
+  async shellOutput(sessionId: string, taskId: unknown): Promise<ShellOutput | null> {
+    const live: LiveTranscript | null = await this.liveTranscript(sessionId);
+    return live === null ? null : this.shells.output(live.transcript, live.session.startedAt, sessionId, taskId);
+  }
+
+  // A shell of an open chat, with the chat's pid: what interrupting it needs.
+  async liveShell(sessionId: string, taskId: unknown): Promise<LiveShell | null> {
+    const live: LiveTranscript | null = await this.liveTranscript(sessionId);
+    const shell: ShellRecord | null = live === null ? null : await this.shells.find(live.transcript, live.session.startedAt, taskId);
+    return live === null || shell === null ? null : { chatPid: live.session.pid, shell };
+  }
+
+  markShellInterrupted(taskId: string): void {
+    this.shells.markInterrupted(taskId);
   }
 
   // Claude Code marks an agent stopped in its meta file, which is how a stop sent from Orbit is confirmed.
@@ -100,12 +132,18 @@ export class ChatRadar {
     return transcript === null ? null : this.permissionReader.read(transcript);
   }
 
+  // The emulators and Claude in Chrome tab the chat has worked with, for the panel's Emulator and Browser buttons.
+  async deviceReferences(sessionId: string): Promise<DeviceReferences> {
+    const transcript: string | null = await this.locator.locate(sessionId);
+    return transcript === null ? NO_DEVICE_REFERENCES : this.deviceReader.read(transcript);
+  }
+
   private async toChat(session: SessionRecord, now: number, activeWindow: number | null): Promise<ChatSnapshot> {
     const transcript: string | null = await this.locator.locate(session.sessionId);
     const color: string | null = transcript === null ? null : await this.colors.colorOf(transcript);
     const agents: AgentSnapshot[] =
       transcript === null ? [] : await this.subagents.read(transcript, session.startedAt, now);
-    const shells: ShellSnapshot[] = transcript === null ? [] : await this.shells.read(transcript, session.startedAt);
+    const shells: ShellSnapshot[] = transcript === null ? [] : await this.shells.list(transcript, session.startedAt, now);
     return {
       sessionId: session.sessionId,
       pid: session.pid,
@@ -121,6 +159,12 @@ export class ChatRadar {
       shells,
       isFocused: activeWindow !== null && (await this.windowOf(session.pid)) === activeWindow,
     };
+  }
+
+  private async liveTranscript(sessionId: string): Promise<LiveTranscript | null> {
+    const session: SessionRecord | undefined = (await listLiveSessions()).find((candidate: SessionRecord) => candidate.sessionId === sessionId);
+    const transcript: string | null = session === undefined ? null : await this.locator.locate(sessionId);
+    return session === undefined || transcript === null ? null : { session, transcript };
   }
 
   private windowOf(chatPid: number): Promise<number | null> {

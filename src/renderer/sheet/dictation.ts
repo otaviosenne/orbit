@@ -1,6 +1,7 @@
 import type { DictationStart, DictationTranscript, TranscriptionResult } from '../../shared/types';
+import type { DraftAnchor, PlacedText } from './dictation-placement';
+import { placeDictation } from './dictation-placement';
 import { PcmRecorder } from './pcm-recorder';
-import { PushToTalk } from './push-to-talk';
 
 export type DictationState = 'idle' | 'listening' | 'refining';
 
@@ -11,13 +12,7 @@ export interface DictationHandlers {
   readonly onDraft: () => void;
 }
 
-// The text around the cursor when dictation started; the transcript is placed between the two halves.
-interface DraftAnchor {
-  readonly before: string;
-  readonly after: string;
-}
-
-// Hold Space to dictate: words stream in while you talk and the final text lands on release, like Claude Code.
+// One push-to-talk dictation: words stream in while you talk and the final text lands on release, like Claude Code.
 export class Dictation {
   private readonly recorder: PcmRecorder = new PcmRecorder();
   private opening: Promise<boolean> | null = null;
@@ -26,12 +21,6 @@ export class Dictation {
   private isListening: boolean = false;
 
   constructor(private readonly input: HTMLTextAreaElement, private readonly handlers: DictationHandlers) {
-    new PushToTalk(input, {
-      onPress: (): void => window.radar.prepareDictation(),
-      onHoldStart: (): void => this.begin(),
-      onHoldEnd: (): void => void this.finish(),
-      onTap: (): void => this.handleTap(),
-    });
     input.addEventListener('focus', (): void => window.radar.prepareDictation());
     input.addEventListener('input', (): void => this.abandonRefinement());
     window.radar.onDictationTranscript((transcript: DictationTranscript): void => this.showLive(transcript));
@@ -39,14 +28,15 @@ export class Dictation {
 
   // Called when the draft is sent or cleared: the microphone turns off and nothing from this
   // dictation (live words or the final text) may write into the composer again.
-  cancel(): void {
+  // Resolves once the microphone and the session are released, so another dictation can take them.
+  cancel(): Promise<void> {
     const opening: Promise<boolean> | null = this.opening;
     const wasActive: boolean = this.isListening || opening !== null || this.anchor !== null;
     this.isListening = false;
     this.anchor = null;
     this.opening = null;
-    if (opening !== null) void opening.then((): Promise<void> => this.shutDown());
     if (wasActive) this.handlers.onState('idle');
+    return opening === null ? Promise.resolve() : opening.then((): Promise<void> => this.shutDown());
   }
 
   // Typing over a draft means the user took over; a late final text must not overwrite their edit.
@@ -61,14 +51,17 @@ export class Dictation {
     if (this.session !== null) window.radar.cancelDictation(this.session);
   }
 
-  // A tap while listening (started by the mic or by Space outside the field) ends it; otherwise it types a space.
-  private handleTap(): void {
-    if (this.isListening) void this.finish();
-    else this.input.setRangeText(' ', this.input.selectionStart, this.input.selectionEnd, 'end');
+  get listening(): boolean {
+    return this.isListening;
   }
 
   start(): void {
     this.begin();
+  }
+
+  // Space released after a hold, or tapped while listening: the final text lands.
+  release(): void {
+    void this.finish();
   }
 
   // For the mic button: starts dictation, or finishes the one in progress.
@@ -147,11 +140,9 @@ export class Dictation {
 
   private showDraft(text: string): void {
     if (this.anchor === null) return;
-    const { before, after } = this.anchor;
-    const spaced: string = text.length === 0 || before.length === 0 || /\s$/.test(before) ? text : ` ${text}`;
-    this.input.value = `${before}${spaced}${after}`;
-    const caret: number = before.length + spaced.length;
-    this.input.setSelectionRange(caret, caret);
+    const placed: PlacedText = placeDictation(this.anchor, text);
+    this.input.value = placed.value;
+    this.input.setSelectionRange(placed.caret, placed.caret);
     this.handlers.onDraft();
   }
 }

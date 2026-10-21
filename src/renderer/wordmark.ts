@@ -13,5 +13,6 @@ export function renderWordmark(container: HTMLElement): void {
   const word: HTMLSpanElement = element('span', 'wordmark');
   word.setAttribute('aria-label', 'Orbit');
   word.append(orbitO, document.createTextNode('rb'), letterI, document.createTextNode('t'));
-  container.replaceChildren(word);
+  // In front of whatever else sits in the title (the hands-free mic indicator).
+  container.prepend(word);
 }

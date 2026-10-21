@@ -4,8 +4,9 @@ import { IMAGE_ICON, MICROPHONE_ICON } from '../icons';
 import type { Lightbox } from '../lightbox';
 import type { ComposerDraft } from './draft-store';
 import { AttachmentTray } from './attachment-tray';
-import { Dictation } from './dictation';
 import type { DictationState } from './dictation';
+import type { DictationTarget } from './hands-free/dictation-target';
+import type { KeptDrafts } from './hands-free/span-writer';
 import type { OrderedDraft } from './draft-image-tokens';
 import { orderByTokens } from './draft-image-tokens';
 import { ImageMarkers } from './image-markers';
@@ -13,6 +14,7 @@ import { AtomicMarkers } from './atomic-markers';
 import { MarkerChipClicks } from './marker-chip-clicks';
 import { MarkerHighlight } from './marker-highlight';
 import { keepingThreadEnd } from './thread-end';
+import { VoiceControls } from './voice-controls';
 import { VoiceVisuals } from './voice-visuals';
 
 export type MessageSubmitted = (text: string, attachments: readonly AttachmentUpload[]) => Promise<boolean>;
@@ -22,7 +24,8 @@ const SUBMIT_KEY: string = 'Enter';
 // A leading /name (letters, digits, - : . _) followed by a space; a path such as /home/x is not a command.
 const LEADING_COMMAND: RegExp = /^\s*(\/[\w:.-]+(?:\s|$))?/;
 
-// Enter sends, Shift+Enter adds a line, holding Space (or the mic) dictates; the draft is kept if sending fails.
+// Enter sends, Shift+Enter adds a line, holding Space (or the mic) dictates, a double tap of Space keeps the mic
+// on hands-free; the draft is kept if sending fails.
 export class Composer {
   private readonly form: HTMLFormElement = requireElement('#composer');
   private readonly input: HTMLTextAreaElement = requireElement('#composer-input');
@@ -30,10 +33,10 @@ export class Composer {
   private readonly mic: HTMLButtonElement = requireElement('#composer-mic');
   private readonly markers: ImageMarkers = new ImageMarkers(this.input);
   private readonly tray: AttachmentTray;
-  private readonly dictation: Dictation;
+  private readonly voice: VoiceControls;
   private readonly visuals: VoiceVisuals;
 
-  constructor(private readonly onSubmit: MessageSubmitted, onProblem: ComposerProblem, lightbox: Lightbox) {
+  constructor(private readonly onSubmit: MessageSubmitted, onProblem: ComposerProblem, lightbox: Lightbox, drafts: KeptDrafts) {
     this.tray = new AttachmentTray(requireElement('#attachment-tray'), lightbox, this.markers);
     this.markers.connect(this.tray);
     this.setUpAttachments();
@@ -47,13 +50,14 @@ export class Composer {
       event.preventDefault();
       void this.submit();
     });
-    this.dictation = new Dictation(this.input, {
+    this.voice = new VoiceControls(this.input, this.mic, {
       onState: (state: DictationState): void => this.showDictation(state),
       onError: onProblem,
       onDraft: (): void => this.visuals.placeBars(),
+      drafts,
     });
     this.visuals = new VoiceVisuals(requireElement('#composer-box'), this.input, requireElement('#voice-bars'), (): number =>
-      this.dictation.level(),
+      this.voice.level(),
     );
     this.setUpMic();
     this.reserveSpaceInThread();
@@ -66,7 +70,12 @@ export class Composer {
       this.input.focus();
       this.input.setSelectionRange(this.input.value.length, this.input.value.length);
     }
-    this.dictation.start();
+    this.voice.pressOutside();
+  }
+
+  // Hands-free words follow the chat on screen; null pauses them.
+  followDictationTarget(target: DictationTarget | null): void {
+    this.voice.follow(target);
   }
 
   // The unsent text and images, to keep while another chat is open.
@@ -93,7 +102,7 @@ export class Composer {
 
   // The images go with the draft, since their markers in it say where each one belongs.
   reset(): void {
-    this.dictation.cancel();
+    this.voice.cancel();
     this.input.value = '';
     this.tray.clear();
   }
@@ -145,10 +154,6 @@ export class Composer {
     this.mic.innerHTML = MICROPHONE_ICON;
     // Keep focus (and the caret) in the text field when the mic is pressed.
     this.mic.addEventListener('mousedown', (event: MouseEvent): void => event.preventDefault());
-    this.mic.addEventListener('click', (): void => {
-      this.input.focus();
-      this.dictation.toggle();
-    });
   }
 
   private showDictation(state: DictationState): void {
@@ -160,8 +165,7 @@ export class Composer {
   private async submit(): Promise<void> {
     const hasText: boolean = this.input.value.trim().length > 0;
     if ((!hasText && this.tray.count === 0) || this.button.disabled) return;
-    // Sending ends dictation: the mic turns off and late words cannot bring the sent text back.
-    this.dictation.cancel();
+    this.voice.messageSent();
     const draft: OrderedDraft = orderByTokens(this.input.value, this.tray.count);
     const uploads: AttachmentUpload[] = inOrder(await this.tray.uploads(), draft.order);
     const files: File[] = inOrder(this.tray.files(), draft.order);

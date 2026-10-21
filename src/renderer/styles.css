@@ -531,8 +531,11 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 /* Agents on the left, background shells on the right; each column folds on its own */
 .agent-strip-column { display: flex; flex-direction: column; gap: 1px; flex: 1 1 0; min-width: 0; }
 .agent-strip.is-split .agent-strip-shells { padding-left: 12px; border-left: 1px solid var(--separator); margin-left: -6px; }
-.agent-strip-shell:hover { background: transparent; }
-.agent-strip-shell-glyph { flex: none; width: 9px; color: var(--secondary); font-family: ui-monospace, monospace; font-size: 11.5px; text-align: center; }
+.agent-strip-shell-glyph { flex: none; width: 9px; color: var(--secondary); font: 11.5px var(--mono); text-align: center; }
+/* A finished shell stays a few minutes, dimmed, with how it ended in place of its running time */
+.agent-strip-shell:not(.agent-strip-shell-running) .agent-strip-name { color: var(--secondary); }
+.agent-strip-time.agent-strip-shell-failed, .agent-strip-time.agent-strip-shell-killed { color: var(--danger); }
+.agent-strip-time.agent-strip-shell-stopping { color: var(--warning); }
 .agent-strip-row, .agent-strip-toggle {
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 8px; border: 0; border-radius: 7px;
   background: transparent; color: var(--text); font: inherit; font-size: 12.5px; text-align: left; cursor: default;
@@ -559,8 +562,25 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 .agent-strip-stop:hover, .agent-strip-item.is-confirming .agent-strip-stop { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
 .agent-strip-item.is-confirming .agent-strip-row { background: var(--disclosure-hover); }
 /* The stop confirmation: the card menu's look, titled with the agent it would stop */
-.agent-stop-menu { min-width: 150px; max-width: 240px; }
-.agent-stop-title { padding: 3px 9px 5px; color: var(--secondary); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.strip-confirm { min-width: 150px; max-width: 240px; }
+.strip-confirm-title { padding: 3px 9px 5px; color: var(--secondary); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A shell's details beside its row: command as written, when and how it ran, and the end of its output */
+/* Blurred like the tooltip: the panel color is slightly see-through, and sharp text behind it would read through */
+.shell-details { width: min(460px, calc(100vw - 16px)); max-width: none; padding: 10px 12px 12px; -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+.shell-details-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-details-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 8px; font-size: 12px; }
+.shell-details-meta-item { display: flex; gap: 5px; }
+.shell-details-label { color: var(--secondary); font-size: 11px; }
+div.shell-details-label { margin: 6px 0 3px; }
+.shell-details-running { color: var(--accent); }
+.shell-details-failed, .shell-details-killed { color: var(--danger); }
+.shell-details-code {
+  margin: 0; padding: 7px 9px; border-radius: 7px; background: rgb(127 127 127 / 0.1);
+  font: 11px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; user-select: text;
+}
+.shell-details-code:not(.shell-details-output) { max-height: 140px; overflow: auto; }
+.shell-details-output { height: 180px; overflow: auto; }
+.shell-details-output.is-empty { height: auto; color: var(--secondary); font-family: var(--font); }
 /* An agent's color; while it runs the dot becomes the spinning ring agents show on the board */
 .agent-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--agent); }
 /* A fixed width: the asterisk's frames (· ✢ ✳ ✶ ✻ ✽) differ in width and would push the name around */
@@ -577,6 +597,13 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 }
 .link-button svg { width: 13px; height: 13px; fill: currentColor; }
 .link-button:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+/* Emulator over Browser, beside the title: each shows only while the chat's emulator or Chrome tab is open */
+.sheet-devices { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding-top: 1px; }
+/* Both set a display of their own, which would otherwise override the hidden attribute */
+.sheet-devices[hidden], .device-link[hidden] { display: none; }
+.device-link { gap: 4px; padding: 2px 9px 2px 7px; font-size: 11.5px; }
+.device-link svg { width: 12px; height: 12px; }
+.sheet.is-starting .sheet-devices { display: none; }
 .rename-form { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: center; }
 .rename-form[hidden] { display: none; }
 .rename-input, .composer-input {
@@ -1106,16 +1133,14 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .chat-settings {
   position: absolute; top: calc(100% - 6px); right: 12px; z-index: 40;
   width: min(380px, calc(100% - 24px)); max-height: min(560px, calc(100vh - 120px));
-  display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 0; padding: 6px; border-radius: 12px; overflow-y: auto;
   background: var(--panel); backdrop-filter: blur(20px); color: var(--text);
   box-shadow: 0 0 0 0.5px var(--control-border), 0 14px 40px rgb(0 0 0 / 0.2);
 }
 .chat-settings[hidden] { display: none; }
-.chat-settings-values { display: flex; flex-direction: column; gap: 12px; }
 .chat-settings-section { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
-.chat-settings-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.chat-settings-title { color: var(--secondary); font-size: 11px; font-weight: 600; }
-.chat-settings-current { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.chat-settings-title { flex: 1; color: var(--text); font-size: 13px; font-weight: 500; }
+.chat-settings-current { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--secondary); font-size: 12.5px; }
 .chat-settings-segmented { display: flex; padding: 2px; border-radius: var(--radius-control); background: var(--segment-track); }
 .chat-settings-segment {
   flex: 1; min-width: 0; padding: 3px 4px; border: 0; border-radius: 5px; cursor: default; white-space: nowrap;
@@ -1125,7 +1150,6 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .chat-settings-segment.is-current { background: var(--segment-thumb); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.04); font-weight: 600; }
 .chat-settings-note { color: var(--secondary); font-size: 11px; line-height: 1.35; }
 /* The skill list takes whatever height is left and scrolls on its own */
-.chat-settings-skills { flex: 1 1 auto; padding-top: 10px; border-top: 1px solid var(--separator); }
 .chat-settings-search {
   display: flex; align-items: center; gap: 6px; padding: 0 8px; height: 28px; border-radius: var(--radius-control);
   background: var(--segment-track); color: var(--secondary);
@@ -1148,7 +1172,56 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .chat-settings-segment:disabled:not(.is-current) { opacity: 0.45; }
 .chat-settings-segment:disabled:hover { background: transparent; }
 .chat-settings-segment.is-current:disabled:hover { background: var(--segment-thumb); }
-.chat-settings-permissions { padding-top: 10px; border-top: 1px solid var(--separator); }
 .chat-settings-note.is-locked { color: var(--warning); }
 .chat-settings-link { padding: 0; border: 0; background: transparent; color: var(--accent); font: inherit; font-weight: 600; cursor: default; }
 .chat-settings-link:hover { text-decoration: underline; }
+
+/* ---------- Settings: Orbit Web (remote access) ---------- */
+.remote-row { flex-wrap: wrap; }
+.remote-label { flex: none; min-width: 110px; font-weight: 500; }
+.remote-state { flex: 1; color: var(--secondary); font-size: 12px; }
+.remote-switch { width: 18px; height: 18px; accent-color: var(--accent); }
+.remote-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px var(--mono); color: var(--secondary); user-select: all; }
+.remote-input {
+  flex: 1; min-width: 160px; padding: 4px 8px; border: 0; border-radius: var(--radius-control);
+  background: var(--control); box-shadow: 0 0 0 0.5px var(--control-border);
+}
+.remote-input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 0.5px var(--accent); }
+.remote-error { color: var(--danger); }
+.remote-pairing { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+/* Dark modules on a white tile in both themes: scanners expect dark-on-light */
+.remote-qr { flex: none; width: 168px; height: 168px; padding: 6px; border-radius: 10px; background: #ffffff; color: #000000; }
+.remote-qr svg { display: block; width: 100%; height: 100%; }
+
+/* ---------- Hands-free dictation indicator ---------- */
+/* Beside the wordmark while the mic is always on: it breathes with your voice, dims while paused; click turns it off */
+.hands-free-indicator {
+  --voice-level: 0;
+  width: 24px; height: 24px; margin-left: 8px; padding: 4px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: var(--accent); color: var(--on-accent); cursor: default;
+  transform: scale(calc(1 + var(--voice-level) * 0.18));
+  box-shadow: 0 0 0 calc(2px + var(--voice-level) * 7px) color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.hands-free-indicator[hidden] { display: none; }
+.hands-free-indicator svg { width: 14px; height: 14px; fill: currentColor; }
+.hands-free-indicator[data-state='paused'] { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); box-shadow: none; }
+/* Collapsed rows, "Title · value", each unfolding its controls; one open at a time */
+.chat-settings-disclosure { gap: 0; }
+.chat-settings-disclosure + .chat-settings-disclosure { border-top: 1px solid var(--separator); }
+.chat-settings-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; border: 0; border-radius: 7px; cursor: default;
+  background: transparent; color: var(--text); font: inherit; text-align: left;
+}
+.chat-settings-row:hover { background: var(--disclosure-hover); }
+.chat-settings-caret { flex: none; display: grid; place-items: center; color: var(--tertiary); transition: transform 0.15s; }
+.chat-settings-caret svg { width: 10px; height: 10px; fill: currentColor; }
+.chat-settings-disclosure:not(.is-open) .chat-settings-caret { transform: rotate(-90deg); }
+.chat-settings-body { display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px 8px 10px; }
+.chat-settings-body[hidden] { display: none; }
+/* Close chat sits apart from the settings, below a divider, like the card menu's destructive item */
+.chat-settings-danger { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--separator); }
+.chat-settings-close {
+  width: 100%; padding: 8px; border: 0; border-radius: 7px; cursor: default; text-align: left;
+  background: transparent; color: var(--danger); font: inherit; font-size: 13px; font-weight: 500;
+}
+.chat-settings-close:hover { background: var(--danger); color: #ffffff; }

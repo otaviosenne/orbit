@@ -1,0 +1,143 @@
+/* Orbit Web: loaded after styles.css, by the web page only. Wide screens keep the desktop layout; below the
+   breakpoint (keep in sync with NARROW_QUERY in mobile/narrow-screen.ts) the board shows one column and a chat
+   takes the whole screen. */
+
+/* ---------- Window ---------- */
+/* The desktop's translucent --window is made for Hyprland's blur; in a browser it would composite onto white */
+:root { --web-window: #f6f6f8; --web-gutter: 12px; --web-touch: 44px; }
+:root[data-theme='dark'] { --web-window: #1e1e1e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --web-window: #1e1e1e; } }
+html, body { background: var(--web-window); }
+/* --panel is slightly see-through as well; over a browser page the board would show through the chat */
+.sheet, .card-menu, .resume-popover, .new-chat-menu { background: linear-gradient(var(--panel), var(--panel)) var(--web-window); }
+body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+
+/* ---------- Desktop-only controls (see REMOTE_ACCESS in src/shared/remote-access.ts) ---------- */
+/* Focus or pop out a desktop window, attach a folder, dictate: none of it reaches a phone */
+#action-focus, #action-window, #sheet-devices, #composer-mic, #voice-bars, .panel-resizer,
+.new-chat-add, .new-chat-separator { display: none !important; }
+/* The phone's own back button, shown only on narrow screens */
+.web-sheet-back { display: none; }
+.web-columns { display: none; }
+
+/* ---------- Sign-in ---------- */
+.web-sign-in {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: var(--web-gutter);
+  background: var(--web-window);
+}
+.web-sign-in-card {
+  width: min(360px, 100%); display: flex; flex-direction: column; gap: 12px; padding: 24px 20px 18px;
+  border-radius: 16px; background: var(--group); box-shadow: var(--shadow-card);
+}
+.web-sign-in-title { display: flex; justify-content: center; padding-bottom: 4px; }
+.web-sign-in-hint { color: var(--secondary); font-size: 13px; text-align: center; }
+.web-sign-in-input {
+  min-height: var(--web-touch); padding: 0 12px; border: 0; border-radius: 10px; background: var(--control);
+  box-shadow: 0 0 0 0.5px var(--control-border); font-size: 16px;
+}
+.web-sign-in-input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 0.5px var(--accent); }
+.web-sign-in-submit { min-height: var(--web-touch); font-size: 15px; font-weight: 600; }
+.web-sign-in-problem { min-height: 1.4em; color: var(--danger); font-size: 12.5px; text-align: center; }
+
+/* ---------- Touch: 44px targets, nothing that only appears on hover ---------- */
+@media (pointer: coarse) {
+  .tab, .button, .link-button, .resume-button, .new-chat-main, .new-chat-more, .card-menu-item, .new-chat-item,
+  .agent-strip-row, .agent-strip-toggle, .web-column, #composer-send { min-height: var(--web-touch); }
+  .icon-button, .composer-attach { min-width: var(--web-touch); min-height: var(--web-touch); }
+  .sheet-dot { margin: 0 6px; }
+  .agent-strip-stop { opacity: 0.6; width: 32px; height: 32px; }
+  .attachment-remove { opacity: 1; width: 24px; height: 24px; }
+  /* A long press opens the card's menu (touch-taps.ts), so the system's text callout must stay away */
+  .card, .lane, .pinned-cards { -webkit-touch-callout: none; user-select: none; }
+  /* 16px stops iOS from zooming the page when the composer gets focus */
+  .composer-input, .resume-search, .rename-input, .remote-input { font-size: 16px; }
+}
+/* A tap leaves :hover stuck on phones, which would keep a card faded after it was opened */
+@media (hover: none) {
+  .card:hover { background: var(--card); opacity: 1; }
+  .card.is-closed:hover { opacity: 0.5; }
+  .lane:hover { background: transparent; }
+}
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 700px) {
+  body { display: flex; flex-direction: column; height: 100dvh; }
+  .view { flex: 1 1 auto; min-height: 0; height: auto; }
+
+  /* Toolbar: wordmark and actions on top, the view tabs across the full width below */
+  .topbar {
+    height: auto; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'title info' 'nav nav';
+    gap: 8px; padding: calc(8px + env(safe-area-inset-top)) var(--web-gutter) 8px;
+  }
+  .topbar .app-title { grid-area: title; display: flex; }
+  .topbar .nav { grid-area: nav; }
+  .topbar .tab { flex: 1; min-width: 0; padding: 4px 6px; }
+  .topbar .topbar-info { grid-area: info; display: flex; gap: 8px; }
+  .settings-button { margin-left: 0; }
+  .new-chat-label { display: none; }
+  .new-chat-menu, .resume-popover {
+    position: fixed; left: var(--web-gutter); right: var(--web-gutter); top: calc(env(safe-area-inset-top) + 56px);
+    width: auto; max-width: none; max-height: calc(100dvh - 72px); overflow-y: auto;
+  }
+
+  /* Board: one column at a time, chosen above it or by swiping */
+  body.web-on-board .web-columns {
+    display: flex; flex: none; margin: 0 var(--web-gutter) 10px; padding: 2px; border-radius: 8px; background: var(--segment-track);
+  }
+  .web-column {
+    flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 2px;
+    border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 12.5px; font-weight: 500;
+  }
+  .web-column.is-active { background: var(--segment-thumb); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.04); }
+  .web-column-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .web-column-count { color: var(--secondary); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* Needs you comes first and turns green when something waits, like its board badge */
+  .web-column.has-items:first-child .web-column-count { color: var(--tag-green); }
+
+  .pinned-row { margin: 0 var(--web-gutter) 10px; }
+  .board { display: flex; flex-direction: column; padding: 0 var(--web-gutter) var(--web-gutter); overflow: hidden; }
+  .board > *, .column-stack > * { flex: 1 1 auto; min-height: 0; max-height: none; }
+  .board .column-title { display: none; }
+  .column:not(:has(.card))::after { content: 'No chats here'; padding: 24px 0; text-align: center; color: var(--tertiary); }
+  body[data-board-column='needs'] .board > :not(.column-needs),
+  body[data-board-column='busy'] .board > :not(.column-busy),
+  body[data-board-column='active'] .board > :not(.column-stack),
+  body[data-board-column='active'] .column-idle,
+  body[data-board-column='idle'] .board > :not(.column-stack),
+  body[data-board-column='idle'] .column-active { display: none; }
+  .column-stack .column-active, .column-stack .column-idle { max-height: none; }
+
+  /* Panel: one tile across and one screen tall; the chat list sits above the tiles */
+  .grid-view { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); padding: 0 var(--web-gutter) var(--web-gutter); }
+  .grid-view .grid-sidebar { max-height: 32dvh; }
+  .grid-view .grid-controls { display: none; }
+  .grid-view .grid-tiles { grid-template-columns: minmax(0, 1fr); grid-auto-rows: calc(100cqh - 2 * var(--grid-padding)); }
+
+  /* Timeline: the view scrolls sideways (it outlives the timeline, rebuilt every poll, so the position holds) */
+  .view:has(> .timeline) { overflow-x: auto; }
+  .timeline { min-width: 620px; margin: 0 var(--web-gutter) var(--web-gutter); padding: 6px 8px 8px; }
+  .timeline-axis, .timeline .lane { grid-template-columns: 120px 1fr; }
+
+  .settings { padding: 4px var(--web-gutter) calc(var(--web-gutter) + env(safe-area-inset-bottom)); }
+
+  /* The chat: the whole screen, with only back, its dot and its name on top */
+  body.panel-open { padding-right: 0; }
+  .sheet {
+    top: var(--web-viewport-top, 0px); bottom: auto; width: 100%; height: var(--web-viewport-height, 100dvh);
+    border-left: 0; box-shadow: none; transform: translateX(100%);
+  }
+  .sheet.is-open { transform: none; }
+  .sheet-head { padding: calc(6px + env(safe-area-inset-top)) var(--web-gutter) 8px 4px; }
+  .sheet-actions, .sheet-meta, #action-rename { display: none; }
+  .web-sheet-back { display: grid; place-items: center; margin-right: -4px; }
+  .web-sheet-back svg { width: 18px; height: 18px; }
+  .sheet.is-agent .web-sheet-back { display: none; }
+  .sheet-name { font-size: 17px; }
+  .composer { padding-left: var(--web-gutter); padding-right: var(--web-gutter); padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  /* A card's menu rises from the bottom like a phone's action sheet, instead of at the finger (it sets its own
+     left/top inline, hence !important) */
+  .card-menu:not(.app-menu) {
+    left: var(--web-gutter) !important; right: var(--web-gutter); top: auto !important;
+    bottom: calc(var(--web-gutter) + env(safe-area-inset-bottom)); max-width: none; padding: 8px; border-radius: 14px;
+  }
+}

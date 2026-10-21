@@ -38,6 +38,7 @@ start or resume chats without leaving the window.
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [How it works](#how-it-works)
 - [Privacy](#privacy)
+- [Orbit Web (remote access)](#orbit-web-remote-access)
 - [Demo mode](#demo-mode)
 - [Configurable assumptions](#configurable-assumptions)
 - [Development](#development)
@@ -210,7 +211,9 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
 
 ## Privacy
 
-- Everything runs locally. There is **no telemetry**, no analytics and no Orbit server.
+- Everything runs locally. There is **no telemetry**, no analytics and no Orbit server. Orbit Web,
+  when you turn it on, listens on `127.0.0.1` only and is reachable from elsewhere only through a
+  tunnel or proxy you set up.
 - **Read:** files under `~/.claude` (sessions, transcripts, agents, credentials), process info under
   `/proc`, and Hyprland and kitty state.
 - **Sent over the network:** only to `api.anthropic.com`: the microphone audio while you dictate, and
@@ -219,6 +222,28 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
   preferences, pins and drafts live in Electron's local storage; New chat shortcuts you add are
   appended to the launcher's `shortcuts.tsv`.
 - Links in messages open in your browser, never inside Orbit.
+
+## Orbit Web (remote access)
+
+Follow and steer your chats from your phone while the computer is on: Board, Timeline, Panel (one
+column) and the chat panel, where you can read, send messages and images, answer questions,
+interrupt, stop agents and switch model or mode. On a phone the board shows one column at a time
+(tap or swipe), a chat opens full screen, and a long press on a card opens its menu. It is the
+same renderer as the desktop app, talking HTTP instead of IPC. Off by default.
+
+1. **Settings → Orbit Web → Allow remote access.** Orbit listens on `http://127.0.0.1:4517` only.
+2. Put it behind HTTPS: Cloudflare Tunnel (+ Cloudflare Access), `tailscale serve`, or a reverse
+   proxy. Copy-paste steps are in [docs/remote.md](docs/remote.md#setup).
+3. Type the public address into **External URL**, then scan the **QR code** with your phone.
+
+**Security model.** A 256-bit token, created on first enable and stored in
+`~/.config/orbit/remote.json` (mode 0600), is traded once for an `HttpOnly; Secure;
+SameSite=Strict` cookie. Comparisons run in constant time, and failed sign-ins are rate-limited.
+Writes must come from your own origin, unknown `Host` headers are refused, there is no CORS, and
+every request is logged without the token. Closing chats, desktop windows, folder pickers, adding
+shortcuts, dictation and Orbit Web's own settings stay desktop-only.
+**The token is as good as a shell on your computer:** keep it private and press **New token** if a
+phone is lost. Full details: [docs/remote.md](docs/remote.md).
 
 ## Demo mode
 

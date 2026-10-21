@@ -50,6 +50,8 @@ import { isTimelineMode, loadTimelineMode, saveTimelineMode } from './views/time
 import { TIMELINE_MODE_ATTRIBUTE } from './views/timeline-mode-control';
 import { TimelineLinesView } from './views/timeline-lines/timeline-lines-view';
 import { renderWordmark } from './wordmark';
+import { isWebHost } from './host';
+import { RemoteSection } from './views/remote-section';
 
 const CHATS_POLL_MS: number = 2000;
 const USAGE_POLL_MS: number = 30_000;
@@ -63,6 +65,8 @@ const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot
   toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
 );
 const pendingEdits: PendingEdits = new PendingEdits();
+// Orbit Web's own settings exist only in the desktop window: a phone must not be able to read or change its token.
+const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSection();
 const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
@@ -105,7 +109,7 @@ const sheet: ChatSheet = new ChatSheet(closeSheet, {
     pendingEdits.drop(sessionId, field);
     showChats();
   },
-}, (): void => void refreshSheet());
+}, (): void => void refreshSheet(), (sessionId: string): void => void closeChat(sessionId));
 const launches: LaunchPanel = new LaunchPanel(new LaunchWatch((): string | null => sheet.sessionId), {
   sheet,
   colorPreview: {
@@ -171,10 +175,11 @@ function renderView(): void {
   settingsButton.classList.toggle('is-active', view === 'settings');
   // A card being renamed holds an open text field; rebuilding the board would throw the typing away.
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
+  if (view === 'settings' && remoteSection?.isEditing === true) return;
   if (view === 'board') viewRoot.replaceChildren(renderBoard(chats, boardMarks(), now));
   else if (view === 'grid') showGrid(now);
   else if (view === 'timeline') showTimeline(now);
-  else viewRoot.replaceChildren(renderSettings(theme, usage, now));
+  else viewRoot.replaceChildren(renderSettings(theme, usage, now, remoteSection === null ? [] : [remoteSection.root]));
 }
 
 // Tiles hold scroll, open rows and drafts, so the grid is mounted once and updated in place instead of rebuilt.

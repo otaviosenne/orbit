@@ -6,7 +6,8 @@ export interface PushToTalkHandlers {
   readonly onPress: () => void;
   readonly onHoldStart: () => void;
   readonly onHoldEnd: () => void;
-  readonly onTap: () => void;
+  // pressedAt: when the key went down (performance.now()), for telling a double tap.
+  readonly onTap: (pressedAt: number) => void;
 }
 
 // Tells a held Space (talk) apart from a tapped Space (type a space) on one input.
@@ -14,6 +15,7 @@ export class PushToTalk {
   private holdTimer: number | undefined;
   private isHolding: boolean = false;
   private isPressed: boolean = false;
+  private pressedAt: number = 0;
 
   constructor(input: HTMLElement, private readonly handlers: PushToTalkHandlers) {
     input.addEventListener('keydown', (event: KeyboardEvent): void => this.handleKeyDown(event));
@@ -26,6 +28,7 @@ export class PushToTalk {
     event.preventDefault();
     if (this.isPressed) return;
     this.isPressed = true;
+    this.pressedAt = performance.now();
     this.handlers.onPress();
     this.holdTimer = window.setTimeout((): void => {
       this.isHolding = true;
@@ -38,7 +41,7 @@ export class PushToTalk {
     event.preventDefault();
     const wasHolding: boolean = this.isHolding;
     this.release();
-    if (!wasHolding) this.handlers.onTap();
+    if (!wasHolding) this.handlers.onTap(this.pressedAt);
   }
 
   private release(): void {
