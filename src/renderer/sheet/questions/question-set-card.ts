@@ -3,12 +3,13 @@ import { element } from '../../dom';
 import type { FieldsetQuestion } from './question-fieldset';
 import { QuestionFieldset } from './question-fieldset';
 import { ProblemLine } from './problem-line';
-import { QuestionProgress, renderQuestionTitle } from './question-head';
+import { QuestionProgress, renderDismissButton, renderQuestionTitle } from './question-head';
 import { settleAction } from './settle-action';
 
 // What a question-set card needs: send every answer at once, hear that the picker is done, reach the chat.
 export interface QuestionSetActions {
   answerSet(questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
+  decline(): Promise<ActionResult>;
   moved(): void;
   goToChat(): void;
 }
@@ -62,6 +63,7 @@ export class QuestionSetCard {
       stepper.append(this.previousArrow, this.stepLabel, this.nextArrow);
       head.append(stepper);
     }
+    head.append(renderDismissButton((): void => void this.decline()));
     return head;
   }
 
@@ -110,6 +112,16 @@ export class QuestionSetCard {
     if (result.ok) return this.actions.moved();
     // Their choices stay as they are, so trying again is one click.
     this.problem.show(result.error ?? 'Could not send the answers');
+    this.setSending(false);
+  }
+
+  private async decline(): Promise<void> {
+    if (this.isSending) return;
+    this.problem.clear();
+    this.setSending(true);
+    const result: ActionResult = await settleAction(this.actions.decline());
+    if (result.ok) return this.actions.moved();
+    this.problem.show(result.error ?? 'Could not dismiss the question');
     this.setSending(false);
   }
 

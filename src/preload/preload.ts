@@ -72,6 +72,7 @@ const api: RadarApi = {
   submitAnswers: (sessionId: string, fingerprint: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SubmitAnswers, sessionId, fingerprint),
   answerQuestionSet: (sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.AnswerQuestionSet, sessionId, questionId, answers),
+  declineQuestion: (sessionId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.DeclineQuestion, sessionId),
   stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.StopAgent, sessionId, agentId),
   getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => ipcRenderer.invoke(IpcChannel.GetShellOutput, sessionId, taskId),
   interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptShell, sessionId, taskId),

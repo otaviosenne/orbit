@@ -4,13 +4,15 @@ import { QuestionFieldset } from './question-fieldset';
 import { renderReviewLines } from './picker-review';
 import { ProblemLine } from './problem-line';
 import { settleAction } from './settle-action';
-import { renderQuestionTitle } from './question-head';
+import { renderDismissButton, renderQuestionTitle } from './question-head';
 
 // What the card can do in the chat's terminal; each resolves once the picker moved on, or with why not.
 export interface PickerActions {
   answer(fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   submit(fingerprint: string): Promise<ActionResult>;
   answerSet(questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
+  // Dismisses the question without an answer, as Esc does in the chat window.
+  decline(): Promise<ActionResult>;
   // Called after a successful step so the next tab (or the answered summary) shows without waiting for a poll.
   moved(): void;
   // Brings up the chat's own window, for an answer that could not go through from here.
@@ -34,10 +36,10 @@ export class PickerCard {
     this.problem = new ProblemLine((): void => actions.goToChat());
     if (view.kind === 'unreadable') {
       this.problem.showNote(UNREADABLE_HINT);
-      this.root.append(cardHead(TITLE, null), this.problem.root);
+      this.root.append(cardHead(TITLE, null, (): void => void this.decline()), this.problem.root);
       return;
     }
-    this.root.append(cardHead(TITLE, view.kind === 'question' ? stepLabel(view) : 'Review your answers'), ...this.body(view), this.foot(view));
+    this.root.append(cardHead(TITLE, view.kind === 'question' ? stepLabel(view) : 'Review your answers', (): void => void this.decline()), ...this.body(view), this.foot(view));
     this.refresh();
   }
 
@@ -75,6 +77,16 @@ export class PickerCard {
     this.setSending(false, label);
   }
 
+  private async decline(): Promise<void> {
+    if (this.isSending) return;
+    const label: string = this.button.textContent ?? '';
+    this.setSending(true, SENDING_LABEL);
+    const result: ActionResult = await settleAction(this.actions.decline());
+    if (result.ok) return this.actions.moved();
+    this.problem.show(result.error ?? 'Could not dismiss the question');
+    this.setSending(false, label);
+  }
+
   private setSending(sending: boolean, label: string): void {
     this.isSending = sending;
     this.root.classList.toggle('is-sending', sending);
@@ -84,10 +96,11 @@ export class PickerCard {
   }
 }
 
-function cardHead(title: string, step: string | null): HTMLElement {
+function cardHead(title: string, step: string | null, dismiss: () => void): HTMLElement {
   const head: HTMLElement = element('header', 'question-head');
   head.append(...renderQuestionTitle(title));
   if (step !== null) head.append(element('span', 'question-count', step));
+  head.append(renderDismissButton(dismiss));
   return head;
 }
 

@@ -74,6 +74,7 @@ export function createHttpRadar(call: RemoteCall): RadarApi {
     submitAnswers: (sessionId: string, fingerprint: string): Promise<ActionResult> => call('SubmitAnswers', [sessionId, fingerprint]),
     answerQuestionSet: (sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> =>
       call('AnswerQuestionSet', [sessionId, questionId, answers]),
+    declineQuestion: (sessionId: string): Promise<ActionResult> => call('DeclineQuestion', [sessionId]),
     stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => call('StopAgent', [sessionId, agentId]),
     getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => call('GetShellOutput', [sessionId, taskId]),
     interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => call('InterruptShell', [sessionId, taskId]),

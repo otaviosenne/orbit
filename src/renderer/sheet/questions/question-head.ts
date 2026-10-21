@@ -1,5 +1,5 @@
 import { element } from '../../dom';
-import { QUESTION_MARK_ICON } from '../../icons';
+import { CLOSE_ICON, QUESTION_MARK_ICON } from '../../icons';
 
 // The card's title with its round question badge, shared by the transcript and the screen-read cards.
 export function renderQuestionTitle(title: string): HTMLElement[] {
@@ -39,4 +39,15 @@ function renderSegment(index: number, count: number, select: (index: number) => 
   segment.setAttribute('aria-label', `Question ${index + 1} of ${count}`);
   segment.addEventListener('click', (): void => select(index));
   return segment;
+}
+
+// The X in the card's corner: dismisses the question without answering, like Esc in the chat window.
+export function renderDismissButton(dismiss: () => void): HTMLButtonElement {
+  const button: HTMLButtonElement = element('button', 'icon-button question-dismiss');
+  button.type = 'button';
+  button.title = 'Dismiss without answering (Esc in the chat)';
+  button.setAttribute('aria-label', 'Dismiss the question');
+  button.innerHTML = CLOSE_ICON;
+  button.addEventListener('click', dismiss);
+  return button;
 }

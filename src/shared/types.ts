@@ -404,6 +404,8 @@ export interface RadarApi {
   answerQuestion(sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   // Answers every question of a set (PickerSetView) in the terminal and submits; resolves once the chat recorded it.
   answerQuestionSet(sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
+  // Dismisses the waiting question without an answer, as Esc does in the chat's terminal.
+  declineQuestion(sessionId: string): Promise<ActionResult>;
   // Confirms the picker's review step; resolves once the chat recorded the answers.
   submitAnswers(sessionId: string, fingerprint: string): Promise<ActionResult>;
   // Stops one running agent of the chat; resolves once the chat marked that agent stopped.

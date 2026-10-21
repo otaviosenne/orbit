@@ -8,6 +8,7 @@ import { resumeChat } from '../chat-resumer';
 import { openLauncher } from '../launcher';
 import { answerQuestion, submitAnswers } from '../questions/question-answerer';
 import { answerQuestionSet } from '../questions/set-answerer';
+import { declineQuestion } from '../questions/question-decliner';
 import { failure } from '../terminal-input';
 import { isAttachmentList, isPid, textArg } from './route-args';
 import type { RouteServices } from './route-services';
@@ -22,6 +23,7 @@ type ActionChannel =
   | 'AnswerQuestion'
   | 'SubmitAnswers'
   | 'AnswerQuestionSet'
+  | 'DeclineQuestion'
   | 'StopAgent'
   | 'InterruptShell';
 
@@ -42,6 +44,7 @@ export function actionRoutes({ radar, pastChats }: RouteServices): Readonly<Reco
     SubmitAnswers: (sessionId: unknown, fingerprint: unknown): Promise<ActionResult> => submitAnswers(radar, sessionId, fingerprint),
     AnswerQuestionSet: (sessionId: unknown, questionId: unknown, answers: unknown): Promise<ActionResult> =>
       answerQuestionSet(radar, sessionId, questionId, answers),
+    DeclineQuestion: (sessionId: unknown): Promise<ActionResult> => declineQuestion(radar, sessionId),
     StopAgent: (sessionId: unknown, agentId: unknown): Promise<ActionResult> => stopAgent(radar, sessionId, agentId),
     InterruptShell: (sessionId: unknown, taskId: unknown): Promise<ActionResult> => interruptShell(radar, sessionId, taskId),
   };

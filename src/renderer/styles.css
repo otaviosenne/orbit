@@ -1206,6 +1206,11 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .question-progress-step.is-done { background-color: color-mix(in srgb, var(--question-tint) 55%, transparent); }
 .question-progress-step.is-current { background-color: var(--question-tint); }
 .question-hint { color: var(--tertiary); font-size: 11px; }
+/* The X sits at the far right of the header, after the step pill and its arrows */
+.question-dismiss { margin-left: auto; width: 24px; height: 24px; color: var(--secondary); }
+.question-head > .question-count { margin-left: auto; }
+.question-stepper + .question-dismiss, .question-count + .question-dismiss { margin-left: 4px; }
+.question-dismiss svg { width: 13px; height: 13px; fill: currentColor; }
 /* "Question 2 of 4" is where the user is in the set, so it reads as a pill rather than a faint caption */
 .question-count {
   padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; font-variant-numeric: tabular-nums;
