@@ -4,7 +4,7 @@ import type { PageFetch } from './paged-transcript';
 import { PagedTranscript } from './paged-transcript';
 
 // Within this distance of the top, the page before the oldest one shown is brought in.
-const NEAR_TOP_PX: number = 240;
+export const NEAR_TOP_PX: number = 240;
 
 // A live thread that starts on its latest page and grows upward as it is scrolled toward the top.
 export class ThreadFeed implements OlderHistory {

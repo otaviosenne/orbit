@@ -1,6 +1,7 @@
 import { CARET_DOWN_ICON, CARET_UP_ICON } from '../icons';
 import type { OlderHistory } from './paging/older-history';
 import { searchOlder } from './paging/older-history';
+import { NEAR_TOP_PX } from './paging/thread-feed';
 
 // Hovering this long opens the preview; shorter passes of the pointer do not.
 const PREVIEW_DELAY_MS: number = 500;
@@ -74,11 +75,18 @@ export class MessageNavigator {
   private async jump(direction: Direction): Promise<void> {
     const { thread } = this.elements;
     this.hidePreview();
-    const loadedBefore: number = thread.childElementCount;
     const target: HTMLElement | null = await this.find(direction);
+    if (target !== null && direction === 'up') await this.loadRoomAbove(target);
     const top: number = target === null ? (direction === 'up' ? 0 : thread.scrollHeight) : this.topOf(target) - JUMP_MARGIN_PX;
-    // Pages just added above shifted the content under a smooth scroll's fixed destination, so jump straight there.
-    thread.scrollTo({ top, behavior: thread.childElementCount === loadedBefore ? 'smooth' : 'instant' });
+    thread.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  // Landing near the top would make the thread page in more history mid-scroll and shove the content under the
+  // animation; loading that history first lets the scroll glide all the way instead of jumping.
+  private async loadRoomAbove(target: HTMLElement): Promise<void> {
+    while (this.history !== null && this.history.canLoadOlder && this.topOf(target) - JUMP_MARGIN_PX < NEAR_TOP_PX) {
+      if (!(await this.history.loadOlder())) return;
+    }
   }
 
   private find(direction: Direction): Promise<HTMLElement | null> {
