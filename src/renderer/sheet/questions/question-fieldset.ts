@@ -35,7 +35,9 @@ export class QuestionFieldset {
     this.otherText.addEventListener('input', (): void => {
       this.otherChoice.checked = this.otherText.value.trim().length > 0 || this.otherChoice.checked;
     });
-    this.otherChoice.addEventListener('change', (): void => {
+    // On click, not change: picking "Other" again (or clicking its row) must still put the caret in the field,
+    // or the keys meant for it land on the radio, where Space only re-picks it.
+    this.otherChoice.addEventListener('click', (): void => {
       if (this.otherChoice.checked) this.otherText.focus();
     });
     this.root.addEventListener('input', onChange);

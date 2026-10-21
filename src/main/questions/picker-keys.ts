@@ -15,13 +15,17 @@ const ROWS_BELOW_OPTIONS_MULTI: number = 3;
 // Below the options the "Type something" field comes first; from the bottom, single-select reaches it in one step up.
 const FIELD_ROWS_ABOVE_BOTTOM_SINGLE: number = 1;
 const FIELD_ROWS_ABOVE_BOTTOM_MULTI: number = 2;
-// Ctrl+U clears the "Type something" field (and unticks it in a multi-select).
-const CLEAR_FIELD: string = '\u0015';
+// Ctrl+U clears the "Type something" field back from the caret (and unticks it in a multi-select), Ctrl+K forward.
+const CLEAR_BEFORE_CARET: string = 'ctrl+u';
+const CLEAR_AFTER_CARET: string = 'ctrl+k';
+// Each press clears only one wrapped line, a narrow window wraps the field over many, and coming back to the field
+// may leave the caret anywhere in it; spare presses on an empty field do nothing.
+const MAX_FIELD_LINES: number = 40;
 // The review step lists "1. Submit answers" first.
 const SUBMIT_ANSWERS_DIGIT: string = '1';
 
 export function keys(name: string, times: number = 1): PickerStep {
-  return { kind: 'keys', keys: Array.from({ length: times }, (): string => name) };
+  return { kind: 'keys', keys: repeated(name, times) };
 }
 
 export function text(value: string): PickerStep {
@@ -52,11 +56,15 @@ export function climbToField(question: PickerShape): PickerStep {
 }
 
 export function clearField(): PickerStep {
-  return text(CLEAR_FIELD);
+  return { kind: 'keys', keys: [...repeated(CLEAR_BEFORE_CARET, MAX_FIELD_LINES), ...repeated(CLEAR_AFTER_CARET, MAX_FIELD_LINES)] };
 }
 
 export function submitReview(): PickerStep {
   return text(SUBMIT_ANSWERS_DIGIT);
+}
+
+function repeated(name: string, times: number): string[] {
+  return Array.from({ length: times }, (): string => name);
 }
 
 function rowsBelowOptions(question: PickerShape): number {

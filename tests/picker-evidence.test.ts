@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { stripAnsi } from '../src/main/questions/screen/ansi-line';
-import { contradictsSet, cursorRow, labelMatches, showsPicker, visibleReviewLines } from '../src/main/questions/screen/picker-evidence';
+import { contradictsSet, cursorRow, labelMatches, showsPicker, showsReviewSubmit, visibleReviewLines } from '../src/main/questions/screen/picker-evidence';
 import { parsePicker } from '../src/main/questions/screen/picker-parser';
 import type { Question } from '../src/shared/types';
 
@@ -60,5 +60,31 @@ describe('picker evidence on a terminal too small for the picker', () => {
       kind: 'question', multiSelect: true, other: null,
       options: [{ label: 'Apple', ticked: false }, { label: 'Banana', ticked: true }, { label: 'Cherry', ticked: false }],
     });
+  });
+});
+
+describe('picker evidence in a window about 18 columns wide', () => {
+  const language: Question = { ...question('Which language do you prefer?', 'Lang', false, 3), options: ['TypeScript', 'Internationalization', 'Go'].map((label: string) => ({ label, description: label })) };
+
+  it('sees the picker by a footer wrapped over several lines, with the tab bar scrolled away', () => {
+    const screen: string = stripAnsi(fixture('narrow-wrapped-footer.ansi.txt'));
+    expect(showsPicker(screen)).toBe(true);
+    expect(showsPicker('Enter to select ·\nTab/Arrow keys to\nnavigate · Esc to\ncancel\n───── Questions demo ─')).toBe(true);
+    expect(contradictsSet(parsePicker(fixture('narrow-wrapped-footer.ansi.txt')), [language])).toBe(false);
+    expect(cursorRow(screen)).toEqual({ number: 1, label: 'TypeScript', ticked: null });
+    expect(labelMatches('International', 'Internationalization')).toBe(true);
+  });
+
+  it('sees the review although its rows are cut to "1. Submit" and its questions wrap', () => {
+    const screen: string = stripAnsi(fixture('narrow-review.ansi.txt'));
+    expect(showsPicker(screen)).toBe(true);
+    expect(showsReviewSubmit(screen)).toBe(true);
+    expect(showsReviewSubmit('❯ 1. Submit answ…\n  2. Cancel')).toBe(true);
+    expect(showsReviewSubmit('❯ 1. Submit\n  2. Green')).toBe(false);
+    expect(showsReviewSubmit('❯ 1. Submit\n     Send it\n  2. Cancel\n\nEnter to select ·\nTab/Arrow keys to\nnavigate')).toBe(false);
+    expect(visibleReviewLines(screen)).toEqual([
+      { question: 'Which color do you prefer?', answer: 'Red' },
+      { question: 'Which fruits do you like?', answer: 'Apple, Cherry' },
+    ]);
   });
 });

@@ -34,6 +34,14 @@ describe('SetDriver on a picker showing only the cursor row', () => {
     expect(picker.submitted).toEqual(['Teal', 'Apple, Cherry', 'Large']);
   });
 
+  it('replaces text left in the field even when coming back to it puts the caret at its start', async () => {
+    const picker: FakePicker = new FakePicker([color, size]);
+    Object.assign(picker.tabs[0] as object, { field: 'hi there' });
+    const answers: QuestionAnswer[] = [{ selected: [], other: 'hello world' }, { selected: [0], other: null }];
+    expect(await driveAndSubmit(picker, [color, size], answers)).toBeNull();
+    expect(picker.submitted).toEqual(['hello world', 'Small']);
+  });
+
   it('sends a lone single choice by its number, with no review', async () => {
     const picker: FakePicker = new FakePicker([size]);
     expect(await new SetDriver(picker).answer([size], [{ selected: [0], other: null }])).toBeNull();

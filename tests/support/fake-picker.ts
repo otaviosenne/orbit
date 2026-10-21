@@ -2,12 +2,15 @@ import type { PickerIO } from '../../src/main/questions/set-driver';
 import type { PickerStep } from '../../src/main/questions/picker-keys';
 import type { Question } from '../../src/shared/types';
 
-const CLEAR_FIELD: string = '\u0015';
+const CLEAR_BEFORE_CARET: string = 'ctrl+u';
+const CLEAR_AFTER_CARET: string = 'ctrl+k';
 
 interface TabState {
   cursor: number;
   ticked: number[];
   field: string;
+  // A narrow window puts the caret at the start of the field whenever the cursor comes back to it.
+  caret: number;
   picked: number | null;
 }
 
@@ -23,7 +26,7 @@ export class FakePicker implements PickerIO {
   readonly typed: string[] = [];
 
   constructor(private readonly questions: readonly Question[]) {
-    this.tabs = questions.map((): TabState => ({ cursor: 0, ticked: [], field: '', picked: null }));
+    this.tabs = questions.map((): TabState => ({ cursor: 0, ticked: [], field: '', caret: 0, picked: null }));
   }
 
   private get onReview(): boolean {
@@ -74,6 +77,8 @@ export class FakePicker implements PickerIO {
     const state: TabState = this.state;
     if (key === 'down') state.cursor = Math.min(state.cursor + 1, this.lastRow);
     if (key === 'up') state.cursor = state.cursor === 0 ? this.fieldRow : state.cursor - 1;
+    if (key === 'down' || key === 'up') state.caret = 0;
+    if (state.cursor === this.fieldRow) this.edit(state, key);
     if (key === 'left' && state.cursor < this.fieldRow) this.tab = Math.max(0, this.tab - 1);
     if (key === 'enter') this.enter();
   }
@@ -94,13 +99,22 @@ export class FakePicker implements PickerIO {
     }
     const state: TabState = this.state;
     if (state.cursor === this.fieldRow) {
-      state.field = value === CLEAR_FIELD ? '' : state.field + value;
+      state.field = state.field.slice(0, state.caret) + value + state.field.slice(state.caret);
+      state.caret += value.length;
       return;
     }
     const digit: number = Number(value) - 1;
     if (state.cursor >= this.fieldRow || !Number.isInteger(digit) || digit < 0 || digit >= this.fieldRow) return;
     if (!this.question.multiSelect) return this.pick(digit);
     state.ticked = state.ticked.includes(digit) ? state.ticked.filter((index: number) => index !== digit) : [...state.ticked, digit];
+  }
+
+  private edit(state: TabState, key: string): void {
+    if (key === CLEAR_BEFORE_CARET) {
+      state.field = state.field.slice(state.caret);
+      state.caret = 0;
+    }
+    if (key === CLEAR_AFTER_CARET) state.field = state.field.slice(0, state.caret);
   }
 
   private pick(option: number | null): void {

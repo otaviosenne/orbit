@@ -12,10 +12,23 @@ function view(multiSelect: boolean, options: PickerChoice[]): PickerQuestionView
   return { kind: 'question', fingerprint: 'f', tabs: [], current: 0, question: 'Q?', multiSelect, options, other: null, hasReview: true };
 }
 
-// The plan as the keystrokes a person would press, for readable expectations.
+// The plan as the keystrokes a person would press, for readable expectations: runs of one key as "key×count".
 function strokes(steps: readonly PickerStep[]): string[] {
-  return steps.map((step: PickerStep) => (step.kind === 'keys' ? `${step.keys[0]}×${step.keys.length}` : JSON.stringify(step.text)));
+  return steps.map((step: PickerStep) => (step.kind === 'keys' ? keyRuns(step.keys) : JSON.stringify(step.text)));
 }
+
+function keyRuns(keys: readonly string[]): string {
+  const runs: { key: string; count: number }[] = [];
+  for (const key of keys) {
+    const last: { key: string; count: number } | undefined = runs.at(-1);
+    if (last?.key === key) last.count += 1;
+    else runs.push({ key, count: 1 });
+  }
+  return runs.map((run: { key: string; count: number }) => `${run.key}×${run.count}`).join(' ');
+}
+
+// Clearing the field presses Ctrl+U then Ctrl+K once per line a narrow window may wrap it over.
+const CLEAR_FIELD: string = 'ctrl+u×40 ctrl+k×40';
 
 describe('tabSteps', () => {
   it('parks at the bottom, climbs to the first option and types its number for a single choice', () => {
@@ -24,17 +37,17 @@ describe('tabSteps', () => {
 
   it('types a single-choice "Other" answer on one line into the cleared field and enters it', () => {
     expect(strokes(tabSteps(view(false, choices(false, false, false)), { selected: [], other: 'Teal,\nbright' }))).toEqual([
-      'down×5', 'up×1', '"\\u0015"', '"Teal, bright"', 'enter×1',
+      'down×5', 'up×1', CLEAR_FIELD, '"Teal, bright"', 'enter×1',
     ]);
   });
 
   it('toggles only the boxes that differ from the screen, then clears the field and submits the tab', () => {
     const steps: PickerStep[] = tabSteps(view(true, choices(false, true, false)), { selected: [0, 2], other: 'Kiwi' });
-    expect(strokes(steps)).toEqual(['down×6', 'up×5', '"1"', '"2"', '"3"', 'down×6', 'up×2', '"\\u0015"', '"Kiwi"', 'down×1', 'enter×1']);
+    expect(strokes(steps)).toEqual(['down×6', 'up×5', '"1"', '"2"', '"3"', 'down×6', 'up×2', CLEAR_FIELD, '"Kiwi"', 'down×1', 'enter×1']);
   });
 
   it('presses no box when the screen already shows the wanted ticks', () => {
-    expect(strokes(tabSteps(view(true, choices(true, false)), { selected: [0], other: null }))).toEqual(['down×5', 'up×4', 'down×5', 'up×2', '"\\u0015"', 'down×1', 'enter×1']);
+    expect(strokes(tabSteps(view(true, choices(true, false)), { selected: [0], other: null }))).toEqual(['down×5', 'up×4', 'down×5', 'up×2', CLEAR_FIELD, 'down×1', 'enter×1']);
   });
 });
 

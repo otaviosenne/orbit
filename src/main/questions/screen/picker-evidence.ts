@@ -5,6 +5,10 @@ const WHITESPACE: RegExp = /\s+/g;
 const QUESTION_FOOTER: string = 'Entertoselect';
 const REVIEW_MARKERS: readonly string[] = ['Readytosubmityouranswers?', '1.Submitanswers'];
 const SUBMIT_ANSWERS: string = '1.Submitanswers';
+// A window about 20 columns wide cuts the review's first row to "1. Submit" (or "1. Submit answ…"), and the
+// leftover cells can trail "2. Cancel". A question tab could list the same two options, but it always keeps its
+// footer, which the review has none of.
+const REVIEW_ROWS: RegExp = /1\.Submit\p{L}*…?2\.Cancel/u;
 // Only the preview layout offers notes ("n to add notes").
 const PREVIEW_LAYOUT_MARKER: string = 'ntoaddnotes';
 // "❯ 2. [✔] Banana": the row the picker's cursor is on, which a scrolled list always keeps in view.
@@ -33,7 +37,7 @@ export function squeeze(text: string): string {
 // Positive signs of the AskUserQuestion picker, however little of it fits on screen.
 export function showsPicker(screen: string): boolean {
   const shown: string = squeeze(screen);
-  return shown.includes(QUESTION_FOOTER) || REVIEW_MARKERS.some((marker: string) => shown.includes(marker));
+  return shown.includes(QUESTION_FOOTER) || REVIEW_MARKERS.some((marker: string) => shown.includes(marker)) || showsCutReviewRows(shown);
 }
 
 export function showsPreviewLayout(screen: string): boolean {
@@ -41,7 +45,12 @@ export function showsPreviewLayout(screen: string): boolean {
 }
 
 export function showsReviewSubmit(screen: string): boolean {
-  return squeeze(screen).includes(SUBMIT_ANSWERS);
+  const shown: string = squeeze(screen);
+  return shown.includes(SUBMIT_ANSWERS) || showsCutReviewRows(shown);
+}
+
+function showsCutReviewRows(shown: string): boolean {
+  return REVIEW_ROWS.test(shown) && !shown.includes(QUESTION_FOOTER);
 }
 
 // True only on positive evidence that the picker on screen asks something else than this set.
@@ -69,8 +78,8 @@ export function labelMatches(shown: string, label: string): boolean {
   return visible.length > 0 && squeeze(label).startsWith(visible);
 }
 
-// The review lines a cut-off screen still shows: a "● question" then its "→ answer", which may wrap onto
-// indented lines of its own.
+// The review lines a cut-off screen still shows: a "● question" then its "→ answer"; a narrow window wraps both
+// onto indented lines of their own.
 export function visibleReviewLines(screen: string): PickerReviewLine[] {
   const lines: { question: string; answer: string }[] = [];
   let question: string | null = null;
@@ -81,6 +90,7 @@ export function visibleReviewLines(screen: string): PickerReviewLine[] {
     const last: { question: string; answer: string } | undefined = lines.at(-1);
     if (asked !== null) question = (asked[1] ?? '').trim();
     else if (answered !== null && question !== null) lines.push({ question, answer: (answered[1] ?? '').trim() });
+    else if (question !== null && CONTINUATION.test(line)) question = `${question} ${line.trim()}`;
     else if (answering && last !== undefined && CONTINUATION.test(line)) last.answer = `${last.answer} ${line.trim()}`;
     answering = answered !== null || (answering && asked === null && CONTINUATION.test(line));
     if (answered !== null) question = null;
