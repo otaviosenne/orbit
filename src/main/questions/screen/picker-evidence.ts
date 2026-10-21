@@ -1,3 +1,5 @@
+import type { SplitItem } from './review-line';
+import { splitInlineAnswer, withoutBorder } from './review-line';
 import type { PickerReviewLine, Question, QuestionPicker } from '../../../shared/types';
 
 const WHITESPACE: RegExp = /\s+/g;
@@ -84,11 +86,19 @@ export function visibleReviewLines(screen: string): PickerReviewLine[] {
   const lines: { question: string; answer: string }[] = [];
   let question: string | null = null;
   let answering: boolean = false;
-  for (const line of screen.split('\n')) {
+  for (const raw of screen.split('\n')) {
+    const line: string = withoutBorder(raw);
     const asked: RegExpExecArray | null = REVIEW_QUESTION.exec(line);
     const answered: RegExpExecArray | null = REVIEW_ANSWER.exec(line);
     const last: { question: string; answer: string } | undefined = lines.at(-1);
-    if (asked !== null) question = (asked[1] ?? '').trim();
+    const item: SplitItem | null = asked === null ? null : splitInlineAnswer((asked[1] ?? '').trim());
+    if (item !== null && item.answer !== null) {
+      lines.push({ question: item.question, answer: item.answer });
+      question = null;
+      answering = true;
+      continue;
+    }
+    if (item !== null) question = item.question;
     else if (answered !== null && question !== null) lines.push({ question, answer: (answered[1] ?? '').trim() });
     else if (question !== null && CONTINUATION.test(line)) question = `${question} ${line.trim()}`;
     else if (answering && last !== undefined && CONTINUATION.test(line)) last.answer = `${last.answer} ${line.trim()}`;
