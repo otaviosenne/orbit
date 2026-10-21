@@ -26,7 +26,17 @@ export function installTooltips(): void {
   window.addEventListener('blur', (): void => void (tooltip.hidden = true));
 }
 
+// The browser's own title tooltip waits and looks foreign; any title is taken over the moment the pointer
+// reaches it, before the browser would show it, and shown here instead.
+function adoptTitle(element: HTMLElement): void {
+  const title: string | null = element.getAttribute('title');
+  element.removeAttribute('title');
+  if (title !== null && title.trim().length > 0) setTip(element, { title, lines: [] });
+}
+
 function follow(tooltip: HTMLElement, event: PointerEvent): void {
+  const titled: HTMLElement | null = event.target instanceof Element ? event.target.closest<HTMLElement>('[title]') : null;
+  if (titled !== null) adoptTitle(titled);
   const source: HTMLElement | null = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-tip]') : null;
   const tip: Tip | null = source === null ? null : readTip(source);
   if (tip === null) {
@@ -48,6 +58,7 @@ function readTip(source: HTMLElement): Tip | null {
 
 function render(tooltip: HTMLElement, tip: Tip, key: string): void {
   tooltip.dataset[TIP_ATTRIBUTE] = key;
+  tooltip.classList.toggle('is-simple', tip.lines.length === 0);
   tooltip.replaceChildren(element('strong', 'tooltip-title', tip.title), ...tip.lines.map((line: string) => element('span', 'tooltip-line', line)));
 }
 

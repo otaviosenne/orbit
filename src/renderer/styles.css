@@ -384,6 +384,9 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 }
 .tooltip[hidden] { display: none; }
 .tooltip-title { font-weight: 600; }
+/* A one-line label (a button's name) reads lighter than an explained mark */
+.tooltip.is-simple { padding: 5px 9px; }
+.tooltip.is-simple .tooltip-title { font-weight: 500; }
 .tooltip-line { color: var(--secondary); }
 .tooltip-line:last-child:not(:nth-child(2)) { margin-top: 3px; color: var(--tertiary); font-size: 11.5px; }
 /* The chat's own lines are thin; a taller invisible band makes them easy to hover */

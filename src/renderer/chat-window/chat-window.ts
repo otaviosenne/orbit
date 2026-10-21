@@ -5,6 +5,7 @@ import { PendingEdits } from '../pending-edits';
 import { ChatSheet } from '../sheet/chat-sheet';
 import { loadThread } from '../sheet/thread-loader';
 import { applyTheme, loadTheme } from '../theme';
+import { installTooltips } from '../tooltip';
 import { EndedNotice } from './ended-notice';
 
 const CHATS_POLL_MS: number = 2000;
@@ -23,6 +24,7 @@ export function startChatWindow(sessionId: string): void {
 // The hub owns the theme setting; another window changing it shows up here as a storage event.
 function followTheme(): void {
   applyTheme(loadTheme());
+  installTooltips();
   window.addEventListener('storage', (): void => applyTheme(loadTheme()));
 }
 
