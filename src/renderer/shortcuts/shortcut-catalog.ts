@@ -56,6 +56,8 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { kind: 'action', id: 'chat-settings', group: 'Open chat', description: 'Chat settings (model, effort, permissions, skills)', keys: [{ key: 's' }] },
   { kind: 'action', id: 'chat-previous-message', group: 'Open chat', description: 'Jump to your previous message', keys: [{ key: '[' }], repeats: true },
   { kind: 'action', id: 'chat-next-message', group: 'Open chat', description: 'Jump to your next message', keys: [{ key: ']' }], repeats: true },
+  { kind: 'action', id: 'chat-scroll-up', group: 'Open chat', description: 'Scroll the thread up, even while typing', keys: [{ key: 'ArrowUp', alt: true }], repeats: true, whileTyping: true },
+  { kind: 'action', id: 'chat-scroll-down', group: 'Open chat', description: 'Scroll the thread down, even while typing', keys: [{ key: 'ArrowDown', alt: true }], repeats: true, whileTyping: true },
   { kind: 'action', id: 'chat-interrupt', group: 'Open chat', description: 'Interrupt Claude while it works (asks first)', keys: [{ key: 'i' }] },
   { kind: 'action', id: 'chat-close', group: 'Open chat', description: 'Close the chat (asks first)', keys: [{ key: 'Backspace', ctrl: true }], desktopOnly: true },
   { kind: 'reference', id: 'thread-zoom', group: 'Open chat', description: 'Make the thread text bigger or smaller', keys: [{ key: 'Wheel', ctrl: true }] },

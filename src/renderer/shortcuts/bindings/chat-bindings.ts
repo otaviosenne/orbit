@@ -13,6 +13,7 @@ export interface OpenChatControls {
   askToClose(): void;
   askToInterrupt(): void;
   jumpToOwnMessage(direction: 'up' | 'down'): void;
+  scrollThread(direction: 'up' | 'down'): void;
 }
 
 export interface ChatShortcutHost {
@@ -30,6 +31,8 @@ type ChatShortcutId =
   | 'chat-settings'
   | 'chat-previous-message'
   | 'chat-next-message'
+  | 'chat-scroll-up'
+  | 'chat-scroll-down'
   | 'chat-interrupt'
   | 'chat-close';
 
@@ -49,6 +52,8 @@ export function chatBindings(host: ChatShortcutHost): Pick<ShortcutBindings, Cha
     'chat-settings': when((): boolean => sheet.showsLiveChat, (): void => sheet.toggleSettings()),
     'chat-previous-message': when(isOpen, (): void => sheet.jumpToOwnMessage('up')),
     'chat-next-message': when(isOpen, (): void => sheet.jumpToOwnMessage('down')),
+    'chat-scroll-up': when(isOpen, (): void => sheet.scrollThread('up')),
+    'chat-scroll-down': when(isOpen, (): void => sheet.scrollThread('down')),
     'chat-interrupt': when((): boolean => sheet.showsLiveChat && sheet.isWorking, (): void => sheet.askToInterrupt()),
     'chat-close': when((): boolean => sheet.showsLiveChat, (): void => sheet.askToClose()),
   };

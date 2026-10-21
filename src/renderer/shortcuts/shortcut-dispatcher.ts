@@ -24,7 +24,7 @@ export function installShortcutDispatcher(bindings: ShortcutBindings, isBlocked:
   document.addEventListener('keydown', (event: KeyboardEvent): void => {
     if (!isShortcutCandidate(event) || isBlocked()) return;
     const match: ShortcutMatch | null = matchShortcut(shortcuts, event);
-    if (match === null) return;
+    if (match === null || (isTextField(event.target) && match.shortcut.whileTyping !== true)) return;
     const binding: ShortcutBinding = bindings[match.shortcut.id];
     if (!binding.enabled(match.chordIndex)) return;
     event.preventDefault();
@@ -33,7 +33,7 @@ export function installShortcutDispatcher(bindings: ShortcutBindings, isBlocked:
 }
 
 function isShortcutCandidate(event: KeyboardEvent): boolean {
-  if (event.defaultPrevented || event.isComposing || event.key === DEAD_KEY || isTextField(event.target)) return false;
+  if (event.defaultPrevented || event.isComposing || event.key === DEAD_KEY) return false;
   // Enter on a focused button or link presses it; it must not also open a card.
   return !(event.key === ACTIVATE_KEY && isActivatable(event.target));
 }

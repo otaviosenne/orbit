@@ -44,6 +44,9 @@ const PANEL_OPEN_CLASS: string = 'panel-open';
 const CLOSED_CLASS: string = 'is-closed';
 
 // Right-side panel for one chat: its history plus the actions you can take on it.
+// Alt+↑/↓ scroll this much of the visible thread per press.
+const THREAD_SCROLL_FRACTION: number = 0.4;
+
 export class ChatSheet {
   private readonly root: HTMLElement = requireElement('#sheet');
   private readonly name: HTMLElement = requireElement('#sheet-name');
@@ -170,6 +173,13 @@ export class ChatSheet {
 
   jumpToOwnMessage(direction: Direction): void {
     void this.navigator.jump(direction);
+  }
+
+  // A step of a good part of the visible thread, so holding the keys reads through it without losing the place.
+  scrollThread(direction: Direction): void {
+    const thread: HTMLElement = requireElement('#sheet-messages');
+    const step: number = thread.clientHeight * THREAD_SCROLL_FRACTION;
+    thread.scrollBy({ top: direction === 'up' ? -step : step, behavior: 'smooth' });
   }
 
   // Escape first backs out of an open sub-action, then out of an agent, then closes the sheet.

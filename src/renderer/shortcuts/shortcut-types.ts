@@ -28,6 +28,8 @@ export type ActionShortcutId =
   | 'chat-settings'
   | 'chat-previous-message'
   | 'chat-next-message'
+  | 'chat-scroll-up'
+  | 'chat-scroll-down'
   | 'chat-interrupt'
   | 'chat-close'
   | 'timeline-mode'
@@ -56,6 +58,8 @@ export interface ActionShortcut extends ShortcutBase {
   readonly id: ActionShortcutId;
   // Holding the key down keeps stepping (moving through cards, jumping through messages).
   readonly repeats?: boolean;
+  // Works while typing too: only for chords whose modifier types nothing, such as Alt+↑.
+  readonly whileTyping?: boolean;
 }
 
 // A key another part of Orbit already handles (the composer, dictation, Escape); listed in Help only.
