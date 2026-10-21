@@ -18,6 +18,7 @@ import type { DictationTarget } from './hands-free/dictation-target';
 import { PanelResizer } from './panel-resizer';
 import type { Direction } from './message-navigator';
 import { MessageNavigator } from './message-navigator';
+import { ThreadScroller } from './thread-scroller';
 import { ThreadZoom } from './thread-zoom';
 import { WorkingIndicator } from './working-indicator';
 import { DeviceLinks } from './device-links';
@@ -44,9 +45,6 @@ const PANEL_OPEN_CLASS: string = 'panel-open';
 const CLOSED_CLASS: string = 'is-closed';
 
 // Right-side panel for one chat: its history plus the actions you can take on it.
-// Alt+↑/↓ scroll this much of the visible thread per press.
-const THREAD_SCROLL_FRACTION: number = 0.4;
-
 export class ChatSheet {
   private readonly root: HTMLElement = requireElement('#sheet');
   private readonly name: HTMLElement = requireElement('#sheet-name');
@@ -83,6 +81,7 @@ export class ChatSheet {
   private chat: ChatSnapshot | null = null;
   private statusTimer: number | undefined;
   private readonly navigator: MessageNavigator;
+  private readonly threadScroller: ThreadScroller = new ThreadScroller(requireElement('#sheet-messages'));
 
   // onThreadChange: the panel switched between the chat and one of its agents, so its transcript must be fetched.
   // onCloseChat: closes a chat the way the board does, so its card and this panel go at once.
@@ -175,11 +174,8 @@ export class ChatSheet {
     void this.navigator.jump(direction);
   }
 
-  // A step of a good part of the visible thread, so holding the keys reads through it without losing the place.
   scrollThread(direction: Direction): void {
-    const thread: HTMLElement = requireElement('#sheet-messages');
-    const step: number = thread.clientHeight * THREAD_SCROLL_FRACTION;
-    thread.scrollBy({ top: direction === 'up' ? -step : step, behavior: 'smooth' });
+    this.threadScroller.step(direction);
   }
 
   // Escape first backs out of an open sub-action, then out of an agent, then closes the sheet.
