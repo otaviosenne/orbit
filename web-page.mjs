@@ -18,11 +18,16 @@ const WEB_HEAD = [
 // After the desktop sheet, in this order: web.css adapts it to a browser, phone.css lays it out as a phone app.
 const WEB_STYLES = ['<link rel="stylesheet" href="web.css" />', '<link rel="stylesheet" href="phone.css" />'];
 
-export function webPage(desktopHtml) {
+// Cloudflare overrides the server's no-cache on .js and .css with a browser cache of hours, so a phone would keep
+// an old script under a new page; a per-build query makes every release a different URL.
+const VERSIONED_ASSETS = [/(href=")(styles\.css|web\.css|phone\.css)(")/g, /(src=")(app\.js)(")/g];
+
+export function webPage(desktopHtml, buildVersion) {
   for (const anchor of [HEAD_ANCHOR, STYLE_ANCHOR]) {
     if (!desktopHtml.includes(anchor)) throw new Error(`index.html changed: Orbit Web needs ${anchor}`);
   }
-  return desktopHtml
+  const page = desktopHtml
     .replace(HEAD_ANCHOR, [HEAD_ANCHOR, ...WEB_HEAD].join('\n    '))
     .replace(STYLE_ANCHOR, [STYLE_ANCHOR, ...WEB_STYLES].join('\n    '));
+  return VERSIONED_ASSETS.reduce((html, pattern) => html.replace(pattern, `$1$2?v=${buildVersion}$3`), page);
 }
