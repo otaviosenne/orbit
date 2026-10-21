@@ -81,6 +81,10 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
 const cardRename: CardRename = new CardRename((sessionId: string, name: string): void => void renameChat(sessionId, name), (): void => renderView());
 const cardMenu: CardMenu = new CardMenu({
   openWindow: (target: CardMenuTarget): void => void window.radar.openChatWindow(target.sessionId),
+  goToChat: (target: CardMenuTarget): void => {
+    const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === target.sessionId);
+    if (chat !== undefined) void window.radar.focusChat(chat.pid);
+  },
   togglePin: (target: CardMenuTarget): void => {
     pins.toggle(target.sessionId);
     renderView();

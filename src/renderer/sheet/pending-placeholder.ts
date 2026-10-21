@@ -19,7 +19,7 @@ const SKELETON_BUBBLES: readonly SkeletonBubble[] = [
 ];
 // What a chat that is still starting cannot do yet: take a new name or color, or show its window. The composer
 // stays open: a message written meanwhile waits and goes out as soon as the chat is live.
-const UNUSABLE_YET: readonly string[] = ['#action-focus', '#action-rename', '#action-color'];
+const UNUSABLE_YET: readonly string[] = ['#action-focus', '#action-window', '#action-rename', '#action-color'];
 const STARTING_CLASS: string = 'is-starting';
 
 // The panel's stand-in for a chat that was just launched: its name and color in the header, shimmering

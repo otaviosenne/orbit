@@ -3,7 +3,7 @@ import type { ChatColor } from '../../shared/chat-colors';
 import type { ActionResult, AttachmentUpload, ChatSnapshot, TurnProgress } from '../../shared/types';
 import { requireElement } from '../dom';
 import { formatDuration } from '../format';
-import { CLOSE_ICON, OPEN_OUTSIDE_ICON, PENCIL_ICON } from '../icons';
+import { CLOSE_ICON, OPEN_OUTSIDE_ICON, PENCIL_ICON, TERMINAL_ICON } from '../icons';
 import { Lightbox } from '../lightbox';
 import { chatColor, textOnChatColor } from '../palette';
 import { renderSpinner } from '../spinner';
@@ -98,7 +98,10 @@ export class ChatSheet {
     close.innerHTML = CLOSE_ICON;
     close.addEventListener('click', onClose);
     // "Go to chat" leaves the radar for the chat's own window, hence the open-outside icon.
-    requireElement('#action-focus').insertAdjacentHTML('beforeend', OPEN_OUTSIDE_ICON);
+    // Its own Orbit window is the main way out of the panel; the terminal is one quiet icon by the name.
+    requireElement('#action-window').insertAdjacentHTML('beforeend', OPEN_OUTSIDE_ICON);
+    requireElement('#action-window').addEventListener('click', (): void => void this.withChat((chat) => window.radar.openChatWindow(chat.sessionId)));
+    requireElement('#action-focus').innerHTML = TERMINAL_ICON;
     requireElement('#action-focus').addEventListener('click', (): void => void this.withChat((chat) => window.radar.focusChat(chat.pid)));
     // The pencil beside the name renames; the color dot before it opens the color picker.
     const pencil: HTMLElement = requireElement('#action-rename');

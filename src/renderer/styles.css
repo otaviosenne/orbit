@@ -664,7 +664,9 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 .sheet-pending-error { margin: 0; max-width: 300px; color: var(--secondary); font-size: 13px; }
 @keyframes pending-shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
 @media (prefers-reduced-motion: reduce) { .sheet-pending-bubble { animation: none; } }
-.sheet.is-starting #action-focus, .sheet.is-starting #action-rename, .sheet.is-starting #action-color { opacity: 0.45; }
+.sheet.is-starting #action-focus, .sheet.is-starting #action-window, .sheet.is-starting #action-rename, .sheet.is-starting #action-color { opacity: 0.45; }
+/* A popped-out chat is already its own window */
+body.chat-window #action-window { display: none; }
 .sheet-pending-queued { align-self: flex-end; margin-top: auto; }
 
 /* Markdown inside bubbles: compact, so a long answer still reads like a message */
@@ -726,7 +728,7 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 .reopen-bar .button { padding: 7px 18px; border-radius: 16px; }
 .sheet.is-closed .reopen-bar { display: flex; }
 .sheet.is-closed .composer, .sheet.is-closed .working-indicator { display: none; }
-.sheet.is-closed #action-focus, .sheet.is-closed #action-rename, .sheet.is-closed #action-color, .sheet.is-closed #action-settings {
+.sheet.is-closed #action-focus, .sheet.is-closed #action-window, .sheet.is-closed #action-rename, .sheet.is-closed #action-color, .sheet.is-closed #action-settings {
   opacity: 0.45; pointer-events: none;
 }
 .sheet.is-closed .sheet-messages { padding-bottom: 72px; }

@@ -1,5 +1,5 @@
 import { element } from '../dom';
-import { CLOSE_ICON, OPEN_OUTSIDE_ICON, PENCIL_ICON, PIN_FILLED_ICON, PIN_ICON } from '../icons';
+import { CLOSE_ICON, OPEN_OUTSIDE_ICON, TERMINAL_ICON, PENCIL_ICON, PIN_FILLED_ICON, PIN_ICON } from '../icons';
 
 // The chat a right click landed on, and which of its cards (a pinned chat has one in the Pinned row too).
 export interface CardMenuTarget {
@@ -12,6 +12,7 @@ export interface CardMenuTarget {
 }
 
 export interface CardMenuActions {
+  readonly goToChat: (target: CardMenuTarget) => void;
   readonly openWindow: (target: CardMenuTarget) => void;
   readonly togglePin: (target: CardMenuTarget) => void;
   readonly rename: (target: CardMenuTarget) => void;
@@ -60,6 +61,7 @@ export class CardMenu {
     if (target.isClosed) return [{ icon: PIN_FILLED_ICON, label: 'Unpin', isDestructive: false, run: this.actions.togglePin }];
     return [
       { icon: OPEN_OUTSIDE_ICON, label: 'Open in new window', isDestructive: false, run: this.actions.openWindow },
+      { icon: TERMINAL_ICON, label: 'Go to chat', isDestructive: false, run: this.actions.goToChat },
       { icon: target.isPinned ? PIN_FILLED_ICON : PIN_ICON, label: target.isPinned ? 'Unpin' : 'Pin', isDestructive: false, run: this.actions.togglePin },
       { icon: PENCIL_ICON, label: 'Rename', isDestructive: false, run: this.actions.rename },
       { icon: CLOSE_ICON, label: `Close ${target.name} chat`, isDestructive: true, run: this.actions.close },
