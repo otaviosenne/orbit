@@ -7,6 +7,8 @@ export interface CardMenuTarget {
   readonly name: string;
   readonly isPinned: boolean;
   readonly inPinnedRow: boolean;
+  // A pinned chat that is closed: there is nothing to open, rename or close, only to unpin.
+  readonly isClosed: boolean;
 }
 
 export interface CardMenuActions {
@@ -55,6 +57,7 @@ export class CardMenu {
 
   // The close item names the chat, so a right click on the wrong card is caught before it closes anything.
   private items(target: CardMenuTarget): MenuItem[] {
+    if (target.isClosed) return [{ icon: PIN_FILLED_ICON, label: 'Unpin', isDestructive: false, run: this.actions.togglePin }];
     return [
       { icon: OPEN_OUTSIDE_ICON, label: 'Open in new window', isDestructive: false, run: this.actions.openWindow },
       { icon: target.isPinned ? PIN_FILLED_ICON : PIN_ICON, label: target.isPinned ? 'Unpin' : 'Pin', isDestructive: false, run: this.actions.togglePin },

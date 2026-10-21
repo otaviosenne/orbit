@@ -37,6 +37,7 @@ export interface OptimisticEdits {
   undo(sessionId: string, field: keyof ChatPatch): void;
 }
 const PANEL_OPEN_CLASS: string = 'panel-open';
+const CLOSED_CLASS: string = 'is-closed';
 
 // Right-side panel for one chat: its history plus the actions you can take on it.
 export class ChatSheet {
@@ -132,6 +133,7 @@ export class ChatSheet {
 
   // A chat launched a moment ago opens at once on a placeholder; open() later swaps in the live chat in place.
   openPending(chat: PendingChat): void {
+    this.root.classList.remove(CLOSED_CLASS);
     this.settleWaiters(null);
     this.keepDraft();
     this.chat = null;
@@ -150,7 +152,19 @@ export class ChatSheet {
     this.settleWaiters(null);
   }
 
+  // A pinned chat that is closed: its history, read-only, with Reopen in place of the composer.
+  openClosed(chat: ChatSnapshot): void {
+    this.open(chat);
+    this.root.classList.add(CLOSED_CLASS);
+    this.update(chat);
+  }
+
+  get isShowingClosed(): boolean {
+    return this.root.classList.contains(CLOSED_CLASS);
+  }
+
   open(chat: ChatSnapshot): void {
+    this.root.classList.remove(CLOSED_CLASS);
     // What was typed while the chat was starting belongs to it; keep it through the reset below.
     const startingDraft: ComposerDraft | null = this.placeholder.isActive ? this.composer.draft() : null;
     this.placeholder.handOver();
@@ -175,6 +189,7 @@ export class ChatSheet {
     const agent: AgentTitle | null = this.agentView.title(now);
     this.name.textContent = agent?.name ?? chat.name;
     if (agent !== null) return void this.meta.replaceChildren(document.createTextNode(agent.meta));
+    if (this.isShowingClosed) return void this.meta.replaceChildren(document.createTextNode(`${chat.repository.name} · Closed`));
     const status: string = `${chat.repository.name} · ${chatStatusLabel(chat.status)} for ${formatDuration(statusAge(chat, now))}`;
     this.meta.replaceChildren(...(chat.status === 'busy' ? [renderSpinner()] : []), document.createTextNode(status));
   }
@@ -198,6 +213,7 @@ export class ChatSheet {
 
   close(): void {
     this.settleWaiters(null);
+    this.root.classList.remove(CLOSED_CLASS);
     this.keepDraft();
     this.root.classList.remove('is-open');
     this.working.hide();

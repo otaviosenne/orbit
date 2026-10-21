@@ -19,6 +19,8 @@ export interface BoardMarks {
   // Decides the green dot: unseen and not open right now.
   readonly hasUnreadReply: UnseenCheck;
   readonly pinnedOrder: readonly string[];
+  // Pinned chats that are closed now: they keep their place in the Pinned row, faded.
+  readonly closedPins: readonly ChatSnapshot[];
   // Active or Idle chosen by dragging, for the rest of the chat's resting stretch.
   readonly restingPin: RestingPin;
 }
@@ -26,7 +28,7 @@ export interface BoardMarks {
 // Pinned chats in a row on top (they also keep their place below), then Needs you | Working | Active over Idle.
 export function renderBoard(chats: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
   const layout: HTMLDivElement = element('div', 'board-layout');
-  const pinned: ChatSnapshot[] = pinnedChats(chats, marks.pinnedOrder);
+  const pinned: ChatSnapshot[] = pinnedChats([...chats, ...marks.closedPins], marks.pinnedOrder);
   if (pinned.length > 0) layout.append(renderPinnedRow(pinned, marks, now));
   layout.append(renderColumns(chats, marks, now));
   return layout;
@@ -39,7 +41,7 @@ function pinnedChats(chats: readonly ChatSnapshot[], order: readonly string[]): 
 function renderPinnedRow(pinned: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
   const section: HTMLElement = element('section', 'pinned-row');
   const cards: HTMLDivElement = element('div', 'pinned-cards');
-  cards.append(...pinned.map((chat: ChatSnapshot) => renderCard(chat, marks, now)));
+  cards.append(...pinned.map((chat: ChatSnapshot) => (marks.closedPins.includes(chat) ? renderClosedCard(chat) : renderCard(chat, marks, now))));
   section.append(element('h2', 'column-title', 'Pinned'), cards);
   return section;
 }
@@ -94,4 +96,17 @@ function renderPinMark(): HTMLSpanElement {
   mark.setAttribute('aria-label', 'Pinned');
   mark.innerHTML = PIN_FILLED_ICON;
   return mark;
+}
+
+// A pinned chat whose window is closed: same card, faded, saying so instead of a time.
+function renderClosedCard(chat: ChatSnapshot): HTMLElement {
+  const card: HTMLElement = element('article', 'card is-closed');
+  card.dataset[SESSION_ATTRIBUTE] = chat.sessionId;
+  card.style.setProperty('--chat', chatColor(chat.color));
+  const top: HTMLDivElement = element('div', 'card-top');
+  const time: HTMLSpanElement = element('span', 'card-time', 'Closed');
+  time.prepend(renderPinMark());
+  top.append(element('span', 'card-name', chat.name), time);
+  card.append(top, element('div', 'card-repo', chat.repository.name));
+  return card;
 }

@@ -5,6 +5,8 @@ import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
 import { CardDrag } from './board/card-drag';
 import { RestingPins } from './board/resting-pins';
 import type { RestingColumn } from './views/board-columns';
+import { resumedChatTarget } from './launch-watch';
+import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
 import { GEAR_ICON } from './icons';
@@ -63,6 +65,7 @@ const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot
 const pendingEdits: PendingEdits = new PendingEdits();
 const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
+const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
 // Active and Idle cards open on release instead of press, so a press can turn into a drag between the two.
 const cardDrag: CardDrag = new CardDrag(viewRoot, {
@@ -146,6 +149,7 @@ async function refreshChats(): Promise<void> {
 function showChats(): void {
   const now: number = Date.now();
   chats = closing.hide(pendingEdits.apply(polledChats, now));
+  pinnedInfo.remember(chats.filter((chat: ChatSnapshot) => pins.has(chat.sessionId)));
   trackViewing(now);
   renderView();
   const open: ChatSnapshot | undefined = chats.find((chat: ChatSnapshot) => chat.sessionId === sheet.sessionId);
@@ -193,6 +197,7 @@ function boardMarks(): BoardMarks {
     isUnseen: (chat: ChatSnapshot): boolean => seen.isUnseen(chat),
     hasUnreadReply: (chat: ChatSnapshot): boolean => seen.hasUnreadReply(chat),
     pinnedOrder: pins.order,
+    closedPins: closedPins(),
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
   };
 }
@@ -228,6 +233,8 @@ async function refreshSheet(): Promise<void> {
   const sessionId: string | null = sheet.sessionId;
   if (sessionId === null) return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  const closed: ChatSnapshot | undefined = chat === undefined && sheet.isShowingClosed ? closedPin(sessionId) : undefined;
+  if (closed !== undefined) return loadThread(sheet, closed);
   if (chat === undefined) return closeSheet();
   sheet.update(chat);
   await loadThread(sheet, chat);
@@ -239,9 +246,42 @@ function toggleSheet(sessionId: string): void {
   else openSheet(sessionId);
 }
 
+// Pinned chats that are closed now, as read-only stand-ins in the order they were pinned.
+function closedPins(): ChatSnapshot[] {
+  return pins.order
+    .filter((sessionId: string) => !chats.some((chat: ChatSnapshot) => chat.sessionId === sessionId))
+    .flatMap((sessionId: string): ChatSnapshot[] => {
+      const closed: ChatSnapshot | null = pinnedInfo.closedSnapshot(sessionId);
+      return closed === null ? [] : [closed];
+    });
+}
+
+function closedPin(sessionId: string): ChatSnapshot | undefined {
+  return closedPins().find((chat: ChatSnapshot) => chat.sessionId === sessionId);
+}
+
+// Reopen in the closed chat's panel: resumed like Resume does, so the panel turns into the live chat in place.
+async function reopenClosed(sessionId: string): Promise<void> {
+  const closed: ChatSnapshot | undefined = closedPin(sessionId);
+  if (closed === undefined) return;
+  // The main process only resumes chats from its own latest list of past chats.
+  await window.radar.listPastChats();
+  const launchedAt: number = Date.now();
+  launches.expect(resumedChatTarget(sessionId, closed.name), launchedAt);
+  const result: ActionResult = await window.radar.resumeChat(sessionId);
+  if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
+}
+
 function openSheet(sessionId: string): void {
   if (view === 'grid') return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  const closed: ChatSnapshot | undefined = chat === undefined ? closedPin(sessionId) : undefined;
+  if (closed !== undefined) {
+    sheet.openClosed(closed);
+    renderView();
+    void refreshSheet();
+    return;
+  }
   if (chat === undefined) return;
   sheet.open(chat);
   trackViewing(Date.now());
@@ -316,11 +356,14 @@ viewRoot.addEventListener('pointerdown', (event: PointerEvent): void => {
 
 viewRoot.addEventListener('contextmenu', (event: MouseEvent): void => {
   const card: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>(`[data-${SESSION_ATTRIBUTE}]`);
-  const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === card?.dataset[SESSION_ATTRIBUTE]);
+  const sessionId: string | undefined = card?.dataset[SESSION_ATTRIBUTE];
+  const live: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  const chat: ChatSnapshot | undefined = live ?? (sessionId === undefined ? undefined : closedPin(sessionId));
   if (card === null || chat === undefined || cardRename.isActive) return;
   event.preventDefault();
   const inPinnedRow: boolean = card.closest('.pinned-row') !== null;
-  cardMenu.open({ sessionId: chat.sessionId, name: chat.name, isPinned: pins.has(chat.sessionId), inPinnedRow }, event.clientX, event.clientY);
+  const target: CardMenuTarget = { sessionId: chat.sessionId, name: chat.name, isPinned: pins.has(chat.sessionId), inPinnedRow, isClosed: live === undefined };
+  cardMenu.open(target, event.clientX, event.clientY);
 });
 
 // The board is rebuilt every poll, so the card that was right-clicked may be gone by the time a menu item is picked.
@@ -365,6 +408,9 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
 }
 
+requireElement('#reopen-chat').addEventListener('click', (): void => {
+  if (sheet.sessionId !== null) void reopenClosed(sheet.sessionId);
+});
 settingsButton.innerHTML = GEAR_ICON;
 settingsButton.addEventListener('click', (): void => setView(view === 'settings' ? viewBeforeSettings : 'settings'));
 installTooltips();

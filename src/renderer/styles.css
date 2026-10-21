@@ -718,6 +718,17 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 .turn::before, .turn::after { content: ''; flex: 1; height: 1px; background: var(--separator); }
 
 /* Floating composer: no bar behind it, the thread scrolls underneath; only the field itself is frosted */
+/* A pinned chat that is closed: its history reads as usual, but Reopen stands where the composer would be */
+.reopen-bar { display: none; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; justify-content: center; padding: 12px 18px 16px; }
+.reopen-bar .button { padding: 7px 18px; border-radius: 16px; }
+.sheet.is-closed .reopen-bar { display: flex; }
+.sheet.is-closed .composer, .sheet.is-closed .working-indicator { display: none; }
+.sheet.is-closed #action-focus, .sheet.is-closed #action-rename, .sheet.is-closed #action-color, .sheet.is-closed #action-settings {
+  opacity: 0.45; pointer-events: none;
+}
+.sheet.is-closed .sheet-messages { padding-bottom: 72px; }
+.card.is-closed { opacity: 0.5; }
+.card.is-closed:hover { opacity: 0.7; }
 .composer {
   position: absolute; left: 0; right: 0; bottom: 0;
   display: flex; gap: 8px; align-items: flex-end; padding: var(--composer-padding-top) 18px 14px;
@@ -882,7 +893,8 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 .working-meta { color: var(--secondary); }
 /* Stop button right after the timer: the line itself lets clicks through, the button takes them */
 .working-stop {
-  display: grid; place-items: center; width: 18px; height: 18px; margin-left: 2px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; width: 18px; height: 18px; margin-left: -2px; padding: 0; border: 0; border-radius: 50%;
+  transform: translateY(-1px);
   background: transparent; color: var(--secondary); pointer-events: auto; cursor: default;
 }
 .working-stop svg { width: 15px; height: 15px; fill: currentColor; }
