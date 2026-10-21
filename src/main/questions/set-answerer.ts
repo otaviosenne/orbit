@@ -6,7 +6,7 @@ import { submitReview } from './picker-keys';
 import { exclusively, recordedOutcome } from './picker-session';
 import type { PickerTerminal } from './picker-terminal';
 import type { QuestionSource } from './question-lookup';
-import { pendingQuestion, settledQuestionIds, waitForNewlySettled } from './question-lookup';
+import { isInTranscript, pendingQuestion, settledQuestionIds, waitForNewlySettled } from './question-lookup';
 import { stripAnsi } from './screen/ansi-line';
 import { contradictsSet, showsPicker, showsReviewSubmit, squeeze, visibleReviewLines } from './screen/picker-evidence';
 import { parsePicker } from './screen/picker-parser';
@@ -24,9 +24,10 @@ export function answerQuestionSet(source: QuestionSource, sessionId: unknown, qu
     const problem: string | null = await screenProblem(terminal, item.questions);
     if (problem !== null) return failure(problem);
     const known: Set<string> = await settledQuestionIds(source, session);
+    const isHooked: boolean = !(await isInTranscript(source, session, item.id));
     const driven: string | null = await drive(terminal, item.questions, check.answers);
     if (driven !== null) return failure(driven);
-    return recordedOutcome(await waitForNewlySettled(source, session, known, (settled: QuestionItem) => sameQuestions(settled, item)));
+    return recordedOutcome(await waitForNewlySettled(source, session, known, (settled: QuestionItem) => sameQuestions(settled, item), isHooked));
   });
 }
 
