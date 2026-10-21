@@ -15,6 +15,11 @@ export class VoiceVisuals {
   ) {
     this.meter = new VoiceMeter(box);
     input.addEventListener('scroll', (): void => this.placeBars());
+    // The bars mark where the next words land, so they follow the caret through deletions, typing and clicks too.
+    input.addEventListener('input', (): void => this.placeBars());
+    document.addEventListener('selectionchange', (): void => {
+      if (document.activeElement === input) this.placeBars();
+    });
   }
 
   show(): void {
