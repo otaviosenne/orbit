@@ -176,7 +176,11 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
    The popover does not clip, so the Filters menu can hang past a short list; the list rounds its own corners instead. */
 .resume-chat { position: relative; display: flex; }
 /* The week's usage beside Resume: plain text color, then yellow (50%), red (70%) and purple (90%) as the limit nears */
-.weekly-usage { margin-right: 4px; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text); }
+.weekly-usage {
+  margin-right: 4px; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent; cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--text);
+}
+.weekly-usage:hover { background: var(--disclosure-hover); }
 .weekly-usage[hidden] { display: none; }
 .weekly-usage[data-level='warning'] { color: color-mix(in srgb, var(--tag-yellow) 80%, var(--text)); }
 .weekly-usage[data-level='critical'] { color: var(--danger); }

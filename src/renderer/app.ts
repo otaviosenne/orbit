@@ -416,6 +416,12 @@ async function openWebInBrowser(): Promise<void> {
   window.open(settings.pairingUrl ?? `${settings.localUrl}/#${PAIRING_HASH_KEY}=${settings.token}`, '_blank');
 }
 
+function showUsageSettings(): void {
+  settingsPage = 'usage';
+  if (view !== 'settings') setView('settings');
+  else renderView();
+}
+
 // The phone pairs through the QR code on Settings' Orbit Web page.
 function showRemoteSettings(): void {
   settingsPage = 'web';
@@ -535,7 +541,7 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
 });
-const weeklyUsage: WeeklyUsageBadge = new WeeklyUsageBadge();
+const weeklyUsage: WeeklyUsageBadge = new WeeklyUsageBadge(showUsageSettings);
 requireElement('#resume-chat').before(weeklyUsage.root);
 const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
