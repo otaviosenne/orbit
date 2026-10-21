@@ -276,7 +276,9 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 .pinned-row { flex: none; margin: 0 20px 12px; padding: 10px; border-radius: 14px; background: var(--well); }
 /* A sideways scroller clips whatever leaves its box, so it gets room for the open card's ring and the keyboard
    focus halo (3px + 2px offset), taken back by the negative margin so the row keeps its size */
-.pinned-cards { display: flex; gap: 8px; overflow-x: auto; padding: 6px; margin: -4px; }
+/* Pinned cards wrap onto a second line when the width runs out; past two lines (board/fit-pinned-rows.ts caps the
+   height) the row scrolls down instead of pushing the columns away */
+.pinned-cards { display: flex; flex-wrap: wrap; gap: 8px; overflow-y: auto; padding: 6px; margin: -4px; }
 .pinned-cards .card { width: 250px; }
 .board { height: 100%; display: grid; grid-template-columns: 0.9fr 1.2fr 1fr; gap: 12px; padding: 0 20px 20px; }
 .column { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; padding: 10px; border-radius: 14px; background: var(--well); }

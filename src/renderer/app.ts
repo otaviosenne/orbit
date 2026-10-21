@@ -1,3 +1,4 @@
+import { fitPinnedRows } from './board/fit-pinned-rows';
 import { fitRestingColumns } from './board/fit-resting-columns';
 import { CardPreview } from './board/card-preview';
 import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
@@ -92,7 +93,10 @@ const viewRoot: HTMLElement = requireElement('#view');
 const boardFocus: BoardFocus = new BoardFocus(viewRoot);
 // The Active/Idle split depends on the window's height too.
 window.addEventListener('resize', (): void => {
-  if (view === 'board') fitRestingColumns(viewRoot);
+  if (view !== 'board') return;
+  // The pinned row's height decides how much the columns get, so it is settled first.
+  fitPinnedRows(viewRoot);
+  fitRestingColumns(viewRoot);
 });
 // A finger has no hover, so Orbit Web on a phone never shows the card preview (it listens to the mouse only).
 new CardPreview(viewRoot);
@@ -238,6 +242,7 @@ function renderView(): void {
   if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
     boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
+    fitPinnedRows(viewRoot);
     fitRestingColumns(viewRoot);
     boardFocus.paint();
   }
