@@ -1,9 +1,9 @@
 import { captureBoardScroll, restoreBoardScroll } from './board-scroll';
 import type { BoardScroll } from './board-scroll';
-import { cardsByKey, visibleBoxes } from './card-boxes';
+import { cardSlots, cardsByKey, visibleBoxes } from './card-boxes';
 import { CardFlights } from './card-flights';
 import type { CardBox, CardBoxes, CardMove } from './card-moves';
-import { cardMoves, enteringCards, seenBoxes } from './card-moves';
+import { cardMoves, enteringCards, seenBoxes, slotMoves } from './card-moves';
 
 // Sub-pixel shifts from rounding are not moves; flying them would only make the board shimmer on every poll.
 const MIN_MOVE_PX: number = 1;
@@ -24,12 +24,14 @@ export class BoardMotion {
 
   replace(root: HTMLElement, layout: HTMLElement): void {
     const before: CardBoxes | null = this.seenBefore(root);
+    const slotsBefore: Map<string, string> = cardSlots(cardsByKey(root));
+    const landed: Set<string> = new Set(this.landings.keys());
     const scroll: BoardScroll = captureBoardScroll(root);
     this.flights.clear();
     this.landings.clear();
     root.replaceChildren(layout);
     restoreBoardScroll(root, scroll);
-    if (before !== null && !matchMedia(REDUCED_MOTION).matches) this.play(root, before);
+    if (before !== null && !matchMedia(REDUCED_MOTION).matches) this.play(root, before, slotsBefore, landed);
   }
 
   // Null when the board was not on screen (first load, or back from another view): nothing moved then.
@@ -38,10 +40,10 @@ export class BoardMotion {
     return seenBoxes(seenBoxes(visibleBoxes(cardsByKey(root)), this.flights.positions()), this.landings);
   }
 
-  private play(root: HTMLElement, before: CardBoxes): void {
+  private play(root: HTMLElement, before: CardBoxes, slotsBefore: ReadonlyMap<string, string>, landed: ReadonlySet<string>): void {
     const cards: Map<string, HTMLElement> = cardsByKey(root);
     const after: CardBoxes = visibleBoxes(cards);
-    cardMoves(before, after, MIN_MOVE_PX).forEach((move: CardMove): void => {
+    slotMoves(cardMoves(before, after, MIN_MOVE_PX), slotsBefore, cardSlots(cards), landed).forEach((move: CardMove): void => {
       const card: HTMLElement | undefined = cards.get(move.key);
       if (card !== undefined) this.flights.launch(card, move);
     });

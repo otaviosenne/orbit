@@ -39,3 +39,8 @@ export function enteringCards(before: CardBoxes, after: CardBoxes): string[] {
 export function seenBoxes(slots: CardBoxes, overrides: CardBoxes): Map<string, CardBox> {
   return new Map([...slots, ...overrides]);
 }
+
+// Only cards that changed slot (column or place in it) are moves; the rest stay put whatever the layout did.
+export function slotMoves(moves: readonly CardMove[], before: ReadonlyMap<string, string>, after: ReadonlyMap<string, string>, landed: ReadonlySet<string>): CardMove[] {
+  return moves.filter((move: CardMove) => landed.has(move.key) || before.get(move.key) !== after.get(move.key));
+}

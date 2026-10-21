@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cardKeyFor, landingCardKey } from '../src/renderer/board/card-keys';
 import type { CardBox, CardMove } from '../src/renderer/board/card-moves';
+import { slotMoves } from '../src/renderer/board/card-moves';
 import { cardMoves, enteringCards, seenBoxes } from '../src/renderer/board/card-moves';
 
 const MIN_PX: number = 1;
@@ -60,5 +61,24 @@ describe('landingCardKey', () => {
     expect(landingCardKey('a', { kind: 'unpin' })).toBe(cardKeyFor('board', 'a'));
     expect(landingCardKey('a', { kind: 'rest', column: 'idle' })).toBe(cardKeyFor('board', 'a'));
     expect(landingCardKey('a', { kind: 'none' })).toBeNull();
+  });
+});
+
+describe('slotMoves', () => {
+  const box = (left: number, top: number) => ({ left, top, width: 200, height: 60 });
+  const moves = [
+    { key: 'a', from: box(0, 0), to: box(80, 0) },
+    { key: 'b', from: box(0, 70), to: box(300, 0) },
+  ];
+
+  it('drops cards that only shifted with the layout and keeps the ones that changed slot', () => {
+    const before = new Map([['a', 'active:1'], ['b', 'active:2']]);
+    const after = new Map([['a', 'active:1'], ['b', 'idle:1']]);
+    expect(slotMoves(moves, before, after, new Set()).map((move) => move.key)).toEqual(['b']);
+  });
+
+  it('keeps a dropped card even in its old slot, since it glides from where it was let go', () => {
+    const same = new Map([['a', 'active:1'], ['b', 'active:2']]);
+    expect(slotMoves(moves, same, same, new Set(['a'])).map((move) => move.key)).toEqual(['a']);
   });
 });

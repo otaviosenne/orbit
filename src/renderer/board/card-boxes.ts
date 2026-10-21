@@ -36,3 +36,15 @@ export function toCardBox(box: DOMRect): CardBox {
 function overlaps(a: DOMRect, b: DOMRect): boolean {
   return a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
 }
+
+// Where each card sits in the board's order: its column (or the pinned row) and its place there. A card whose slot
+// is unchanged only shifted because the layout did (the side panel opening, the window resizing), which is no move.
+export function cardSlots(cards: ReadonlyMap<string, HTMLElement>): Map<string, string> {
+  const slots: Map<string, string> = new Map();
+  cards.forEach((card: HTMLElement, key: string): void => {
+    const zone: HTMLElement | null = card.parentElement?.closest<HTMLElement>(DROP_ZONE_SELECTOR) ?? null;
+    const siblings: Element[] = card.parentElement === null ? [] : [...card.parentElement.children];
+    slots.set(key, `${zone?.dataset['dropZone'] ?? 'none'}:${siblings.indexOf(card)}`);
+  });
+  return slots;
+}
