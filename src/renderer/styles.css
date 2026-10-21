@@ -318,8 +318,9 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 /* A press on a card may become a drag; started on selectable text it would also select the board on its way */
 .board-layout .card { user-select: none; }
 /* A card changing place flies as a copy fixed to the window (board/card-flights.ts) while it waits hidden in its
-   new slot; below menus, tooltips and the drag's own lifted card */
-.card-flight { position: fixed; z-index: 45; margin: 0; pointer-events: none; }
+   new slot: just above the board, under the chat panel (which must hide it, full screen on a phone), menus,
+   tooltips and the drag's own lifted card */
+.card-flight { position: fixed; z-index: 1; margin: 0; pointer-events: none; }
 .card.is-arriving { visibility: hidden; }
 /* Only a from step, so the fade ends on the card's own opacity (a closed pin stays faded) */
 @keyframes card-enter { from { opacity: 0; transform: scale(0.97); } }
@@ -556,7 +557,7 @@ body { --panel-width: min(640px, 46vw); transition: padding-right 0.22s ease; }
 body.panel-open { padding-right: min(var(--panel-width), 50vw); }
 body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none; cursor: col-resize; }
 .sheet {
-  position: fixed; top: 0; right: 0; bottom: 0; width: min(var(--panel-width), 50vw);
+  position: fixed; z-index: 2; top: 0; right: 0; bottom: 0; width: min(var(--panel-width), 50vw);
   display: flex; flex-direction: column;
   background: var(--panel); border-left: 1px solid var(--separator); box-shadow: var(--shadow-panel);
   transform: translateX(105%); transition: transform 0.22s ease;
