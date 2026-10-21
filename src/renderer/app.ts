@@ -48,6 +48,7 @@ import type { SettingsPage } from './views/settings-pages';
 import { DEFAULT_SETTINGS_PAGE, availablePages } from './views/settings-pages';
 import { renderAppearanceSection } from './views/appearance-section';
 import { renderUsageSection } from './views/usage-section';
+import { WeeklyUsageBadge } from './usage/weekly-usage-badge';
 import type { TimelineChats } from './views/timeline-view';
 import { mountTimeline, renderTimeline } from './views/timeline-view';
 import { GridView } from './views/grid/grid-view';
@@ -214,6 +215,7 @@ function showChats(): void {
 
 async function refreshUsage(): Promise<void> {
   usage = await window.radar.getUsage();
+  weeklyUsage.show(usage);
   if (view === 'settings') renderView();
 }
 
@@ -533,6 +535,8 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
 });
+const weeklyUsage: WeeklyUsageBadge = new WeeklyUsageBadge();
+requireElement('#resume-chat').before(weeklyUsage.root);
 const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(

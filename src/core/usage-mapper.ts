@@ -1,9 +1,10 @@
 import type { UsageLimit, UsageShare, UsageSnapshot } from '../shared/types';
+import { WEEKLY_ALL_LABEL } from '../shared/usage-labels';
 import type { RawLimit, RawShare, RawUsage } from './usage-client';
 
 const LIMIT_LABELS: Readonly<Record<string, string>> = {
   session: 'Current session',
-  weekly_all: 'This week, all models',
+  weekly_all: WEEKLY_ALL_LABEL,
 };
 
 export function toUsageSnapshot(raw: RawUsage, fetchedAt: number): UsageSnapshot {
