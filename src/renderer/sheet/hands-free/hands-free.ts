@@ -1,3 +1,4 @@
+import { sendOnVoiceCommand } from '../voice/voice-send';
 import type { TranscriptionResult } from '../../../shared/types';
 import { PcmRecorder } from '../pcm-recorder';
 import { DictatedSpan } from './dictated-span';
@@ -211,6 +212,8 @@ export class HandsFree {
     if (!result.ok) return this.hooks.onError(`Transcription failed: ${result.error ?? 'unknown error'}`);
     // An empty final keeps whatever the live words showed.
     if (binding !== undefined && result.text.length > 0) this.writer.write(binding, segment.id, result.text);
+    // Only a field on screen can be sent from; words kept for a composer that went away just wait there.
+    if (binding?.sink.kind === 'field') sendOnVoiceCommand(binding.sink.field.input);
   }
 
   // New words go into the target composer's field as it is now; a later move does not take this span along.
