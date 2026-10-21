@@ -1,4 +1,5 @@
 import { requireElement } from '../../renderer/dom';
+import { installScrollDismissesKeyboard } from './scroll-dismiss-keyboard';
 import { installSheetBack } from './sheet-back';
 import { installSwipeBack } from './swipe-back';
 import { keepThreadEndOnResize } from './thread-end-on-resize';
@@ -13,4 +14,5 @@ export function installMobileLayout(): void {
   installSwipeBack();
   trackViewportHeight();
   keepThreadEndOnResize();
+  installScrollDismissesKeyboard();
 }
