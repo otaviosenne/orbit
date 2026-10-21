@@ -6,7 +6,7 @@ import type { BoardZone } from '../board/drop-rules';
 import { element } from '../dom';
 import { formatDuration } from '../format';
 import { INFO_ICON, PIN_FILLED_ICON } from '../icons';
-import { chatColor } from '../palette';
+import { chatColor, textOnChatColor } from '../palette';
 import { renderSpinner } from '../spinner';
 import { renderAgentRows } from './agent-rows';
 import type { BoardColumn, RestingPin, UnseenCheck } from './board-columns';
@@ -108,6 +108,8 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   const card: HTMLElement = element('article', `card${isOpen ? ' is-open' : ''}${hasUnread ? ' is-unseen' : ''}`);
   card.dataset[SESSION_ATTRIBUTE] = chat.sessionId;
   card.style.setProperty('--chat', chatColor(chat.color));
+  // For the hover preview's bubbles (board/card-preview.ts), which take the card's colors.
+  card.style.setProperty('--on-chat', textOnChatColor(chat.color));
   const top: HTMLDivElement = element('div', 'card-top');
   const time: HTMLSpanElement = element('span', 'card-time', formatDuration(statusAge(chat, now)));
   if (hasUnread) time.prepend(renderUnseenDot());

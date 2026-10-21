@@ -1,3 +1,4 @@
+import { CardPreview } from './board/card-preview';
 import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
 import type { BoardColumn } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
@@ -88,6 +89,8 @@ const nav: HTMLElement = requireElement('#nav');
 const settingsButton: HTMLButtonElement = requireElement('#settings-button');
 const viewRoot: HTMLElement = requireElement('#view');
 const boardFocus: BoardFocus = new BoardFocus(viewRoot);
+// A finger has no hover, so Orbit Web on a phone never shows the card preview (it listens to the mouse only).
+new CardPreview(viewRoot);
 // Cards glide to their new place instead of jumping there when the board is rebuilt.
 const boardMotion: BoardMotion = new BoardMotion();
 const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: availableQuestions(isWebHost()) });

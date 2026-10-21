@@ -759,6 +759,22 @@ div.shell-details-label { margin: 6px 0 3px; }
   bottom: calc(var(--composer-space, 64px) + var(--working-space) + 46px); justify-content: flex-end;
 }
 .jump-preview[hidden] { display: none; }
+/* Hovering a board card shows its last message as the thread would (board/card-preview.ts), frosted like the
+   chevron preview, capped so a long reply shows its start */
+.card-preview {
+  position: fixed; z-index: 55; width: min(420px, 40vw); max-height: 320px; overflow: hidden;
+  display: flex; flex-direction: column; pointer-events: none; font-size: 13px;
+}
+/* Only a reply taller than the cap fades out at the bottom; a short one shows whole */
+.card-preview.is-clipped { -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); mask-image: linear-gradient(180deg, #000 82%, transparent); }
+.card-preview[hidden] { display: none; }
+.card-preview .message { max-width: 100%; }
+.card-preview .message-text {
+  background: color-mix(in srgb, var(--bubble-them) 92%, transparent); box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+}
+.card-preview .message-user .message-text { background: var(--chat); }
+.card-preview .message-meta { color: var(--secondary); }
 .jump-preview .message { max-width: 100%; }
 .sheet-messages {
   position: relative; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
