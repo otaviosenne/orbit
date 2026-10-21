@@ -1,3 +1,5 @@
+import { isTouchWeb } from '../host';
+import { installSheetDismiss } from '../sheet-dismiss';
 import type { PastChat } from '../../shared/types';
 import { element } from '../dom';
 import { FILTER_ICON, SEARCH_ICON } from '../icons';
@@ -39,6 +41,7 @@ export class ResumePopover {
   constructor(private readonly actions: ResumePopoverActions) {
     this.root.hidden = true;
     this.root.append(this.renderHead(), this.list);
+    installSheetDismiss(this.root, (): HTMLElement => this.list, (): void => this.actions.close());
     this.search.addEventListener('input', (): void => {
       this.activeIndex = 0;
       this.renderList();
@@ -65,7 +68,8 @@ export class ResumePopover {
     this.search.value = '';
     this.activeIndex = 0;
     this.renderList();
-    this.search.focus();
+    // On a touch screen focusing the search would raise the keyboard over the list before anything is typed.
+    if (!isTouchWeb()) this.search.focus();
   }
 
   show(chats: readonly PastChat[]): void {

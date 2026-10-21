@@ -1,3 +1,4 @@
+import { installSheetDismiss } from './sheet-dismiss';
 import type { ActionResult, LauncherEntry } from '../shared/types';
 import { element } from './dom';
 import { isPhoneLayout } from './host';
@@ -39,6 +40,7 @@ export class NewChatButton {
     more.innerHTML = CARET_DOWN_ICON;
     this.menu.hidden = true;
     root.append(this.main, more, this.menu);
+    installSheetDismiss(this.menu, (): HTMLElement => this.menu, (): void => this.closeMenu());
     this.main.setAttribute('aria-label', 'New chat');
     this.main.addEventListener('click', (): void => this.press());
     more.addEventListener('click', (): void => void this.toggleMenu());
