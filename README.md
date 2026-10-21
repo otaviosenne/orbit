@@ -218,6 +218,8 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
   `/proc`, and Hyprland and kitty state.
 - **Sent over the network:** only to `api.anthropic.com`: the microphone audio while you dictate, and
   a request for your usage limits. Both carry your Claude Code token, exactly as Claude Code does.
+  Dictating from Orbit Web sends the phone's audio to Orbit on your computer first, through your own
+  tunnel or proxy, and from there on the same way.
 - **Written:** images you attach go to `~/.cache/orbit/attachments` (deleted after 7 days); view
   preferences, pins and drafts live in Electron's local storage; New chat shortcuts you add are
   appended to the launcher's `shortcuts.tsv`.
@@ -227,7 +229,7 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
 
 Follow and steer your chats from your phone while the computer is on: Board, Timeline, Panel (one
 column) and the chat panel, where you can read, send messages and images, answer questions,
-interrupt, stop agents, and (on wide screens) switch model or mode. On a phone the board shows one
+interrupt, stop agents, dictate with the composer's mic, and (on wide screens) switch model or mode. On a phone the board shows one
 column at a time (tap or swipe), a chat opens full screen with only back, its dot and its name on
 top, and a long press on a card opens its menu. It is the
 same renderer as the desktop app, talking HTTP instead of IPC. Off by default.
@@ -242,7 +244,7 @@ same renderer as the desktop app, talking HTTP instead of IPC. Off by default.
 SameSite=Strict` cookie. Comparisons run in constant time, and failed sign-ins are rate-limited.
 Writes must come from your own origin, unknown `Host` headers are refused, there is no CORS, and
 every request is logged without the token. Closing chats, desktop windows, folder pickers, adding
-shortcuts, dictation and Orbit Web's own settings stay desktop-only.
+shortcuts and Orbit Web's own settings stay desktop-only.
 **The token is as good as a shell on your computer:** keep it private and press **New token** if a
 phone is lost. Full details: [docs/remote.md](docs/remote.md).
 

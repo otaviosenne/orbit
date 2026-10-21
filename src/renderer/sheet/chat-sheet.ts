@@ -25,7 +25,7 @@ import { DeviceLinks } from './device-links';
 import { ChatSettingsPopover } from './settings/chat-settings-popover';
 import { RenameForm } from './rename-form';
 import { listenForSpaceToTalk } from './space-to-talk';
-import { isWebHost } from '../host';
+import { usesSpaceGestures } from './voice/space-gestures';
 import type { ChatPatch } from '../pending-edits';
 import { TranscriptList } from './transcript-list';
 import { DRAWER_PAGE_ITEMS } from './paging/page-sizes';
@@ -105,8 +105,7 @@ export class ChatSheet {
     // Saved as it is typed, so a draft also survives quitting Orbit without leaving the chat.
     requireElement('#composer-input').addEventListener('input', (): void => this.keepDraft());
     listenForSpaceToTalk(
-      // Orbit Web has no dictation, so Space stays a plain key there.
-      (): boolean => !isWebHost() && this.chat !== null && this.agentView.agentId === null && !this.lightbox.isOpen && !this.rename.isOpen,
+      (): boolean => usesSpaceGestures() && this.chat !== null && this.agentView.agentId === null && !this.lightbox.isOpen && !this.rename.isOpen,
       (): void => this.composer.startDictation(),
     );
     this.navigator = new MessageNavigator({

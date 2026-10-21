@@ -1,4 +1,5 @@
-import { isWebHost } from '../../host';
+import { isTouchWeb, isWebHost } from '../../host';
+import { suspendCaptureAudio } from '../capture-context';
 import { rememberHandsFree, wasHandsFreeOn } from '../hands-free/hands-free-memory';
 import { composerState } from '../hands-free/composer-state';
 import { DoubleTap } from '../hands-free/double-tap';
@@ -11,6 +12,8 @@ import { DictationRouter } from './dictation-router';
 import { FieldVoice } from './field-voice';
 import type { MicPress } from './mic-press';
 import { micPress } from './mic-press';
+import { onPageHidden } from './page-hidden';
+import { usesSpaceGestures } from './space-gestures';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
 import type { VoiceField } from './voice-field';
@@ -42,10 +45,14 @@ export class VoiceHub {
     });
     this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.handsFree.turnOff());
     this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place));
-    this.listenForOtherKeys();
-    this.listenForDoubleTapAnywhere();
-    // Orbit Web has no dictation; the desktop window picks the mode up where the last run left it.
+    if (usesSpaceGestures()) {
+      this.listenForOtherKeys();
+      this.listenForDoubleTapAnywhere();
+    }
+    // The desktop window picks the mode up where the last run left it. A browser never does: it opens the microphone
+    // only on a tap, and an unexpected open mic on a phone is the worse mistake.
     if (!isWebHost() && wasHandsFreeOn()) this.handsFree.turnOn(Promise.resolve());
+    if (isWebHost()) onPageHidden((): void => this.stopListening());
   }
 
   attach(field: VoiceField): FieldVoice {
@@ -125,6 +132,13 @@ export class VoiceHub {
     else this.turnHandsFreeOn();
   }
 
+  // The page is going away (screen locked, app switched): what was heard is finalized and the microphone released.
+  private stopListening(): void {
+    this.handsFree.turnOff();
+    if (this.talking?.dictation.listening === true) this.talking.dictation.release();
+    suspendCaptureAudio();
+  }
+
   private toggleFromMic(): void {
     const press: MicPress = micPress(this.handsFree.isOn, this.handsFree.isBusy);
     if (press === 'turn-off') this.handsFree.turnOff();
@@ -176,9 +190,10 @@ export class VoiceHub {
   }
 
   // While hands-free listens its composer holds the caret, so Backspace and Enter act on the words as they come.
-  // Another text field the user is typing in (a rename, a search) keeps its focus.
+  // Another text field the user is typing in (a rename, a search) keeps its focus. A touch screen is left alone:
+  // focusing there raises the on-screen keyboard over the thread.
   private focusTarget(): void {
-    const field: VoiceField | null = this.handsFree.isOn ? this.handsFree.field : null;
+    const field: VoiceField | null = this.handsFree.isOn && !isTouchWeb() ? this.handsFree.field : null;
     if (field === null || document.activeElement === field.input || isTextField(document.activeElement)) return;
     field.input.focus({ preventScroll: true });
   }
@@ -192,7 +207,8 @@ export class VoiceHub {
   private showHandsFree(state: HandsFreeState): void {
     this.handsFreeState = state;
     // Finishing is the tail of turning off; paused is still on, only with no composer to write to.
-    if (state !== 'finishing') rememberHandsFree(state !== 'off');
+    // Remembered for the desktop's next start only; Orbit Web never turns it back on by itself.
+    if (state !== 'finishing' && !isWebHost()) rememberHandsFree(state !== 'off');
     this.indicator.show(state);
     this.showStates();
     this.focusTarget();

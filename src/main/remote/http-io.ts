@@ -1,4 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { contentSecurityPolicy } from './content-security';
+import type { TrustedOrigins } from './trusted-origins';
 
 // Generous for a few phone photos sent as base64, small enough that a stray upload cannot fill the memory.
 export const MAX_BODY_BYTES: number = 25 * 1024 * 1024;
@@ -7,8 +9,6 @@ export class BodyTooLargeError extends Error {}
 
 // Sent with every response: no framing (a framed remote terminal is a clickjacking target), no sniffing, no referrer.
 const SECURITY_HEADERS: Readonly<Record<string, string>> = {
-  'Content-Security-Policy':
-    "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
@@ -16,7 +16,8 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'Cross-Origin-Resource-Policy': 'same-origin',
 };
 
-export function applySecurityHeaders(response: ServerResponse): void {
+export function applySecurityHeaders(response: ServerResponse, trusted: TrustedOrigins): void {
+  response.setHeader('Content-Security-Policy', contentSecurityPolicy(trusted.origins));
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
 }
 

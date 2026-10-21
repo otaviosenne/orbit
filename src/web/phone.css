@@ -168,9 +168,16 @@
   /* While typing the keyboard covers the home indicator, so its inset would only open a gap above the keyboard */
   .composer:has(.composer-input:focus) { padding-bottom: 8px; }
   .composer .composer-box { border-radius: 22px; }
-  .composer-input { min-height: var(--web-touch); padding: 11px 14px 11px var(--web-touch); border-radius: 22px; }
+  .composer-input { min-height: var(--web-touch); padding: 11px var(--web-touch) 11px var(--web-touch); border-radius: 22px; }
   .composer-attach { left: 0; bottom: 0; width: var(--web-touch); height: var(--web-touch); padding: 0; }
   .composer-attach svg { width: 20px; height: 20px; }
+  /* The mic mirrors the image button on the right; its pulsing circle stays small, its tap area is the full 44px */
+  .composer-mic { right: 6px; bottom: 6px; width: 32px; height: 32px; padding: 0; }
+  .composer-mic svg { width: 19px; height: 19px; }
+  .composer-mic::after { content: ''; position: absolute; inset: calc((32px - var(--web-touch)) / 2); }
+  /* The hands-free sign beside the wordmark turns the mode off when tapped, so a finger gets 44px around it too */
+  .hands-free-indicator { position: relative; }
+  .hands-free-indicator::after { content: ''; position: absolute; inset: calc((24px - var(--web-touch)) / 2); border-radius: 50%; }
   .composer .button { min-height: var(--web-touch); padding: 0 18px; border-radius: 22px; font-size: 15px; }
   /* The working line keeps to the screen: a long count shortens, the verb and the stop button always show */
   .working-indicator { left: var(--web-gutter); max-width: calc(100% - 2 * var(--web-gutter)); }

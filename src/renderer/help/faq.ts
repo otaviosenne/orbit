@@ -67,12 +67,12 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'dictate',
     question: 'How do I dictate?',
-    answer: 'Hold Space in the composer, or anywhere in an open chat outside a text field, and talk; let go to stop. A quick tap still types a space. A red “No speech detected” means nothing was heard: check that your microphone is on.',
+    answer: 'Hold Space in the composer, or anywhere in an open chat outside a text field, and talk; let go to stop. A quick tap still types a space. In Orbit Web (phone or browser), tap the mic in the composer instead: it stays on until you tap it again. A red “No speech detected” means nothing was heard: check that your microphone is on.',
   },
   {
     id: 'hands-free',
     question: 'What is hands-free?',
-    answer: 'Double-tap Space, or click the mic in a composer, to keep the mic on: words go to the chat on screen and follow you between chats. Double-tap again, or click either mic, to turn it off.',
+    answer: 'Double-tap Space, or click the mic in a composer, to keep the mic on: words go to the chat on screen and follow you between chats. Double-tap again, or click either mic, to turn it off. In Orbit Web only the mic does it, and it turns off when the screen locks or you switch apps.',
   },
   {
     id: 'chat-settings',
@@ -138,7 +138,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'orbit-web',
     question: 'What is Orbit Web?',
-    answer: 'Board, Timeline, Panel and chats on a phone or another browser, behind a token. Turn it on in Settings → Orbit Web; dictation, windows and closing chats stay on the desktop.',
+    answer: 'Board, Timeline, List and chats on a phone or another browser, behind a token, with dictation through the composer’s mic. Turn it on in Settings → Orbit Web; windows and closing chats stay on the desktop.',
   },
   {
     id: 'appearance-usage',

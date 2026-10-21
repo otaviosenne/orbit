@@ -1,14 +1,13 @@
 import { readAccessToken } from '../core/claude-login';
 import type { DictationStart, TranscriptionResult } from '../shared/types';
+import type { DictationEngine, SessionTranscriptListener } from './remote/dictation/dictation-engine';
 import { VoiceStream } from './voice-stream';
-
-export type SessionTranscriptListener = (session: number, text: string) => void;
 
 // A connection kept ready this long without being used is closed rather than idling on the service.
 const WARM_IDLE_MS: number = 60_000;
 
 // One dictation at a time; audio and results from an older session are ignored.
-export class DictationService {
+export class DictationService implements DictationEngine {
   private session: number = 0;
   private stream: VoiceStream | null = null;
   private warm: Promise<VoiceStream | null> | null = null;

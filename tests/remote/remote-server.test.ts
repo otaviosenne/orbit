@@ -9,6 +9,7 @@ import { FailureLimiter } from '../../src/main/remote/failure-limiter';
 import type { RemoteRoutes } from '../../src/main/remote/remote-context';
 import { closeServer, createRemoteServer, listenLocally } from '../../src/main/remote/remote-server';
 import { trustedOrigins } from '../../src/main/remote/trusted-origins';
+import { DemoDictationEngine } from '../../src/demo/demo-dictation';
 import { DEMO_ROUTES } from '../../src/demo/demo-routes';
 import type { ChatSnapshot } from '../../src/shared/types';
 import { decodeWire, encodeWire } from '../../src/shared/wire-codec';
@@ -75,6 +76,7 @@ beforeAll(async () => {
     webRoot,
     credentials: () => ({ token: TOKEN, trusted: trustedOrigins(port, '') }),
     limiter: new FailureLimiter({ maxFailures: LOCKOUT_FAILURES, windowMs: 60_000, lockoutMs: 60_000 }),
+    dictation: () => new DemoDictationEngine(),
     now: (): number => Date.now(),
     log: (line: string): void => void logLines.push(line),
   });

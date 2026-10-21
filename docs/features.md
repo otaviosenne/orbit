@@ -64,6 +64,8 @@ the terminal instead. Answered questions stay in the thread as a one-line summar
 Hold <kbd>Space</kbd> in the composer to talk (a quick tap still types a space). With a chat open,
 <kbd>Space</kbd> anywhere outside a text field works too: hold it to talk, or tap it to start and tap
 again to stop. The text appears word by word. The microphone button in the field does the same.
+In Orbit Web, tap the mic in the composer: it keeps listening (hands-free) until you tap it again, and
+stops when the phone locks.
 
 ## Panel
 

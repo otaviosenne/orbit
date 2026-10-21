@@ -22,11 +22,16 @@ const WEB_STYLES = ['<link rel="stylesheet" href="web.css" />', '<link rel="styl
 // an old script under a new page; a per-build query makes every release a different URL.
 const VERSIONED_ASSETS = [/(href=")(styles\.css|web\.css|phone\.css)(")/g, /(src=")(app\.js)(")/g];
 
+// The server sends Orbit Web's policy as a header, which also lets the page open its dictation socket. A browser
+// enforces every policy it is given, so the desktop page's own (no sockets allowed) must not come along.
+const DESKTOP_POLICY = /\s*<meta http-equiv="Content-Security-Policy"[^>]*>/;
+
 export function webPage(desktopHtml, buildVersion) {
   for (const anchor of [HEAD_ANCHOR, STYLE_ANCHOR]) {
     if (!desktopHtml.includes(anchor)) throw new Error(`index.html changed: Orbit Web needs ${anchor}`);
   }
   const page = desktopHtml
+    .replace(DESKTOP_POLICY, '')
     .replace(HEAD_ANCHOR, [HEAD_ANCHOR, ...WEB_HEAD].join('\n    '))
     .replace(STYLE_ANCHOR, [STYLE_ANCHOR, ...WEB_STYLES].join('\n    '));
   return VERSIONED_ASSETS.reduce((html, pattern) => html.replace(pattern, `$1$2?v=${buildVersion}$3`), page);

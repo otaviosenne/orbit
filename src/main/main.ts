@@ -7,6 +7,7 @@ import { UsageService } from '../core/usage-service';
 import { pruneOldAttachments } from './attachments';
 import { ChatWindows } from './chat-windows';
 import { DictationService } from './dictation-service';
+import type { DictationEngine } from './remote/dictation/dictation-engine';
 import { activeWindowPid, findTerminalWindowPid } from './terminal-window';
 import { registerIpcHandlers } from './ipc';
 import type { RadarServices } from './ipc';
@@ -40,7 +41,8 @@ async function start(): Promise<void> {
   // One table answers the desktop window over IPC and Orbit Web over HTTP.
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);
-  await startRemoteAccess(routes, false);
+  // Each Orbit Web browser gets its own service, so its dictation never touches the desktop window's or another's.
+  await startRemoteAccess(routes, (): DictationEngine => new DictationService(), false);
   createRadarWindow();
   void pruneOldAttachments(Date.now());
 }

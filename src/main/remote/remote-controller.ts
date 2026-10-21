@@ -2,19 +2,21 @@ import type { Server } from 'node:http';
 import type { RemoteSettings } from '../../shared/remote-settings';
 import { PAIRING_HASH_KEY } from '../../shared/remote-settings';
 import { generateToken } from './access-token';
+import type { DictationEngineFactory } from './dictation/dictation-engine';
 import { normalizeExternalUrl } from './external-url';
 import { FailureLimiter, SIGN_IN_POLICY } from './failure-limiter';
 import { pairingQrSvg } from './pairing-qr';
 import type { RemoteConfig, RemoteConfigStore } from './remote-config';
 import { DEFAULT_REMOTE_CONFIG, isUserPort } from './remote-config';
 import type { RemoteCredentials, RemoteRoutes } from './remote-context';
-import { closeServer, createRemoteServer, listenLocally, LOOPBACK_HOST } from './remote-server';
+import { closeServer, createRemoteServer, dropDictationClients, listenLocally, LOOPBACK_HOST } from './remote-server';
 import { trustedOrigins } from './trusted-origins';
 
 export interface RemoteControllerOptions {
   readonly store: RemoteConfigStore;
   readonly routes: RemoteRoutes;
   readonly webRoot: string;
+  readonly dictation: DictationEngineFactory;
   readonly log: (line: string) => void;
 }
 
@@ -81,6 +83,7 @@ export class RemoteController {
       }
       this.error = null;
       await this.update({ ...this.config, externalUrl });
+      this.dropDictation();
       return this.settings();
     });
   }
@@ -105,6 +108,7 @@ export class RemoteController {
   regenerateToken(): Promise<RemoteSettings> {
     return this.serialize(async (): Promise<RemoteSettings> => {
       await this.update({ ...this.config, token: generateToken() });
+      this.dropDictation();
       return this.settings();
     });
   }
@@ -113,6 +117,11 @@ export class RemoteController {
     const result: Promise<T> = this.queue.then(work, work);
     this.queue = result.catch((): void => undefined);
     return result;
+  }
+
+  // An open dictation socket proved the old token or address; it must not outlive them.
+  private dropDictation(): void {
+    if (this.server !== null) dropDictationClients(this.server);
   }
 
   private credentials(): RemoteCredentials {
@@ -132,6 +141,7 @@ export class RemoteController {
       webRoot: this.options.webRoot,
       credentials: (): RemoteCredentials => this.credentials(),
       limiter: this.limiter,
+      dictation: this.options.dictation,
       now: (): number => Date.now(),
       log: this.options.log,
     });

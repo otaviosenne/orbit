@@ -9,7 +9,12 @@ const MS_PER_SECOND: number = 1000;
 const SIGN_IN_BODY_LIMIT: number = 1024;
 
 export function isSignedIn(request: IncomingMessage, credentials: RemoteCredentials): boolean {
-  const cookie: string | null = readCookie(request.headers.cookie, SESSION_COOKIE);
+  return hasValidSession(request.headers.cookie, credentials);
+}
+
+// Also asked again on every dictation message, so a socket opened before a new token ends with the old cookie.
+export function hasValidSession(cookieHeader: string | undefined, credentials: RemoteCredentials): boolean {
+  const cookie: string | null = readCookie(cookieHeader, SESSION_COOKIE);
   return cookie !== null && credentials.token.length > 0 && secretsMatch(cookie, sessionValueFor(credentials.token));
 }
 

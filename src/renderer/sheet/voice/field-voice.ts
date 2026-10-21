@@ -1,12 +1,16 @@
 import type { DictationState } from '../dictation';
 import { Dictation } from '../dictation';
 import { SpaceTyping } from '../hands-free/space-typing';
+import { isTouchWeb } from '../../host';
 import { MICROPHONE_ICON } from '../../icons';
+import { primeCaptureAudio } from '../capture-context';
 import { PushToTalk } from '../push-to-talk';
+import { usesSpaceGestures } from './space-gestures';
 import type { TranscriptFeed } from './transcript-feed';
 import type { VoiceField } from './voice-field';
 
 export const MIC_TITLE: string = 'Keep the mic on hands-free (or hold Space to talk)';
+const WEB_MIC_TITLE: string = 'Keep the mic on hands-free';
 
 // What a field's keys and mic ask of the voice shared by every composer (the double tap, hands-free, the one
 // dictation at a time).
@@ -37,12 +41,7 @@ export class FieldVoice {
       mayRefocus: (): boolean => field.mayRefocus(),
     });
     field.input.addEventListener('input', (): void => routes.edited(this));
-    new PushToTalk(field.input, {
-      onPress: (): void => window.radar.prepareDictation(),
-      onHoldStart: (): void => routes.holdStart(this),
-      onHoldEnd: (): void => this.dictation.release(),
-      onTap: (pressedAt: number): void => routes.tap(this, pressedAt),
-    });
+    if (usesSpaceGestures()) this.listenForSpace(routes);
     this.setUpMic(routes);
   }
 
@@ -61,14 +60,26 @@ export class FieldVoice {
     this.dictation.dispose();
   }
 
+  private listenForSpace(routes: FieldVoiceRoutes): void {
+    new PushToTalk(this.field.input, {
+      onPress: (): void => window.radar.prepareDictation(),
+      onHoldStart: (): void => routes.holdStart(this),
+      onHoldEnd: (): void => this.dictation.release(),
+      onTap: (pressedAt: number): void => routes.tap(this, pressedAt),
+    });
+  }
+
   private setUpMic(routes: FieldVoiceRoutes): void {
     const mic: HTMLButtonElement = this.field.mic;
     mic.innerHTML = MICROPHONE_ICON;
-    mic.title = MIC_TITLE;
+    mic.title = usesSpaceGestures() ? MIC_TITLE : WEB_MIC_TITLE;
     // Keep focus (and the caret) in the text field when the mic is pressed.
     mic.addEventListener('mousedown', (event: MouseEvent): void => event.preventDefault());
     mic.addEventListener('click', (): void => {
-      this.field.input.focus();
+      // Still inside the tap: a phone only lets audio start from one.
+      primeCaptureAudio();
+      // On a touch screen focusing would raise the keyboard; dictated words reach the field without it.
+      if (!isTouchWeb()) this.field.input.focus();
       routes.mic(this);
     });
   }

@@ -23,7 +23,8 @@ export interface DictationHandlers {
 // Claude Code. Each composer field has its own, so a final text still being refined in one field keeps its place
 // while another field starts talking.
 export class Dictation {
-  private readonly recorder: PcmRecorder = new PcmRecorder();
+  // A call or Siri taking the microphone ends the take like letting go of Space.
+  private readonly recorder: PcmRecorder = new PcmRecorder((): void => this.release());
   private opening: Promise<boolean> | null = null;
   private session: number | null = null;
   private anchor: DraftAnchor | null = null;

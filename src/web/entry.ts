@@ -1,5 +1,7 @@
 import { markWebHost } from '../renderer/host';
 import { applyTheme, loadTheme } from '../renderer/theme';
+import { dictationSocketUrl } from './dictation/socket-url';
+import { RemoteDictation } from './dictation/remote-dictation';
 import { createHttpRadar } from './http-radar';
 import { installMobileLayout } from './mobile/mobile-layout';
 import { createRemoteCall } from './remote-caller';
@@ -13,7 +15,8 @@ async function start(): Promise<void> {
   // The sign-in card shows before the app, so it takes the saved theme itself.
   applyTheme(loadTheme());
   await ensureSignedIn();
-  Object.defineProperty(window, 'radar', { value: createHttpRadar(createRemoteCall(fetch.bind(window), onSignedOut)) });
+  const voice: RemoteDictation = new RemoteDictation((): string => dictationSocketUrl(window.location), (url: string): WebSocket => new WebSocket(url));
+  Object.defineProperty(window, 'radar', { value: createHttpRadar(createRemoteCall(fetch.bind(window), onSignedOut), voice) });
   installMobileLayout();
   await import('../renderer/app');
 }

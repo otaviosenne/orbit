@@ -2,6 +2,8 @@ import { app } from 'electron';
 import { join } from 'node:path';
 import { createRadarWindow } from '../main/window';
 import { startRemoteAccess } from '../main/remote/start-remote';
+import type { DictationEngine } from '../main/remote/dictation/dictation-engine';
+import { DemoDictationEngine } from './demo-dictation';
 import { registerDemoIpcHandlers } from './demo-ipc';
 import { DEMO_ROUTES } from './demo-routes';
 
@@ -15,6 +17,6 @@ export async function startDemo(): Promise<void> {
   await app.whenReady();
   registerDemoIpcHandlers();
   // Orbit Web serves the same made-up data, so the web app can be shown without real chats.
-  await startRemoteAccess(DEMO_ROUTES, true);
+  await startRemoteAccess(DEMO_ROUTES, (): DictationEngine => new DemoDictationEngine(), true);
   createRadarWindow();
 }

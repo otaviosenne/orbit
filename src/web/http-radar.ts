@@ -13,6 +13,7 @@ import type {
   ClosedChatActivity,
   DeviceFocus,
   DictationStart,
+  DictationTranscript,
   LauncherEntry,
   PastChat,
   QuestionAnswer,
@@ -26,17 +27,19 @@ import type {
   TurnProgress,
   UsageSnapshot,
 } from '../shared/types';
+import type { RemoteDictation } from './dictation/remote-dictation';
 import type { RemoteCall } from './remote-caller';
 
 const DESKTOP_ONLY: string = 'Only available in the desktop app';
 const DESKTOP_ONLY_RESULT: ActionResult = { ok: false, method: null, error: DESKTOP_ONLY };
 const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
-const NO_DICTATION: DictationStart = { session: 0, error: DESKTOP_ONLY };
-const NO_TRANSCRIPTION: TranscriptionResult = { ok: false, text: '', error: DESKTOP_ONLY };
 
-// window.radar for Orbit Web: the same RadarApi the desktop window gets from its preload, over HTTP. What is
-// desktop-only (REMOTE_ACCESS) answers locally as unavailable, and the UI hides its buttons on the web.
-export function createHttpRadar(call: RemoteCall): RadarApi {
+// The dictation steps window.radar needs; RemoteDictation carries them over Orbit Web's dictation socket.
+export type RemoteVoice = Pick<RemoteDictation, 'prepare' | 'start' | 'feed' | 'finish' | 'cancel' | 'onTranscript'>;
+
+// window.radar for Orbit Web: the same RadarApi the desktop window gets from its preload, over HTTP (dictation over
+// its own WebSocket). What is desktop-only (REMOTE_ACCESS) answers locally as unavailable, and the UI hides its buttons.
+export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi {
   return {
     getImage: (sessionId: string, key: string): Promise<string | null> => call('GetImage', [sessionId, key]),
     getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => call('GetTurnProgress', [sessionId]),
@@ -48,12 +51,12 @@ export function createHttpRadar(call: RemoteCall): RadarApi {
     listPastChats: (): Promise<PastChat[]> => call('ListPastChats', []),
     getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => call('GetTimelineHistory', [sinceMs]),
     resumeChat: (sessionId: string): Promise<ActionResult> => call('ResumeChat', [sessionId]),
-    prepareDictation: (): void => undefined,
-    startDictation: (): Promise<DictationStart> => Promise.resolve(NO_DICTATION),
-    feedDictation: (): void => undefined,
-    finishDictation: (): Promise<TranscriptionResult> => Promise.resolve(NO_TRANSCRIPTION),
-    cancelDictation: (): void => undefined,
-    onDictationTranscript: (): void => undefined,
+    prepareDictation: (): void => voice.prepare(),
+    startDictation: (): Promise<DictationStart> => voice.start(),
+    feedDictation: (session: number, pcm: Uint8Array): void => voice.feed(session, pcm),
+    finishDictation: (session: number): Promise<TranscriptionResult> => voice.finish(session),
+    cancelDictation: (session: number): void => voice.cancel(session),
+    onDictationTranscript: (listener: (transcript: DictationTranscript) => void): void => voice.onTranscript(listener),
     getChats: (): Promise<ChatSnapshot[]> => call('GetChats', []),
     // JSON turns a missing argument into null, which the route reads as "the usual amount".
     getTranscript: (sessionId: string, limit?: number): Promise<TranscriptItem[]> => call('GetTranscript', [sessionId, limit ?? null]),

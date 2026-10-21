@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { RemoteChannel } from '../../src/shared/remote-access';
 import { isRemoteChannel, REMOTE_ACCESS } from '../../src/shared/remote-access';
-import type { RadarApi } from '../../src/shared/types';
+import type { DictationTranscript, RadarApi } from '../../src/shared/types';
 import { createHttpRadar } from '../../src/web/http-radar';
+import type { RemoteVoice } from '../../src/web/http-radar';
 import type { RemoteCall } from '../../src/web/remote-caller';
 
 interface Recorded {
@@ -50,13 +51,24 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getChatResources(), 'GetChatResources', []],
 ];
 
-function recordingRadar(): { radar: RadarApi; calls: Recorded[] } {
+const PCM: Uint8Array = new Uint8Array([0, 1, 2, 3]);
+
+function recordingRadar(): { radar: RadarApi; calls: Recorded[]; voiceSteps: string[] } {
   const calls: Recorded[] = [];
+  const voiceSteps: string[] = [];
   const call: RemoteCall = <T>(channel: RemoteChannel, args: readonly unknown[]): Promise<T> => {
     calls.push({ channel, args });
     return Promise.resolve(null as T);
   };
-  return { radar: createHttpRadar(call), calls };
+  const voice: RemoteVoice = {
+    prepare: (): void => void voiceSteps.push('prepare'),
+    start: () => (voiceSteps.push('start'), Promise.resolve({ session: 7, error: null })),
+    feed: (session: number, pcm: Uint8Array): void => void voiceSteps.push(`feed ${session} ${pcm.byteLength}`),
+    finish: (session: number) => (voiceSteps.push(`finish ${session}`), Promise.resolve({ ok: true, text: 'oi', error: null })),
+    cancel: (session: number): void => void voiceSteps.push(`cancel ${session}`),
+    onTranscript: (listener: (transcript: DictationTranscript) => void): void => (voiceSteps.push('listen'), listener({ session: 7, text: 'o' })),
+  };
+  return { radar: createHttpRadar(call, voice), calls, voiceSteps };
 }
 
 describe('Orbit Web radar over HTTP', () => {
@@ -78,11 +90,24 @@ describe('Orbit Web radar over HTTP', () => {
     expect((await radar.closeChat(PID)).ok).toBe(false);
     expect((await radar.addShortcut({ label: 'x', chatName: 'x', folder: '/tmp' })).ok).toBe(false);
     expect(await radar.chooseFolder()).toBeNull();
-    expect((await radar.startDictation()).error).not.toBeNull();
     expect(await radar.getChatDevices(SESSION)).toEqual({ emulator: null, browser: null });
     await radar.focusChat(PID);
     await radar.openChatWindow(SESSION);
     await expect(radar.getRemoteSettings()).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
+
+  it('dictates over the dictation socket, never as calls', async () => {
+    const { radar, calls, voiceSteps } = recordingRadar();
+    const heard: DictationTranscript[] = [];
+    radar.prepareDictation();
+    expect(await radar.startDictation()).toEqual({ session: 7, error: null });
+    radar.feedDictation(7, PCM);
+    radar.onDictationTranscript((transcript: DictationTranscript): void => void heard.push(transcript));
+    expect((await radar.finishDictation(7)).text).toBe('oi');
+    radar.cancelDictation(7);
+    expect(voiceSteps).toEqual(['prepare', 'start', 'feed 7 4', 'listen', 'finish 7', 'cancel 7']);
+    expect(heard).toEqual([{ session: 7, text: 'o' }]);
     expect(calls).toEqual([]);
   });
 });

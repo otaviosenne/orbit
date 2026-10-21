@@ -33,7 +33,8 @@ export interface HandsFreeHooks {
 // side panel's chat, or the focused Panel tile. The audio is cut into segments (one voice session each) at pauses, at a
 // maximum length and whenever the words change destination, so every utterance is finalized on the way.
 export class HandsFree {
-  private readonly recorder: PcmRecorder = new PcmRecorder();
+  // A call or Siri taking the microphone turns the mode off; it never comes back on by itself.
+  private readonly recorder: PcmRecorder = new PcmRecorder((): void => this.turnOff());
   private readonly lane: SegmentLane;
   private readonly writer: SpanWriter = new SpanWriter();
   private readonly spans: Map<number, SpanBinding> = new Map();

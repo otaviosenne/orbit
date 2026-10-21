@@ -52,7 +52,7 @@ export const REMOTE_ACCESS = {
   GetChatDevices: 'desktop',
   FocusChatEmulator: 'desktop',
   FocusChatBrowser: 'desktop',
-  // Dictation streams microphone audio over IPC; Orbit Web leaves it out of its first version.
+  // Never a call: Orbit Web dictates over its own WebSocket (/api/dictation), one voice engine per browser.
   DictationStart: 'desktop',
   DictationFinish: 'desktop',
   // CPU and memory of the open chats' own process trees; the server picks the processes, never the caller.

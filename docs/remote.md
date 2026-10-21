@@ -18,7 +18,8 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
                                             ├─ GET  /…               static web app (dist/web)
                                             ├─ GET  /api/session     is the cookie still good?
                                             ├─ POST /api/session     token → session cookie
-                                            └─ POST /api/call/<Ch>   one IPC channel, args as a JSON array
+                                            ├─ POST /api/call/<Ch>   one IPC channel, args as a JSON array
+                                            └─ GET  /api/dictation   WebSocket: microphone audio in, words out
 ```
 
 - **One route table for both transports.** `src/main/routes/shared-routes.ts` builds one handler
@@ -34,7 +35,14 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
   `build.mjs` derives `dist/web/index.html` from the desktop `index.html` (see `web-page.mjs`).
   `src/web/web.css` adapts the page to a browser and `src/web/phone.css` lays it out as a phone app.
 - **Polling, like the desktop.** The web app polls every 2 seconds as the desktop window does. There
-  is no WebSocket and no service worker. API answers are sent with `Cache-Control: no-store`.
+  is no service worker. API answers are sent with `Cache-Control: no-store`.
+- **Dictation over one WebSocket.** The composer's mic records 16 kHz PCM in the browser (resampled
+  from the device rate) and streams it to `/api/dictation`, where each browser gets its own copy of
+  the desktop's voice engine (`src/main/remote/dictation/`). Live words and the final text come back
+  on the same socket. Control messages are JSON; audio frames are a 32-bit session id plus PCM
+  (`src/shared/dictation-protocol.ts`, `dictation-audio-frame.ts`). The audio takes the same path as
+  every Orbit Web request (through your tunnel to this computer), then the same one as desktop
+  dictation: Claude's speech-to-text service. The browser's own speech recognition is never used.
 - **Bytes over JSON.** Attached images cross as base64 (`src/shared/wire-codec.ts`). Request bodies
   are capped at 25 MB.
 
@@ -51,7 +59,8 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
 | DNS rebinding | Requests whose `Host` is not `127.0.0.1:<port>`, `localhost:<port>` or the External URL's host get `421`. |
 | Clickjacking | `frame-ancestors 'none'`, `X-Frame-Options: DENY`, a strict CSP, `nosniff`, `no-referrer`. |
 | Acting on the wrong process | Calls that act on a chat by pid (send, interrupt, rename, recolor, model, effort) must name a chat Orbit lists right now. |
-| Auditing | Each request is logged to the main process's stdout as `[orbit-web] <time> <method> <path> <status> <ms>`. The log has no query strings, headers or bodies. |
+| Dictation socket | The handshake passes the same Host, Origin (required) and cookie checks as an API call; every message checks them again, and a new token or External URL hangs up open sockets. Each browser gets its own voice engine, so it can neither feed nor cancel another's dictation. At most 4 browsers at once, 64 KB per message, no compression; a session ends 10 s after its audio stops or after 15 minutes, an idle socket after 3 minutes, a silent one at the next missed 20 s ping, and closing the socket closes its voice connections. |
+| Auditing | Each request is logged to the main process's stdout as `[orbit-web] <time> <method> <path> <status> <ms>`, dictation handshakes too. The log has no query strings, headers or bodies, and never the audio or the words. |
 | Token at rest | `~/.config/orbit/remote.json`, mode `0600`, in a `0700` folder. |
 
 ### What stays desktop-only
@@ -61,10 +70,11 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
 | Close chat | Ends a Claude Code process; too destructive for a lost phone. |
 | Go to chat, New window, Emulator / Browser buttons | They focus or open windows on the desktop's screen. |
 | Add Shortcut (New chat form), folder picker | They write a command into the launcher file and open a system dialog. |
-| Dictation | Streams microphone audio over IPC; left out of the first version. |
 | Orbit Web's own settings | A phone can never read or change the token, URL or switch. |
 
-Allowed from the web: reading everything Orbit shows; sending messages and images; interrupting a
+Allowed from the web: reading everything Orbit shows; dictating (the composer's mic turns hands-free
+on and off; holding Space stays a desktop gesture, and the mic stops when the phone locks or the page
+goes to the background); sending messages and images; interrupting a
 turn or a background shell; answering questions; stopping agents; renaming and recoloring;
 switching model, effort and permission mode (wide screens only: on a phone the chat's header keeps
 just back, its dot and its name); resuming past chats; and opening a chat from a

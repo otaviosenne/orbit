@@ -2,6 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DemoDictationEngine } from '../../src/demo/demo-dictation';
 import { DEMO_ROUTES } from '../../src/demo/demo-routes';
 import { RemoteConfigStore } from '../../src/main/remote/remote-config';
 import { RemoteController } from '../../src/main/remote/remote-controller';
@@ -18,7 +19,7 @@ describe('RemoteController', () => {
     dir = await mkdtemp(join(tmpdir(), 'orbit-controller-'));
     const store: RemoteConfigStore = new RemoteConfigStore(dir);
     await store.save({ enabled: false, port: TEST_PORT, externalUrl: '', token: '' });
-    controller = new RemoteController({ store, routes: DEMO_ROUTES, webRoot: dir, log: (): void => undefined });
+    controller = new RemoteController({ store, routes: DEMO_ROUTES, webRoot: dir, dictation: () => new DemoDictationEngine(), log: (): void => undefined });
     await controller.start();
   });
 

@@ -19,8 +19,8 @@ export function requestPath(request: IncomingMessage): string {
 // Host first (DNS rebinding), then Origin (CSRF): writes must come from Orbit Web's own page. No CORS headers exist,
 // so no other site can read an answer either.
 export async function handleRequest(request: IncomingMessage, response: ServerResponse, context: RemoteContext): Promise<void> {
-  applySecurityHeaders(response);
   const credentials: RemoteCredentials = context.credentials();
+  applySecurityHeaders(response, credentials.trusted);
   if (!isTrustedHost(credentials.trusted, request.headers.host)) return sendError(response, 421, 'Unknown host');
   if (!isAllowedOrigin(request, credentials)) return sendError(response, 403, 'Cross-origin request refused');
   const path: string = requestPath(request);
