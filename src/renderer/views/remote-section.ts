@@ -9,6 +9,8 @@ export class RemoteSection {
   readonly root: HTMLElement = element('section', 'settings-section remote-section');
   private settings: RemoteSettings | null = null;
   private busy: boolean = false;
+  // Kept across renders, so How it works stays open while the switch or a field is used.
+  private readonly intro: HTMLElement = renderIntro();
 
   constructor() {
     this.root.append(element('h2', 'settings-heading', 'Orbit Web'), element('p', 'settings-note', 'Loading…'));
@@ -36,7 +38,7 @@ export class RemoteSection {
     const settings: RemoteSettings | null = this.settings;
     if (settings === null) return;
     const group: HTMLDivElement = element('div', 'settings-group');
-    this.root.replaceChildren(element('h2', 'settings-heading', 'Orbit Web'), renderIntro());
+    this.root.replaceChildren(element('h2', 'settings-heading', 'Orbit Web'), this.intro);
     group.append(this.renderToggle(settings));
     if (settings.enabled) group.append(this.renderLocalUrl(settings), this.renderExternalUrl(settings), this.renderToken(settings));
     this.root.append(group);
@@ -112,30 +114,33 @@ export class RemoteSection {
   private renderPairing(settings: RemoteSettings): HTMLElement {
     const pairing: HTMLDivElement = element('div', 'remote-pairing');
     if (settings.pairingQrSvg === null || settings.pairingUrl === null) {
-      pairing.append(element('p', 'settings-note', 'Add the External URL your tunnel or proxy serves to get a pairing QR code.'));
+      pairing.append(element('p', 'settings-note', 'Add an External URL to get the QR code.'));
       return pairing;
     }
     const code: HTMLDivElement = element('div', 'remote-qr');
     // Drawn by the main process from the pairing URL alone (pairing-qr.ts), never from text a page supplied.
     code.innerHTML = settings.pairingQrSvg;
-    pairing.append(code, element('p', 'settings-note', 'Scan with the phone to sign in. Anyone with this code or the token can type into your chats.'));
+    pairing.append(code, element('p', 'settings-note', 'Scan with your phone to sign in. Anyone with this code or the token can type into your chats; New token signs every phone out.'));
     return pairing;
   }
 }
 
-const INTRO: string = 'Use Orbit from a browser, such as on your phone: the Board, Timeline, Panel and chats, with the same answers and messages.';
+const INTRO: string = 'Use Orbit from a browser, such as on your phone.';
 const STEPS: readonly string[] = [
-  'Turn on Allow remote access. Orbit then serves itself at the Local URL, reachable from this computer only.',
-  'Reach it from elsewhere through a tunnel or proxy with HTTPS (Cloudflare Tunnel, Tailscale, Caddy…) pointed at the Local URL, and type the address it gives you in External URL.',
-  'Scan the QR code with your phone: it opens that address already signed in. Anyone with the code or the token can type into your chats; New token signs every phone out.',
+  'Turn on Allow remote access: Orbit serves itself at the Local URL, on this computer only.',
+  'Point a tunnel or proxy with HTTPS at the Local URL and type its address in External URL.',
+  'Scan the QR code with your phone to open it already signed in.',
 ];
+const STEPS_SUMMARY: string = 'How it works';
 
-// What Orbit Web is and the three steps to a phone, shown whether it is on or off.
+// One line up front; the three steps fold away so the page is not a wall of text.
 function renderIntro(): HTMLElement {
   const intro: HTMLDivElement = element('div', 'remote-intro');
+  const how: HTMLDetailsElement = element('details', 'remote-how');
   const steps: HTMLOListElement = element('ol', 'remote-steps');
   steps.append(...STEPS.map((step: string): HTMLLIElement => element('li', '', step)));
-  intro.append(element('p', 'settings-note', INTRO), steps);
+  how.append(element('summary', 'remote-how-summary', STEPS_SUMMARY), steps);
+  intro.append(element('p', 'settings-lead', INTRO), how);
   return intro;
 }
 

@@ -39,7 +39,12 @@ import type { CardMenuTarget } from './board/card-menu';
 import { CardRename } from './board/card-rename';
 import { PinnedChats } from './board/pinned-chats';
 import { ClosingChats } from './board/closing-chats';
+import type { SettingsLayout } from './views/settings-view';
 import { renderSettings } from './views/settings-view';
+import type { SettingsPage } from './views/settings-pages';
+import { DEFAULT_SETTINGS_PAGE, availablePages } from './views/settings-pages';
+import { renderAppearanceSection } from './views/appearance-section';
+import { renderUsageSection } from './views/usage-section';
 import type { TimelineChats } from './views/timeline-view';
 import { mountTimeline, renderTimeline } from './views/timeline-view';
 import { GridView } from './views/grid/grid-view';
@@ -163,6 +168,7 @@ const launches: LaunchPanel = new LaunchPanel(new LaunchWatch((): string | null 
 let view: ViewName = 'board';
 // The gear toggles: pressed again in Settings, it goes back to where you were.
 let viewBeforeSettings: ViewName = 'board';
+let settingsPage: SettingsPage = DEFAULT_SETTINGS_PAGE;
 // As polled from disk, and as shown (with edits that the chats have not confirmed yet).
 let polledChats: ChatSnapshot[] = [];
 let chats: ChatSnapshot[] = [];
@@ -206,7 +212,7 @@ function renderView(): void {
   const now: number = Date.now();
   nav.replaceChildren(...renderNav(view));
   settingsButton.classList.toggle('is-active', view === 'settings');
-  resourcesSection.setActive(view === 'settings');
+  resourcesSection.setActive(view === 'settings' && settingsPage === 'resources');
   // A card being renamed holds an open text field; rebuilding the board would throw the typing away.
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
   if (view === 'settings' && remoteSection?.isEditing === true) return;
@@ -219,12 +225,29 @@ function renderView(): void {
   else showSettings(now);
 }
 
-// The settings column is rebuilt on every poll; without this a scrolled page snaps back to the top.
+// The settings page is rebuilt on every poll; without this a scrolled page snaps back to the top.
 function showSettings(now: number): void {
-  const scrollTop: number = viewRoot.querySelector<HTMLElement>('.settings')?.scrollTop ?? 0;
-  const settings: HTMLElement = renderSettings(theme, usage, now, [...(remoteSection === null ? [] : [remoteSection.root]), resourcesSection.root]);
+  const scrollTop: number = viewRoot.querySelector<HTMLElement>('.settings-column')?.scrollTop ?? 0;
+  const layout: SettingsLayout = { pages: availablePages(remoteSection !== null), current: settingsPage, choose: showSettingsPage };
+  const settings: HTMLElement = renderSettings(layout, settingsContent(now));
   viewRoot.replaceChildren(settings);
-  settings.scrollTop = scrollTop;
+  const column: HTMLElement | null = settings.querySelector<HTMLElement>('.settings-column');
+  if (column !== null) column.scrollTop = scrollTop;
+}
+
+// Orbit Web and Resources keep their own state between renders, so their elements are reused, not rebuilt.
+function settingsContent(now: number): HTMLElement {
+  if (settingsPage === 'usage') return renderUsageSection(usage, now);
+  if (settingsPage === 'resources') return resourcesSection.root;
+  if (settingsPage === 'web' && remoteSection !== null) return remoteSection.root;
+  return renderAppearanceSection(theme);
+}
+
+function showSettingsPage(page: SettingsPage): void {
+  settingsPage = page;
+  const column: HTMLElement | null = viewRoot.querySelector<HTMLElement>('.settings-column');
+  if (column !== null) column.scrollTop = 0;
+  renderView();
 }
 
 // Tiles hold scroll, open rows and drafts, so the grid is mounted once and updated in place instead of rebuilt.
@@ -374,10 +397,11 @@ async function openWebInBrowser(): Promise<void> {
   window.open(settings.pairingUrl ?? `${settings.localUrl}/#${PAIRING_HASH_KEY}=${settings.token}`, '_blank');
 }
 
-// The phone pairs through the QR code in Settings' Orbit Web section.
+// The phone pairs through the QR code on Settings' Orbit Web page.
 function showRemoteSettings(): void {
+  settingsPage = 'web';
   if (view !== 'settings') setView('settings');
-  remoteSection?.root.scrollIntoView({ block: 'start' });
+  else renderView();
 }
 
 function setView(next: ViewName): void {
