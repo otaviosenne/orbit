@@ -1,3 +1,4 @@
+import { withoutPastedWrappers } from './pasted-content';
 import type { MessageImage, NoticeTone, QuestionItem, ToolItem, TranscriptItem } from '../shared/types';
 import { clipText } from './clip-text';
 import { MAX_TOOL_TEXT_CHARS } from './config';
@@ -111,7 +112,7 @@ class TranscriptBuilder {
       this.items.push({ kind: 'peer', id, timestamp, direction: 'in', chat: record.origin.name ?? UNKNOWN_CHAT, text: record.origin.body ?? contentText(record) });
       return;
     }
-    const text: string = contentText(record).trim();
+    const text: string = withoutPastedWrappers(contentText(record)).trim();
     const task: TaskNotification | null = parseTaskNotification(text);
     if (task !== null) return this.addNotice(id, timestamp, task.status === FAILED_STATUS ? 'error' : 'info', task.summary ?? 'Agent update', task.result);
     if (record.isMeta === true || text.length === 0) return;
