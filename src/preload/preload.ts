@@ -8,6 +8,7 @@ import { IpcChannel } from '../shared/ipc-channels';
 import type { IpcRendererEvent } from 'electron';
 import type {
   ActionResult,
+  AttachmentBlob,
   AttachmentUpload,
   ChatPermissions,
   ChatSettings,
@@ -33,6 +34,8 @@ import type {
 
 const api: RadarApi = {
   getImage: (sessionId: string, key: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetImage, sessionId, key),
+  getAttachment: (path: string): Promise<AttachmentBlob | null> => ipcRenderer.invoke(IpcChannel.GetAttachment, path),
+  revealFile: (path: string): Promise<void> => ipcRenderer.invoke(IpcChannel.RevealFile, path),
   getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => ipcRenderer.invoke(IpcChannel.GetTurnProgress, sessionId),
   getChatColor: (sessionId: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetChatColor, sessionId),
   listLaunchers: (): Promise<LauncherEntry[]> => ipcRenderer.invoke(IpcChannel.ListLaunchers),

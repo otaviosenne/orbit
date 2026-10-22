@@ -11,6 +11,10 @@ export const REMOTE_ACCESS = {
   GetTranscript: 'read',
   GetAgentTranscript: 'read',
   GetImage: 'read',
+  // Only viewable files directly inside Orbit's own attachments folder; never a path anywhere else.
+  GetAttachment: 'read',
+  // Opens the desktop's file manager.
+  RevealFile: 'desktop',
   GetTurnProgress: 'read',
   GetChatColor: 'read',
   GetUsage: 'read',

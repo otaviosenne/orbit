@@ -34,6 +34,7 @@ import type { PageFetch } from './paging/paged-transcript';
 import { ThreadFeed } from './paging/thread-feed';
 import type { PendingChat } from '../pending-chat';
 import { PendingPlaceholder } from './pending-placeholder';
+import { pendingAttachmentOf } from './pending-attachments';
 
 const STATUS_CLEAR_MS: number = 5000;
 
@@ -376,7 +377,7 @@ export class ChatSheet {
     if (this.chat === null && this.placeholder.isActive) this.placeholder.showQueued(text.trim());
     const chat: ChatSnapshot | null = await this.whenLive();
     if (chat === null) return false;
-    const pendingId: string = this.messages.addPending(text.trim(), attachments.map(previewUrl));
+    const pendingId: string = this.messages.addPending(text.trim(), attachments.map(pendingAttachmentOf));
     const result: ActionResult | null = await window.radar.sendMessage(chat.pid, text, attachments);
     if (result?.ok === true) this.messages.markPendingDelivered(pendingId);
     else this.messages.removePending(pendingId);
@@ -424,9 +425,4 @@ export class ChatSheet {
   private async withChat<T>(action: (chat: ChatSnapshot) => T | Promise<T>): Promise<T | null> {
     return this.chat === null ? null : action(this.chat);
   }
-}
-
-// The tray revokes its own previews as soon as it clears, so the sent message needs copies of its own.
-function previewUrl(attachment: AttachmentUpload): string {
-  return URL.createObjectURL(new Blob([new Uint8Array(attachment.bytes)], { type: attachment.mediaType }));
 }

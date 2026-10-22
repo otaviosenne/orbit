@@ -43,8 +43,10 @@ phone ──HTTPS──▶ tunnel / proxy ──HTTP──▶ 127.0.0.1:4690 (Or
   (`src/shared/dictation-protocol.ts`, `dictation-audio-frame.ts`). The audio takes the same path as
   every Orbit Web request (through your tunnel to this computer), then the same one as desktop
   dictation: Claude's speech-to-text service. The browser's own speech recognition is never used.
-- **Bytes over JSON.** Attached images cross as base64 (`src/shared/wire-codec.ts`). Request bodies
-  are capped at 25 MB.
+- **Bytes over JSON.** Attached files cross as base64 (`src/shared/wire-codec.ts`). Request bodies
+  are capped at 64 MB, so one message carries up to 47 MB of files (`src/shared/attachment-limits.ts`); the
+  composer refuses bigger ones with a note. The viewer reads a sent video, audio file or PDF back through
+  `GetAttachment`, which serves only files directly inside `~/.cache/orbit/attachments` (no links, 48 MB max).
 
 ## Security model
 

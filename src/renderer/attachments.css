@@ -1,0 +1,67 @@
+/* Attachments that are not images: tray cards, chips in sent messages, the file viewer, and the Panel tiles' own
+   attachments. Kept apart from styles.css; the tokens (--control, --well, --panel...) come from there. */
+
+/* A file waiting to be sent: its kind's icon and its name, as tall as an image thumbnail */
+.attachment-file { width: auto; max-width: 180px; background: var(--well); }
+.attachment-file-card { display: flex; align-items: center; gap: 8px; height: 100%; padding: 0 26px 0 10px; }
+.attachment-file-icon { flex: none; width: 24px; height: 24px; color: var(--secondary); }
+.attachment-file-icon svg { width: 100%; height: 100%; fill: currentColor; }
+.attachment-file-name {
+  min-width: 0; font-size: 11.5px; line-height: 1.3; color: var(--text); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* A file in a sent message: like the image chip, with the kind's icon and the file's name */
+.file-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 0 7px; margin: 0 1px; border: 0; border-radius: 6px;
+  background: rgb(255 255 255 / 0.22); color: inherit; font: inherit; font-weight: 600; cursor: pointer; vertical-align: bottom;
+}
+.message-assistant .file-chip, .card-preview .file-chip { background: rgb(127 127 127 / 0.18); }
+.file-chip:hover .file-chip-name { text-decoration: underline; }
+.file-chip-icon { flex: none; display: inline-grid; width: 1.05em; height: 1.05em; }
+.file-chip-icon svg { width: 100%; height: 100%; fill: currentColor; }
+.file-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The viewer: a panel on the lightbox's backdrop (clicking the backdrop closes it) */
+.lightbox-panel[hidden] { display: none; }
+.file-viewer {
+  display: flex; flex-direction: column; gap: 12px; width: min(92vw, 960px); max-height: 92vh; padding: 14px 16px 16px; overflow: auto;
+  border-radius: 14px; background: var(--panel); color: var(--text); box-shadow: 0 20px 60px rgb(0 0 0 / 0.5); cursor: default;
+}
+.file-viewer-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.file-viewer-icon { flex: none; width: 20px; height: 20px; color: var(--secondary); }
+.file-viewer-icon svg { width: 100%; height: 100%; fill: currentColor; }
+.file-viewer-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.file-viewer-kind { flex: none; padding: 1px 7px; border-radius: 6px; background: var(--well); color: var(--secondary); font-size: 11.5px; }
+.file-viewer-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 0; }
+.file-viewer-video { display: block; max-width: 100%; max-height: 70vh; border-radius: 8px; background: #000000; }
+.file-viewer-audio { width: 100%; }
+.file-viewer-pdf { display: block; width: 100%; height: 72vh; border: 0; border-radius: 8px; background: #ffffff; }
+.file-viewer-link { align-self: flex-start; color: var(--accent); font-size: 12.5px; }
+.file-viewer-notice, .file-viewer-note { margin: 0; color: var(--secondary); font-size: 12.5px; }
+.file-viewer-path-row { display: flex; flex-direction: column; gap: 8px; }
+.file-viewer-path {
+  padding: 8px 10px; border-radius: 8px; background: var(--well); font-size: 12px; line-height: 1.4;
+  overflow-wrap: anywhere; user-select: text; cursor: text;
+}
+.file-viewer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-viewer-action { display: inline-flex; align-items: center; gap: 6px; }
+.file-viewer-action svg { width: 14px; height: 14px; fill: currentColor; }
+
+/* Panel tiles: the draft painted behind a transparent textarea, as in the side panel's composer; the layer
+   carries the field's background so the chips show through */
+.tile-composer-text { display: grid; }
+.tile-composer-text > * { grid-area: 1 / 1; min-width: 0; }
+.tile-composer-markers { line-height: 1.4; border-radius: 15px; background: var(--control); }
+.tile-composer-text .tile-composer-input { background: transparent; color: transparent; caret-color: var(--text); }
+.tile-composer-text .tile-composer-input.is-over-chip { cursor: pointer; }
+.tile-composer-text .tile-composer-input::selection { color: transparent; background: color-mix(in srgb, var(--accent) 28%, transparent); }
+.tile-composer-attach-holder { flex: none; align-self: flex-end; }
+.tile-composer-attach {
+  width: 26px; height: 26px; padding: 5px; display: grid; place-items: center; margin-bottom: 1px;
+  border: 0; border-radius: 50%; background: transparent; color: var(--tertiary); cursor: default;
+}
+.tile-composer-attach:hover { color: var(--secondary); }
+.tile-composer-attach svg { width: 16px; height: 16px; fill: currentColor; }
+.tile-attachment-tray { padding: 0 2px; }
+.tile-composer:not(.is-open) .tile-composer-attach-holder, .tile-composer:not(.is-open) .tile-attachment-tray { display: none; }

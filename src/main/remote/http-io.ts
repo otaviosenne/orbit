@@ -1,9 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { REMOTE_BODY_LIMIT_BYTES } from '../../shared/attachment-limits';
 import { contentSecurityPolicy } from './content-security';
 import type { TrustedOrigins } from './trusted-origins';
 
-// Generous for a few phone photos sent as base64, small enough that a stray upload cannot fill the memory.
-export const MAX_BODY_BYTES: number = 25 * 1024 * 1024;
+// Sized with the attachments a phone may send (shared/attachment-limits.ts).
+export const MAX_BODY_BYTES: number = REMOTE_BODY_LIMIT_BYTES;
 
 export class BodyTooLargeError extends Error {}
 

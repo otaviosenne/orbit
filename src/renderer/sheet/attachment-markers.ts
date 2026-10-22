@@ -1,3 +1,5 @@
+import type { AttachmentKind } from '../../shared/attachment-kinds';
+import { draftMarker } from '../../shared/draft-markers';
 import type { AttachmentTray, TrayChanges } from './attachment-tray';
 import type { DraftEdit, Renumbering, TokenRange } from './draft-image-tokens';
 import { compacting, insertTokens, presentNumbers, removing, renumberDraft, reordering, widenOverTokens } from './draft-image-tokens';
@@ -6,13 +8,13 @@ import { compacting, insertTokens, presentNumbers, removing, renumberDraft, reor
 const BACKWARD_DELETIONS: ReadonlySet<string> = new Set(['deleteContentBackward', 'deleteWordBackward', 'deleteSoftLineBackward', 'deleteHardLineBackward']);
 const FORWARD_DELETIONS: ReadonlySet<string> = new Set(['deleteContentForward', 'deleteWordForward', 'deleteSoftLineForward', 'deleteHardLineForward']);
 
-// Keeps the draft's "[Image #N]" markers and the tray's images in step: each marker is where its image goes,
-// removing an image removes its marker, and deleting a marker removes its image.
-export class ImageMarkers implements TrayChanges {
+// Keeps the draft's markers ("[Image #N]", "[PDF #N]", ...) and the tray's attachments in step: each marker is where
+// its attachment goes, removing an attachment removes its marker, and deleting a marker removes its attachment.
+export class AttachmentMarkers implements TrayChanges {
   private tray: AttachmentTray | null = null;
 
   constructor(private readonly input: HTMLTextAreaElement) {
-    input.addEventListener('input', (): void => this.dropUnmarkedImages());
+    input.addEventListener('input', (): void => this.dropUnmarkedAttachments());
     input.addEventListener('beforeinput', (event: InputEvent): void => this.deleteWholeMarkers(event));
   }
 
@@ -21,23 +23,21 @@ export class ImageMarkers implements TrayChanges {
     this.tray = tray;
   }
 
-  // New images get their markers where the caret is.
+  // New attachments get their markers where the caret is.
   attach(files: Iterable<File>): void {
     if (this.tray === null) return;
-    const first: number = this.tray.count + 1;
-    const added: number = this.tray.add(files);
-    if (added === 0) return;
-    const numbers: number[] = Array.from({ length: added }, (_unused: unknown, offset: number) => first + offset);
-    this.write(insertTokens(this.input.value, this.input.selectionStart, numbers));
+    const first: number = this.tray.count;
+    if (this.tray.add(files) === 0) return;
+    this.write(insertTokens(this.input.value, this.input.selectionStart, markersFrom(this.tray.kinds(), first)));
   }
 
-  // For images put back without their draft: their markers go at the end.
+  // For attachments put back without their draft: their markers go at the end.
   appendMarkers(count: number): void {
-    const numbers: number[] = Array.from({ length: count }, (_unused: unknown, index: number) => index + 1);
-    this.write(insertTokens(this.input.value, this.input.value.length, numbers));
+    const kinds: AttachmentKind[] = this.tray?.kinds().slice(0, count) ?? [];
+    this.write(insertTokens(this.input.value, this.input.value.length, markersFrom(kinds, 0)));
   }
 
-  // The tray already let the image go, so it held one more before.
+  // The tray already let the attachment go, so it held one more before.
   removed(index: number): void {
     this.renumber(removing(index + 1, (this.tray?.count ?? 0) + 1));
   }
@@ -46,7 +46,7 @@ export class ImageMarkers implements TrayChanges {
     this.renumber(reordering(order));
   }
 
-  private dropUnmarkedImages(): void {
+  private dropUnmarkedAttachments(): void {
     if (this.tray === null) return;
     const count: number = this.tray.count;
     const present: Set<number> = presentNumbers(this.input.value, count);
@@ -91,4 +91,9 @@ export class ImageMarkers implements TrayChanges {
     this.input.value = draft.text;
     this.input.setSelectionRange(draft.caret, draft.caret);
   }
+}
+
+// Markers numbered from first + 1, each with its attachment's word.
+function markersFrom(kinds: readonly AttachmentKind[], first: number): string[] {
+  return kinds.slice(first).map((kind: AttachmentKind, offset: number) => draftMarker(kind, first + offset + 1));
 }

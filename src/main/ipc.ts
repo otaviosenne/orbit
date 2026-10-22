@@ -8,6 +8,7 @@ import type { ChatWindows } from './chat-windows';
 import type { DictationService } from './dictation-service';
 import { chooseFolder } from './folder-picker';
 import { addShortcut } from './shortcut-actions';
+import { revealFile } from './file-reveal';
 import { focusTerminalOf } from './terminal-focus';
 import { isPid } from './routes/route-args';
 import { registerRoutes } from './routes/register-routes';
@@ -38,6 +39,7 @@ function registerDesktopHandlers(chatWindows: ChatWindows): void {
   ipcMain.handle(IpcChannel.CloseChat, (_event: IpcMainInvokeEvent, pid: unknown): Promise<ActionResult> =>
     isPid(pid) ? closeChat(pid) : Promise.resolve(failure('Not a chat')),
   );
+  ipcMain.handle(IpcChannel.RevealFile, (_event: IpcMainInvokeEvent, path: unknown): Promise<void> => revealFile(path));
   ipcMain.handle(IpcChannel.OpenChatWindow, (_event: IpcMainInvokeEvent, sessionId: unknown): void => {
     // The id ends up in a file URL, so anything but a real id is ignored.
     if (typeof sessionId === 'string' && sessionId.length > 0) chatWindows.open(sessionId);

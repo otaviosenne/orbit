@@ -3,7 +3,7 @@ const IMAGE_TOKEN_SOURCE: string = '\\[Image #(\\d+)\\]';
 
 export type MessageSegment =
   | { readonly kind: 'text'; readonly text: string }
-  // index counts the message's attachments from 0.
+  // index counts the message's attachments from 0 (images only, or every kind for the composer's own markers).
   | { readonly kind: 'image'; readonly index: number };
 
 // A fresh global pattern each time, since a shared one carries lastIndex between uses.
@@ -18,10 +18,15 @@ export function imageToken(number: number): string {
 // The composer numbers its markers from 1 by attachment; each image goes where its marker is.
 // Markers with no attachment stay as text, and attachments with no marker go at the end.
 export function splitOnImageTokens(text: string, attachmentCount: number): MessageSegment[] {
+  return splitOnMarkers(text, attachmentCount, imageTokenPattern());
+}
+
+// The same cut for any global marker pattern whose group 1 is the number.
+export function splitOnMarkers(text: string, attachmentCount: number, pattern: RegExp): MessageSegment[] {
   const segments: MessageSegment[] = [];
   const placed: Set<number> = new Set();
   let cursor: number = 0;
-  for (const match of text.matchAll(imageTokenPattern())) {
+  for (const match of text.matchAll(pattern)) {
     const index: number = Number(match[1]) - 1;
     if (index < 0 || index >= attachmentCount || placed.has(index)) continue;
     pushText(segments, text.slice(cursor, match.index));

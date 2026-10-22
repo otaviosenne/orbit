@@ -14,9 +14,9 @@ import {
 
 describe('insertTokens', () => {
   it('adds markers at the caret as words of their own', () => {
-    expect(insertTokens('look here', 4, [1])).toEqual({ text: 'look [Image #1] here', caret: 15 });
-    expect(insertTokens('', 0, [1, 2])).toEqual({ text: '[Image #1] [Image #2] ', caret: 22 });
-    expect(insertTokens('end', 3, [1])).toEqual({ text: 'end [Image #1] ', caret: 15 });
+    expect(insertTokens('look here', 4, ['[Image #1]'])).toEqual({ text: 'look [Image #1] here', caret: 15 });
+    expect(insertTokens('', 0, ['[Image #1]', '[Image #2]'])).toEqual({ text: '[Image #1] [Image #2] ', caret: 22 });
+    expect(insertTokens('end', 3, ['[Image #1]'])).toEqual({ text: 'end [Image #1] ', caret: 15 });
   });
 });
 
@@ -36,6 +36,18 @@ describe('renumberTokens', () => {
 
   it('moves the caret with the text before it', () => {
     expect(renumberDraft({ text: '[Image #1] ab', caret: 13 }, removing(1, 1))).toEqual({ text: 'ab', caret: 2 });
+  });
+});
+
+describe('file markers', () => {
+  it('share the numbering with images and keep their word when renumbered', () => {
+    expect(renumberTokens('[Image #1] [PDF #2] [Video #3]', removing(1, 3))).toBe('[PDF #1] [Video #2]');
+    expect(orderByTokens('[File #2] then [Image #1]', 2)).toEqual({ text: '[File #1] then [Image #2]', order: [1, 0] });
+  });
+
+  it('are atomic like image markers', () => {
+    expect(tokenRanges('a [Audio #1] b')).toEqual([{ start: 2, end: 12 }]);
+    expect(widenOverTokens('x [PDF #1]', { start: 9, end: 10 })).toEqual({ start: 2, end: 10 });
   });
 });
 

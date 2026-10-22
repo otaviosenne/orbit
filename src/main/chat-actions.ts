@@ -1,4 +1,7 @@
 import type { ActionResult, AttachmentUpload } from '../shared/types';
+import { DESKTOP_ATTACHMENTS_LIMIT_BYTES, formatMegabytes } from '../shared/attachment-limits';
+import type { PlacedMessage } from './attachment-placement';
+import { placeAttachments } from './attachment-placement';
 import { saveAttachments } from './attachments';
 import { colorCommand, effortCommand, messageText, modelCommand, renameCommand } from './chat-command-text';
 import { failure, submitToChat } from './terminal-input';
@@ -20,11 +23,17 @@ export function setChatEffort(pid: number, effort: unknown): Promise<ActionResul
   return submitIfValid(pid, effortCommand(effort), 'command', `Unknown effort: ${String(effort)}`);
 }
 
-// A message may be only images; the text is optional when something is attached.
+// A message may be only attachments; the text is optional when something is attached.
 export async function sendMessage(pid: number, text: string, uploads: readonly AttachmentUpload[]): Promise<ActionResult> {
   const body: string | null = messageText(text);
   if (body === null && uploads.length === 0) return failure('Message is empty');
-  return submitToChat(pid, body ?? '', 'message', await saveAttachments(uploads));
+  if (totalBytes(uploads) > DESKTOP_ATTACHMENTS_LIMIT_BYTES) return failure(`Attachments over ${formatMegabytes(DESKTOP_ATTACHMENTS_LIMIT_BYTES)}`);
+  const placed: PlacedMessage = placeAttachments(body ?? '', await saveAttachments(uploads));
+  return submitToChat(pid, placed.text, 'message', placed.imagePaths);
+}
+
+function totalBytes(uploads: readonly AttachmentUpload[]): number {
+  return uploads.reduce((sum: number, upload: AttachmentUpload) => sum + upload.bytes.byteLength, 0);
 }
 
 function submitIfValid(pid: number, text: string | null, kind: InputKind, invalidReason: string): Promise<ActionResult> {

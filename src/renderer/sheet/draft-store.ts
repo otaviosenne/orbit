@@ -1,4 +1,4 @@
-import { imageTokenPattern } from '../../shared/image-tokens';
+import { draftMarkerPattern } from '../../shared/draft-markers';
 
 const STORAGE_KEY: string = 'orbit.drafts';
 
@@ -11,7 +11,7 @@ export interface ComposerDraft {
 export const EMPTY_DRAFT: ComposerDraft = { text: '', files: [] };
 
 // Keeps each chat's unsent draft while you visit other chats, views or windows. The text also survives a
-// restart; images only live in memory, so a stored draft drops their markers instead of leaving dead ones.
+// restart; attachments only live in memory, so a stored draft drops their markers instead of leaving dead ones.
 export class DraftStore {
   private readonly drafts: Map<string, ComposerDraft> = new Map(
     Object.entries(load()).map(([sessionId, text]: [string, string]): [string, ComposerDraft] => [sessionId, { text, files: [] }]),
@@ -40,7 +40,7 @@ function isEmpty(draft: ComposerDraft): boolean {
 }
 
 export function storedText(draft: ComposerDraft): string {
-  return draft.files.length === 0 ? draft.text : draft.text.replace(imageTokenPattern(), '').replace(/ {2,}/g, ' ').trim();
+  return draft.files.length === 0 ? draft.text : draft.text.replace(draftMarkerPattern(), '').replace(/ {2,}/g, ' ').trim();
 }
 
 // Storage can be unavailable; then drafts last for this run only.

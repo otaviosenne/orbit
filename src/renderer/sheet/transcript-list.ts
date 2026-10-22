@@ -2,12 +2,13 @@ import type { QuestionItem, TranscriptItem } from '../../shared/types';
 import { DISCLOSURE_KEY_ATTRIBUTE } from './transcript/disclosure';
 import type { TranscriptEntry } from './transcript/group-tools';
 import { groupTools } from './transcript/group-tools';
-import type { PendingMessage, Reconciliation } from './pending-messages';
+import type { PendingAttachment, PendingMessage, Reconciliation } from './pending-messages';
 import { PendingMessages } from './pending-messages';
 import type { QuestionPickerApi } from './questions/live-picker';
 import { LivePicker } from './questions/live-picker';
 import { renderQuestionSummary } from './questions/question-summary';
 import type { Lightbox } from '../lightbox';
+import { ThreadFiles } from './thread-files';
 import { ThreadImages } from './thread-images';
 import { renderMessage, renderPendingMessage } from './transcript/message-bubble';
 import { renderNotice, renderTurn } from './transcript/notice-row';
@@ -49,6 +50,7 @@ export class TranscriptList {
     // 'toggle' does not bubble, so listen in the capture phase.
     root.addEventListener('toggle', (event: Event): void => this.rememberToggle(event.target), true);
     this.images = new ThreadImages(root, lightbox, (): string | null => this.sessionId);
+    new ThreadFiles(root, lightbox);
   }
 
   show(sessionId: string, items: readonly TranscriptItem[], thread: string = sessionId): void {
@@ -67,9 +69,9 @@ export class TranscriptList {
   }
 
   // Shows a just-sent message at once; returns its id so a failed delivery can take it back.
-  // The list owns imageUrls from here on and lets go of them once the message is dropped or confirmed.
-  addPending(text: string, imageUrls: readonly string[]): string {
-    const id: string = this.pending.add(text, imageUrls, Date.now()).id;
+  // The list owns the attachments' URLs from here on and lets go of them once the message is dropped or confirmed.
+  addPending(text: string, attachments: readonly PendingAttachment[]): string {
+    const id: string = this.pending.add(text, attachments, Date.now()).id;
     // Reading near the end, the sent message is brought into view; reading far back up, the place is kept.
     this.render(false, this.isNearEnd(SEND_FOLLOW_SCREENS));
     return id;

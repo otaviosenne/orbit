@@ -1,5 +1,9 @@
+import type { AttachmentKind } from '../../shared/attachment-kinds';
+import { attachmentKindOf } from '../../shared/attachment-kinds';
 import type { AttachmentUpload } from '../../shared/types';
 import { element } from '../dom';
+import { FILE_KIND_ICONS } from '../files/file-icons';
+import { FileViewer } from '../files/file-viewer';
 import { CLOSE_ICON } from '../icons';
 import type { Lightbox } from '../lightbox';
 
@@ -7,25 +11,26 @@ interface Attachment {
   readonly id: number;
   readonly file: File;
   readonly url: string;
+  readonly kind: AttachmentKind;
 }
 
-const IMAGE_TYPE_PREFIX: string = 'image/';
-
-// Tells the composer when the user changes the images from the tray, so the draft's markers follow.
+// Tells the composer when the user changes the attachments from the tray, so the draft's markers follow.
 export interface TrayChanges {
   removed(index: number): void;
-  // order[newIndex] is the image's index before the move.
+  // order[newIndex] is the attachment's index before the move.
   reordered(order: readonly number[]): void;
 }
 
-// Images waiting to be sent, shown as rounded thumbnails above the text (ChatGPT style).
-// Drag a thumbnail to reorder, × to remove, click to view it large.
+// Files waiting to be sent, above the text (ChatGPT style): images as rounded thumbnails, other files as small
+// cards with their kind's icon and name. Drag one to reorder, × to remove, click to view it.
 export class AttachmentTray {
   private attachments: Attachment[] = [];
   private nextId: number = 0;
   private draggedId: number | null = null;
+  private readonly viewer: FileViewer;
 
   constructor(private readonly root: HTMLElement, private readonly lightbox: Lightbox, private readonly changes: TrayChanges) {
+    this.viewer = new FileViewer(lightbox);
     this.render();
   }
 
@@ -33,18 +38,27 @@ export class AttachmentTray {
     return this.attachments.length;
   }
 
-  // Returns how many of the files were images and were added.
+  // What the attachments weigh together, held against the upload limit before more are added.
+  get totalBytes(): number {
+    return this.attachments.reduce((sum: number, attachment: Attachment) => sum + attachment.file.size, 0);
+  }
+
+  // Returns how many files were added.
   add(files: Iterable<File>): number {
     const before: number = this.attachments.length;
     for (const file of files) {
-      if (!file.type.startsWith(IMAGE_TYPE_PREFIX)) continue;
-      this.attachments.push({ id: this.nextId++, file, url: URL.createObjectURL(file) });
+      this.attachments.push({ id: this.nextId++, file, url: URL.createObjectURL(file), kind: attachmentKindOf(file.name, file.type) });
     }
     this.render();
     return this.attachments.length - before;
   }
 
-  // Keeps only the images at these indexes, in their current order; the draft already dropped the others' markers.
+  // Each attachment's kind, in tray order; its marker in the draft says the same.
+  kinds(): AttachmentKind[] {
+    return this.attachments.map((attachment: Attachment) => attachment.kind);
+  }
+
+  // Keeps only the attachments at these indexes, in their current order; the draft already dropped the others' markers.
   keep(indexes: ReadonlySet<number>): void {
     const dropped: Attachment[] = this.attachments.filter((_attachment: Attachment, index: number) => !indexes.has(index));
     for (const attachment of dropped) URL.revokeObjectURL(attachment.url);
@@ -52,10 +66,10 @@ export class AttachmentTray {
     this.render();
   }
 
-  // Shows the image at this index large; a marker typed by hand may point at no image, and then nothing opens.
+  // Shows the attachment at this index; a marker typed by hand may point at none, and then nothing opens.
   preview(index: number): void {
     const attachment: Attachment | undefined = this.attachments[index];
-    if (attachment !== undefined) this.lightbox.open(attachment.url);
+    if (attachment !== undefined) this.view(attachment);
   }
 
   files(): File[] {
@@ -76,6 +90,11 @@ export class AttachmentTray {
     for (const attachment of this.attachments) URL.revokeObjectURL(attachment.url);
     this.attachments = [];
     this.render();
+  }
+
+  private view(attachment: Attachment): void {
+    if (attachment.kind === 'image') return this.lightbox.open(attachment.url);
+    this.viewer.open({ kind: attachment.kind, name: attachment.file.name, path: null, isAttachment: false, localUrl: attachment.url });
   }
 
   private remove(id: number): void {
@@ -102,36 +121,53 @@ export class AttachmentTray {
 
   private render(): void {
     this.root.hidden = this.attachments.length === 0;
-    this.root.replaceChildren(...this.attachments.map((attachment: Attachment) => this.renderThumb(attachment)));
+    this.root.replaceChildren(...this.attachments.map((attachment: Attachment) => this.renderItem(attachment)));
   }
 
-  private renderThumb(attachment: Attachment): HTMLElement {
-    const thumb: HTMLDivElement = element('div', 'attachment');
-    thumb.draggable = true;
-    const image: HTMLImageElement = element('img', 'attachment-image');
-    image.src = attachment.url;
-    image.alt = attachment.file.name;
-    image.draggable = false;
-    const remove: HTMLButtonElement = element('button', 'attachment-remove');
-    remove.type = 'button';
-    remove.setAttribute('aria-label', 'Remove image');
-    remove.innerHTML = CLOSE_ICON;
-    remove.addEventListener('click', (event: MouseEvent): void => {
-      event.stopPropagation();
-      this.remove(attachment.id);
-    });
-    thumb.append(image, remove);
-    thumb.addEventListener('click', (): void => this.lightbox.open(attachment.url));
-    thumb.addEventListener('dragstart', (): void => {
+  private renderItem(attachment: Attachment): HTMLElement {
+    const item: HTMLDivElement = element('div', attachment.kind === 'image' ? 'attachment' : 'attachment attachment-file');
+    item.draggable = true;
+    item.append(attachment.kind === 'image' ? thumbnail(attachment) : fileCard(attachment), this.removeButton(attachment));
+    item.addEventListener('click', (): void => this.view(attachment));
+    item.addEventListener('dragstart', (): void => {
       this.draggedId = attachment.id;
     });
-    thumb.addEventListener('dragover', (event: DragEvent): void => event.preventDefault());
-    thumb.addEventListener('drop', (event: DragEvent): void => {
+    item.addEventListener('dragover', (event: DragEvent): void => event.preventDefault());
+    item.addEventListener('drop', (event: DragEvent): void => {
       event.preventDefault();
       event.stopPropagation();
       if (this.draggedId !== null) this.moveBefore(this.draggedId, attachment.id);
       this.draggedId = null;
     });
-    return thumb;
+    return item;
   }
+
+  private removeButton(attachment: Attachment): HTMLButtonElement {
+    const remove: HTMLButtonElement = element('button', 'attachment-remove');
+    remove.type = 'button';
+    remove.setAttribute('aria-label', `Remove ${attachment.file.name}`);
+    remove.innerHTML = CLOSE_ICON;
+    remove.addEventListener('click', (event: MouseEvent): void => {
+      event.stopPropagation();
+      this.remove(attachment.id);
+    });
+    return remove;
+  }
+}
+
+function thumbnail(attachment: Attachment): HTMLImageElement {
+  const image: HTMLImageElement = element('img', 'attachment-image');
+  image.src = attachment.url;
+  image.alt = attachment.file.name;
+  image.draggable = false;
+  return image;
+}
+
+function fileCard(attachment: Attachment): HTMLElement {
+  const card: HTMLDivElement = element('div', 'attachment-file-card');
+  const icon: HTMLSpanElement = element('span', 'attachment-file-icon');
+  icon.innerHTML = FILE_KIND_ICONS[attachment.kind];
+  card.title = attachment.file.name;
+  card.append(icon, element('span', 'attachment-file-name', attachment.file.name));
+  return card;
 }

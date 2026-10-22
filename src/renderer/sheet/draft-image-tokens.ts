@@ -1,6 +1,7 @@
-import { imageToken, imageTokenPattern } from '../../shared/image-tokens';
+import { draftMarkerPattern, renumberedMarker } from '../../shared/draft-markers';
 
-// What a marker's image is now numbered, or null when the image is gone and its marker must go too.
+// The draft's attachment markers ("[Image #N]", "[PDF #N]", ...) share one numbering, by attachment.
+// What a marker's attachment is now numbered, or null when it is gone and its marker must go too.
 export type Renumbering = (number: number) => number | null;
 
 export interface DraftEdit {
@@ -16,7 +17,7 @@ export interface TokenRange {
 // A draft ready to send: markers numbered in reading order, and which attachment each number is.
 export interface OrderedDraft {
   readonly text: string;
-  // order[n - 1] is the attachment index behind "[Image #n]".
+  // order[n - 1] is the attachment index behind the marker numbered n.
   readonly order: number[];
 }
 
@@ -24,21 +25,21 @@ const WHITESPACE_AT_END: RegExp = /\s$/;
 const WHITESPACE_AT_START: RegExp = /^\s/;
 
 // Spaces keep each marker a word of its own, the way Claude Code shows it.
-export function insertTokens(text: string, caret: number, numbers: readonly number[]): DraftEdit {
+export function insertTokens(text: string, caret: number, markers: readonly string[]): DraftEdit {
   const before: string = text.slice(0, caret);
   const after: string = text.slice(caret);
   const lead: string = before.length === 0 || WHITESPACE_AT_END.test(before) ? '' : ' ';
   const trail: string = WHITESPACE_AT_START.test(after) ? '' : ' ';
-  const inserted: string = `${lead}${numbers.map(imageToken).join(' ')}${trail}`;
+  const inserted: string = `${lead}${markers.join(' ')}${trail}`;
   return { text: `${before}${inserted}${after}`, caret: caret + inserted.length };
 }
 
-// A removed marker takes one space after it along, so no double space is left behind.
+// A removed marker takes one space after it along, so no double space is left behind. Each keeps its kind's word.
 export function renumberTokens(text: string, renumber: Renumbering): string {
-  const pattern: RegExp = new RegExp(`${imageTokenPattern().source}( ?)`, 'g');
-  return text.replace(pattern, (_token: string, number: string, space: string): string => {
+  const pattern: RegExp = new RegExp(`${draftMarkerPattern().source}( ?)`, 'g');
+  return text.replace(pattern, (token: string, number: string, space: string): string => {
     const next: number | null = renumber(Number(number));
-    return next === null ? '' : `${imageToken(next)}${space}`;
+    return next === null ? '' : `${renumberedMarker(token, next)}${space}`;
   });
 }
 
@@ -49,7 +50,7 @@ export function renumberDraft(draft: DraftEdit, renumber: Renumbering): DraftEdi
 
 // Marker numbers, from 1, that point at one of the attachments.
 export function presentNumbers(text: string, attachmentCount: number): Set<number> {
-  const numbers: number[] = [...text.matchAll(imageTokenPattern())].map((match: RegExpExecArray) => Number(match[1]));
+  const numbers: number[] = [...text.matchAll(draftMarkerPattern())].map((match: RegExpExecArray) => Number(match[1]));
   return new Set(numbers.filter((number: number) => number >= 1 && number <= attachmentCount));
 }
 
@@ -81,7 +82,7 @@ export function reordering(order: readonly number[]): Renumbering {
 
 // Where each marker sits in the draft, in reading order.
 export function tokenRanges(text: string): TokenRange[] {
-  return [...text.matchAll(imageTokenPattern())].map((match: RegExpExecArray): TokenRange => ({ start: match.index, end: match.index + match[0].length }));
+  return [...text.matchAll(draftMarkerPattern())].map((match: RegExpExecArray): TokenRange => ({ start: match.index, end: match.index + match[0].length }));
 }
 
 // A marker is all or nothing: a deletion that reaches any character of one (Backspace right after it, a key
@@ -96,11 +97,11 @@ export function widenOverTokens(text: string, deletion: TokenRange): TokenRange 
   return widened;
 }
 
-// Images are pasted in reading order and Claude Code numbers them that way, so the sent draft follows it too.
+// Attachments are delivered in reading order and Claude Code numbers images that way, so the sent draft follows it too.
 // An attachment whose marker was deleted is not sent.
 export function orderByTokens(text: string, attachmentCount: number): OrderedDraft {
   const order: number[] = [];
-  for (const match of text.matchAll(imageTokenPattern())) {
+  for (const match of text.matchAll(draftMarkerPattern())) {
     const index: number = Number(match[1]) - 1;
     if (index >= 0 && index < attachmentCount && !order.includes(index)) order.push(index);
   }

@@ -9,6 +9,9 @@ export function contentSecurityPolicy(origins: ReadonlySet<string>): string {
     `connect-src ${connect}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
+    // A sent video, audio file or PDF plays from a blob of its bytes, which come through the API, never by a file URL.
+    "media-src 'self' blob:",
+    "frame-src 'self' blob:",
     "frame-ancestors 'none'",
     "base-uri 'none'",
     "form-action 'none'",

@@ -282,7 +282,13 @@ export interface TurnProgress {
   readonly outputTokens: number;
 }
 
-// An image attached in the composer, sent along with a message.
+// A file Orbit attached to a message, read back for its viewer (video, audio, PDF).
+export interface AttachmentBlob {
+  readonly mediaType: string;
+  readonly bytes: Uint8Array;
+}
+
+// A file attached in the composer (an image or any other file), sent along with a message.
 export interface AttachmentUpload {
   readonly name: string;
   readonly mediaType: string;
@@ -366,6 +372,10 @@ export type DeviceFocus = 'exact' | 'window' | 'missing';
 
 export interface RadarApi {
   getImage(sessionId: string, key: string): Promise<string | null>;
+  // A video, audio or PDF file Orbit saved for a message, by its path; null for any other path.
+  getAttachment(path: string): Promise<AttachmentBlob | null>;
+  // Shows the file in the desktop's file manager.
+  revealFile(path: string): Promise<void>;
   getTurnProgress(sessionId: string): Promise<TurnProgress | null>;
   // The chat's last /color, open or closed; null when it never set one.
   getChatColor(sessionId: string): Promise<string | null>;

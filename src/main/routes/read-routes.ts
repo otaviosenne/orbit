@@ -3,7 +3,8 @@ import type { RemoteChannel } from '../../shared/remote-access';
 import { REMOTE_ACCESS } from '../../shared/remote-access';
 import type { Route } from '../../shared/ipc-routing';
 import { isSessionId } from '../../shared/session-id';
-import type { ChatSnapshot, ClosedChatActivity, LauncherEntry, PastChat, QuestionPicker, ShellOutput, TranscriptItem, TurnProgress, UsageSnapshot } from '../../shared/types';
+import type { AttachmentBlob, ChatSnapshot, ClosedChatActivity, LauncherEntry, PastChat, QuestionPicker, ShellOutput, TranscriptItem, TurnProgress, UsageSnapshot } from '../../shared/types';
+import { readAttachment } from '../attachment-reader';
 import { listLaunchers } from '../launcher';
 import { readQuestionPicker } from '../questions/chat-picker';
 import type { ResourceSnapshot } from '../../shared/chat-resources';
@@ -24,6 +25,7 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
       isSessionId(sessionId) ? radar.agentTranscript(sessionId, textArg(agentId), transcriptLimit(limit)) : Promise.resolve([]),
     GetImage: (sessionId: unknown, key: unknown): Promise<string | null> =>
       isSessionId(sessionId) ? radar.image(sessionId, textArg(key)) : Promise.resolve(null),
+    GetAttachment: (path: unknown): Promise<AttachmentBlob | null> => readAttachment(path),
     GetTurnProgress: (sessionId: unknown): Promise<TurnProgress | null> =>
       isSessionId(sessionId) ? radar.turnProgress(sessionId) : Promise.resolve(null),
     GetChatColor: (sessionId: unknown): Promise<string | null> => (isSessionId(sessionId) ? radar.colorOf(sessionId) : Promise.resolve(null)),

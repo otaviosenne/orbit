@@ -1,4 +1,4 @@
-import type { ActionResult, ChatDevices, ChatSnapshot, TranscriptItem } from '../../../shared/types';
+import type { ActionResult, AttachmentUpload, ChatDevices, ChatSnapshot, TranscriptItem } from '../../../shared/types';
 import type { CardDeviceKind } from '../../board/card-devices';
 import { element } from '../../dom';
 import type { Lightbox } from '../../lightbox';
@@ -6,6 +6,7 @@ import { chatColor, textOnChatColor } from '../../palette';
 import { isAtThreadEnd } from '../../sheet/thread-end';
 import { TILE_PAGE_ITEMS } from '../../sheet/paging/page-sizes';
 import { ThreadFeed } from '../../sheet/paging/thread-feed';
+import { pendingAttachmentOf } from '../../sheet/pending-attachments';
 import { TranscriptList } from '../../sheet/transcript-list';
 import type { DictationPlace } from '../../sheet/voice/dictation-place';
 import type { VoiceHub } from '../../sheet/voice/voice-hub';
@@ -15,7 +16,6 @@ import { TileHeader } from './tile-header';
 // Not "session": the board's click and context-menu handlers on the view act on any [data-session].
 export const TILE_SESSION_ATTRIBUTE: string = 'gridSession';
 
-const NO_IMAGES: readonly string[] = [];
 
 export interface GridTileHandlers {
   readonly remove: (sessionId: string) => void;
@@ -37,7 +37,11 @@ export class GridTile {
     this.root.dataset[TILE_SESSION_ATTRIBUTE] = chat.sessionId;
     this.transcript = new TranscriptList(this.thread, lightbox, window.radar);
     this.feed = new ThreadFeed(this.thread, this.transcript, TILE_PAGE_ITEMS);
-    this.composer = new TileComposer((text: string): Promise<ActionResult> => this.send(text), voice);
+    this.composer = new TileComposer(
+      (text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> => this.send(text, attachments),
+      voice,
+      lightbox,
+    );
     this.header = new TileHeader({
       remove: (): void => handlers.remove(this.chat.sessionId),
       openDevice: (kind: CardDeviceKind): void => handlers.openDevice(kind, this.chat.sessionId),
@@ -101,17 +105,17 @@ export class GridTile {
   }
 
   // Optimistic like the panel: the message shows at once, then as delivered, or leaves again if sending failed.
-  private async send(text: string): Promise<ActionResult> {
-    const pendingId: string = this.transcript.addPending(text.trim(), NO_IMAGES);
-    const result: ActionResult = await this.deliver(text);
+  private async send(text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> {
+    const pendingId: string = this.transcript.addPending(text.trim(), attachments.map(pendingAttachmentOf));
+    const result: ActionResult = await this.deliver(text, attachments);
     if (result.ok) this.transcript.markPendingDelivered(pendingId);
     else this.transcript.removePending(pendingId);
     return result;
   }
 
-  private async deliver(text: string): Promise<ActionResult> {
+  private async deliver(text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> {
     try {
-      return await window.radar.sendMessage(this.chat.pid, text, []);
+      return await window.radar.sendMessage(this.chat.pid, text, attachments);
     } catch (error: unknown) {
       return { ok: false, method: null, error: error instanceof Error ? error.message : String(error) };
     }

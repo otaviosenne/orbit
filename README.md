@@ -64,7 +64,8 @@ in its status and every running agent, with agents that stopped writing flagged 
 
 Click a card to open the chat beside the board: rendered markdown, tool calls folded into groups,
 agent and slash-command notices, turn dividers, and a composer that sends straight into the chat's
-terminal. Paste or drop images, rename the chat, change its color, or jump to its terminal.
+terminal. Paste or drop images or any other file (videos and PDFs open in a viewer), rename the chat, change its
+color, or jump to its terminal.
 Hold <kbd>Space</kbd> to dictate.
 
 ### Agents at a glance
@@ -220,7 +221,7 @@ See [docs/architecture.md](docs/architecture.md) for a diagram and the code layo
   a request for your usage limits. Both carry your Claude Code token, exactly as Claude Code does.
   Dictating from Orbit Web sends the phone's audio to Orbit on your computer first, through your own
   tunnel or proxy, and from there on the same way.
-- **Written:** images you attach go to `~/.cache/orbit/attachments` (deleted after 7 days); view
+- **Written:** files you attach go to `~/.cache/orbit/attachments` (deleted after 7 days); view
   preferences, pins and drafts live in Electron's local storage; New chat shortcuts you add are
   appended to the launcher's `shortcuts.tsv`.
 - Links in messages open in your browser, never inside Orbit.

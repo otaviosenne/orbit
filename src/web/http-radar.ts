@@ -5,6 +5,7 @@ import type { RemoteSettings } from '../shared/remote-settings';
 import type { ResourceSnapshot } from '../shared/chat-resources';
 import type {
   ActionResult,
+  AttachmentBlob,
   AttachmentUpload,
   ChatDevices,
   ChatPermissions,
@@ -42,6 +43,9 @@ export type RemoteVoice = Pick<RemoteDictation, 'prepare' | 'start' | 'feed' | '
 export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi {
   return {
     getImage: (sessionId: string, key: string): Promise<string | null> => call('GetImage', [sessionId, key]),
+    getAttachment: (path: string): Promise<AttachmentBlob | null> => call('GetAttachment', [path]),
+    // The file manager is on the desktop; the web shows the path to copy instead.
+    revealFile: (): Promise<void> => Promise.resolve(),
     getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => call('GetTurnProgress', [sessionId]),
     getChatColor: (sessionId: string): Promise<string | null> => call('GetChatColor', [sessionId]),
     listLaunchers: (): Promise<LauncherEntry[]> => call('ListLaunchers', []),

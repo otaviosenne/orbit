@@ -1,9 +1,11 @@
-import { imageTokenPattern } from '../../shared/image-tokens';
+import type { AttachmentKind } from '../../shared/attachment-kinds';
+import { draftMarkerPattern, markerKind } from '../../shared/draft-markers';
 
 // A marker drawn as a chip: its brackets stay in the text (so it keeps its width) but are not shown,
-// leaving "Image #N" with a bracket's width of room on each side, like the chip in a sent message.
+// leaving "Image #N" (or "PDF #N", ...) with a bracket's width of room on each side, like the chip in a sent message.
 export interface MarkerSegment {
   readonly kind: 'marker';
+  readonly attachment: AttachmentKind;
   readonly number: number;
   readonly opening: string;
   readonly label: string;
@@ -23,7 +25,7 @@ const BRACKET_LENGTH: number = 1;
 export function splitDraftMarkers(text: string): DraftSegment[] {
   const segments: DraftSegment[] = [];
   let cursor: number = 0;
-  for (const match of text.matchAll(imageTokenPattern())) {
+  for (const match of text.matchAll(draftMarkerPattern())) {
     pushText(segments, text.slice(cursor, match.index));
     segments.push(markerSegment(match[0], Number(match[1])));
     cursor = match.index + match[0].length;
@@ -38,7 +40,7 @@ export function segmentText(segment: DraftSegment): string {
 
 function markerSegment(token: string, number: number): MarkerSegment {
   const labelEnd: number = token.length - BRACKET_LENGTH;
-  return { kind: 'marker', number, opening: token.slice(0, BRACKET_LENGTH), label: token.slice(BRACKET_LENGTH, labelEnd), closing: token.slice(labelEnd) };
+  return { kind: 'marker', attachment: markerKind(token), number, opening: token.slice(0, BRACKET_LENGTH), label: token.slice(BRACKET_LENGTH, labelEnd), closing: token.slice(labelEnd) };
 }
 
 function pushText(segments: DraftSegment[], text: string): void {

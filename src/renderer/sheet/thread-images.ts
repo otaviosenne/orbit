@@ -2,7 +2,8 @@ import type { Lightbox } from '../lightbox';
 import { ImageCache } from './image-cache';
 import type { ImageHandover, ImageSeed } from './pending-images';
 import { handOverImages } from './pending-images';
-import type { Confirmation, PendingMessage } from './pending-messages';
+import type { Confirmation, PendingAttachment, PendingMessage } from './pending-messages';
+import { fileUrlsOf } from './pending-messages';
 import type { ImageLookup } from './transcript/message-thumbnails';
 import { fillThumbnails, IMAGE_KEY_ATTRIBUTE, missingThumbnailKeys, shownSource, THUMBNAIL_SELECTOR } from './transcript/message-thumbnails';
 
@@ -40,11 +41,13 @@ export class ThreadImages {
       const handover: ImageHandover = handOverImages(confirmation);
       handover.seeds.forEach((seed: ImageSeed): void => this.cache.seed(seed.key, seed.source));
       handover.unused.forEach(revoke);
+      // The confirmed bubble's file chips open the saved files by their paths from now on.
+      fileUrlsOf(confirmation.message).forEach(revoke);
     }
   }
 
   release(dropped: readonly PendingMessage[]): void {
-    for (const message of dropped) message.imageUrls.forEach(revoke);
+    for (const message of dropped) message.attachments.forEach((attachment: PendingAttachment): void => revoke(attachment.url));
   }
 
   clear(): void {

@@ -38,8 +38,11 @@ Click a card (or a timeline lane) to open the chat on the right. Click the same 
   see each input and output. Agent completions, slash commands and compactions show as notices,
   messages to and from other chats show as peer rows, and "Worked for" dividers end each turn.
 - **Composer**: sends a prompt into the chat. The bubble shows as *Sending…* until delivery
-  succeeds. Paste, drop or pick images: they are attached as `[Image #N]` chips. Unsent text is kept
-  per chat.
+  succeeds. Paste, drop or pick any file (the paperclip): images are attached as `[Image #N]` chips,
+  other files as `[Video #N]`, `[Audio #N]`, `[PDF #N]` or `[File #N]` chips and reach Claude as their
+  saved path. In the thread, a sent video or audio file plays and a PDF opens in a viewer; any other file
+  shows its path to copy (and, on the desktop, Show in folder). The Panel's tiles take files too.
+  Unsent text is kept per chat.
 - **Navigation**: chevrons step through your own messages. Hover one for half a second to preview
   where it goes.
 - **Header**: rename (pencil), change the `/color` (dot), and **Go to chat** focuses its terminal.

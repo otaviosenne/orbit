@@ -1,10 +1,12 @@
-import type { MessageSegment } from '../../../shared/image-tokens';
-import { imageToken, imageTokenPattern, splitOnImageTokens } from '../../../shared/image-tokens';
+import { imageTokenPattern } from '../../../shared/image-tokens';
 import type { MessageImage, MessageItem, MessageRole } from '../../../shared/types';
 import { element } from '../../dom';
 import { formatClock } from '../../format';
 import { renderMarkdown } from '../../markdown';
 import type { PendingMessage } from '../pending-messages';
+import { linkFileChips } from './file-chips';
+import type { MessageFiles } from './message-files';
+import { pendingFiles, transcriptFiles } from './message-files';
 import type { ImageLookup, ThumbnailSource } from './message-thumbnails';
 import { IMAGE_KEY_ATTRIBUTE, renderThumbnails, transcriptThumbnails } from './message-thumbnails';
 
@@ -15,17 +17,13 @@ const ROLE_LABELS: Readonly<Record<MessageRole, string>> = { user: 'You', assist
 export function renderPendingMessage(message: PendingMessage): HTMLElement {
   const item: HTMLElement = element('div', `message message-user${message.delivered ? '' : ' is-pending'}`);
   const body: HTMLDivElement = element('div', 'message-text markdown');
-  renderMarkdown(body, pendingText(message));
+  const files: MessageFiles = pendingFiles(message.text, message.attachments);
+  renderMarkdown(body, files.text);
   linkImages(body, []);
+  linkFileChips(body, files.chips);
   const thumbnails: ThumbnailSource[] = message.imageUrls.map((url: string): ThumbnailSource => ({ source: url }));
   item.append(element('span', 'message-meta', pendingMeta(message)), ...thumbnailRow(thumbnails), body);
   return item;
-}
-
-// Each image's marker stays where it was placed in the draft; one without a marker is sent last, so it shows last.
-function pendingText(message: PendingMessage): string {
-  const segments: MessageSegment[] = splitOnImageTokens(message.text, message.imageUrls.length);
-  return segments.map((segment: MessageSegment) => (segment.kind === 'text' ? segment.text : ` ${imageToken(segment.index + 1)}`)).join('').trim();
 }
 
 function thumbnailRow(thumbnails: readonly ThumbnailSource[]): HTMLElement[] {
@@ -68,9 +66,12 @@ function imageChip(number: number, images: readonly MessageImage[]): HTMLElement
 export function renderMessage(message: MessageItem, lookup: ImageLookup): HTMLElement {
   const item: HTMLElement = element('div', `message message-${message.role}`);
   const body: HTMLDivElement = element('div', 'message-text markdown');
-  renderMarkdown(body, message.text);
   const isUser: boolean = message.role === 'user';
+  // Files sent from the composer reach Claude as paths; the user's own bubble shows them as chips again.
+  const files: MessageFiles | null = isUser ? transcriptFiles(message.text) : null;
+  renderMarkdown(body, files?.text ?? message.text);
   if (isUser) linkImages(body, message.images);
+  if (files !== null) linkFileChips(body, files.chips);
   const thumbnails: ThumbnailSource[] = isUser ? transcriptThumbnails(message.images, lookup) : [];
   item.append(element('span', 'message-meta', `${ROLE_LABELS[message.role]} · ${formatClock(message.timestamp)}`), ...thumbnailRow(thumbnails), body);
   return item;

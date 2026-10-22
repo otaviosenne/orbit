@@ -1,18 +1,15 @@
 import type { AttachmentUpload } from '../../shared/types';
 import { requireElement } from '../dom';
 import { isTouchWeb } from '../host';
-import { IMAGE_ICON } from '../icons';
 import type { Lightbox } from '../lightbox';
 import type { ComposerDraft } from './draft-store';
 import { AttachmentTray } from './attachment-tray';
 import type { DictationState } from './dictation';
 import type { DictationTarget } from './hands-free/dictation-target';
-import type { OrderedDraft } from './draft-image-tokens';
-import { orderByTokens } from './draft-image-tokens';
-import { ImageMarkers } from './image-markers';
-import { AtomicMarkers } from './atomic-markers';
-import { MarkerChipClicks } from './marker-chip-clicks';
-import { MarkerHighlight } from './marker-highlight';
+import type { SendingDraft } from './sending-draft';
+import { sendingDraft } from './sending-draft';
+import { AttachmentMarkers } from './attachment-markers';
+import { wireAttachmentInput } from './attachment-input';
 import { returnKeyAction, showNewLineReturnKey } from './return-key';
 import { keepingThreadEnd } from './thread-end';
 import { DictationDisplay } from './voice/dictation-display';
@@ -39,7 +36,7 @@ export class Composer {
   private readonly input: HTMLTextAreaElement = requireElement('#composer-input');
   private readonly button: HTMLButtonElement = requireElement('#composer-send');
   private readonly mic: HTMLButtonElement = requireElement('#composer-mic');
-  private readonly markers: ImageMarkers = new ImageMarkers(this.input);
+  private readonly markers: AttachmentMarkers = new AttachmentMarkers(this.input);
   private readonly tray: AttachmentTray;
   private readonly hub: VoiceHub = sharedVoiceHub();
   private readonly display: DictationDisplay;
@@ -54,8 +51,12 @@ export class Composer {
   ) {
     this.tray = new AttachmentTray(requireElement('#attachment-tray'), lightbox, this.markers);
     this.markers.connect(this.tray);
-    this.setUpAttachments();
-    this.setUpMarkerChips();
+    wireAttachmentInput(
+      { host: this.form, input: this.input, layer: requireElement('#composer-markers'), attach: requireElement('#composer-attach'), picker: requireElement('#composer-file') },
+      this.markers,
+      this.tray,
+      onProblem,
+    );
     this.form.addEventListener('submit', (event: SubmitEvent): void => {
       event.preventDefault();
       void this.submit();
@@ -141,7 +142,6 @@ export class Composer {
     }).observe(this.form, { box: 'border-box' });
   }
 
-  // Images come in by pasting, dropping files on the composer, or the image button.
   // Left arrow in an empty composer has nowhere to go, so it backs out of the chat, like going back a page.
   closeOnLeftWhenEmpty(close: () => void): void {
     this.input.addEventListener('keydown', (event: KeyboardEvent): void => {
@@ -152,52 +152,17 @@ export class Composer {
     });
   }
 
-  private setUpAttachments(): void {
-    const picker: HTMLInputElement = requireElement('#composer-file');
-    const attach: HTMLButtonElement = requireElement('#composer-attach');
-    attach.innerHTML = IMAGE_ICON;
-    attach.addEventListener('mousedown', (event: MouseEvent): void => event.preventDefault());
-    attach.addEventListener('click', (): void => picker.click());
-    picker.addEventListener('change', (): void => {
-      this.markers.attach(picker.files ?? []);
-      picker.value = '';
-      this.input.focus();
-    });
-    this.input.addEventListener('paste', (event: ClipboardEvent): void => {
-      const files: File[] = [...(event.clipboardData?.files ?? [])];
-      if (files.length === 0) return;
-      event.preventDefault();
-      this.markers.attach(files);
-    });
-    this.form.addEventListener('dragover', (event: DragEvent): void => event.preventDefault());
-    this.form.addEventListener('drop', (event: DragEvent): void => {
-      const files: File[] = [...(event.dataTransfer?.files ?? [])];
-      if (files.length === 0) return;
-      event.preventDefault();
-      this.markers.attach(files);
-    });
-  }
-
-  // Each marker shows as a chip that the caret steps over and that opens its image when clicked.
-  private setUpMarkerChips(): void {
-    const highlight: MarkerHighlight = new MarkerHighlight(this.input, requireElement('#composer-markers'));
-    new AtomicMarkers(this.input);
-    new MarkerChipClicks(this.input, highlight, (number: number): void => this.tray.preview(number - 1));
-  }
-
   private async submit(): Promise<void> {
     const hasText: boolean = this.input.value.trim().length > 0;
     if ((!hasText && this.tray.count === 0) || this.button.disabled) return;
     this.hub.messageSent(this.voice);
-    const draft: OrderedDraft = orderByTokens(this.input.value, this.tray.count);
-    const uploads: AttachmentUpload[] = inOrder(await this.tray.uploads(), draft.order);
-    const files: File[] = inOrder(this.tray.files(), draft.order);
+    const draft: SendingDraft = await sendingDraft(this.input.value, this.tray);
     // Optimistic: the field and the images clear right away and come back only if delivery fails.
     this.reset();
     this.button.disabled = true;
-    const sent: boolean = await this.onSubmit(draft.text, uploads);
+    const sent: boolean = await this.onSubmit(draft.text, draft.uploads);
     this.button.disabled = false;
-    if (!sent) this.restore(draft.text, files);
+    if (!sent) this.restore(draft.text, draft.files);
   }
 
   // Whatever the user started meanwhile is kept; images put back without their draft get markers at its end.
@@ -208,11 +173,4 @@ export class Composer {
     const added: number = this.tray.add(files);
     if (!restoresText) this.markers.appendMarkers(added);
   }
-}
-
-function inOrder<T>(items: readonly T[], order: readonly number[]): T[] {
-  return order.flatMap((index: number): T[] => {
-    const item: T | undefined = items[index];
-    return item === undefined ? [] : [item];
-  });
 }

@@ -3,6 +3,8 @@ export const IpcChannel = {
   GetTranscript: 'radar:get-transcript',
   GetAgentTranscript: 'radar:get-agent-transcript',
   GetImage: 'radar:get-image',
+  GetAttachment: 'radar:get-attachment',
+  RevealFile: 'radar:reveal-file',
   GetTurnProgress: 'radar:get-turn-progress',
   GetChatColor: 'radar:get-chat-color',
   GetUsage: 'radar:get-usage',
