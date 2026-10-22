@@ -12,8 +12,14 @@ describe('stripSendCommand', () => {
     expect(stripSendCommand('faz o deploy. Chinelo, chinelo.')).toBe('faz o deploy');
   });
 
-  it('no longer sends on "enviar"', () => {
+  it('sends on "Orbit enviar", in any case and punctuation', () => {
+    expect(stripSendCommand('corrige o bug, Orbit enviar')).toBe('corrige o bug');
+    expect(stripSendCommand('Corrige o bug. Orbit, enviar.')).toBe('Corrige o bug');
+  });
+
+  it('does not send on "enviar" alone, nor on "Orbit" in the middle', () => {
     expect(stripSendCommand('corrige o bug, enviar')).toBeNull();
+    expect(stripSendCommand('o Orbit enviar é um comando')).toBeNull();
   });
 
   it('leaves "chinelo" in the middle of a sentence alone', () => {

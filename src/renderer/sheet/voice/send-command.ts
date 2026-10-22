@@ -1,6 +1,8 @@
-// A draft ending in "chinelo" is sent: a word no prompt ends with by accident. Said twice it still goes out whole.
-// Dictation varies case, accents and punctuation, so words are compared bare. This list is the one place to change it.
+// A draft ending in "chinelo" or "Orbit enviar" is sent: words no prompt ends with by accident. Said twice, the
+// first one goes too. Dictation varies case, accents and punctuation, so words are compared bare. This list is the one
+// place to change them; longer forms come first so all of their words are removed.
 const SEND_PHRASES: readonly (readonly string[])[] = [
+  ['orbit', 'enviar'],
   ['chinelo', 'chinelo'],
   ['chinelo'],
 ];
