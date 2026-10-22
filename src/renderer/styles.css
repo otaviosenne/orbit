@@ -775,11 +775,10 @@ div.shell-details-label { margin: 6px 0 3px; }
    chevron preview, as tall as the window allows */
 .card-preview {
   /* Hugs the bubble instead of a fixed width, so a short reply or the user's right-aligned bubble sits right by the card */
-  position: fixed; z-index: 55; width: max-content; max-width: min(420px, 40vw); max-height: calc(100vh - 20px); overflow: hidden;
-  display: flex; flex-direction: column; pointer-events: none; font-size: 13px;
+  position: fixed; z-index: 55; width: max-content; max-width: min(420px, 40vw); max-height: calc(100vh - 20px);
+  /* Hoverable: the pointer can move onto it to read, scroll or select text, and it stays open */
+  display: flex; flex-direction: column; font-size: 13px; overflow-y: auto; user-select: text;
 }
-/* The whole message shows; only one taller than the window fades out at the bottom */
-.card-preview.is-clipped { -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent); mask-image: linear-gradient(180deg, #000 82%, transparent); }
 .card-preview[hidden] { display: none; }
 .card-preview .message { max-width: 100%; align-self: stretch; align-items: stretch; }
 .card-preview .message-text {
