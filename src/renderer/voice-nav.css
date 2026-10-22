@@ -3,10 +3,11 @@
    they take no room, so a card's height never changes; the repository name only slides sideways when they appear. */
 .voice-number {
   display: inline-block; flex: none; width: 0; margin: 0; padding: 0; overflow: clip; opacity: 0; white-space: nowrap;
-  font: inherit; color: inherit; font-variant-numeric: tabular-nums; pointer-events: none;
+  font: inherit; color: inherit; font-variant-numeric: tabular-nums; pointer-events: none; cursor: default;
 }
 /* Plain text in the font of the line it sits in ("#2 mudbord"), nothing around it */
-html[data-voice-active] .voice-number { width: auto; margin-right: 0.45em; opacity: 1; }
+/* Visible, it answers the pointer: hovering a number says what to speak to reach it */
+html[data-voice-active] .voice-number { width: auto; margin-right: 0.45em; opacity: 1; pointer-events: auto; }
 .voice-number[hidden] { display: none; }
 /* A flex row adds its gap even around a zero-width badge */
 .tile-number:not([hidden]) { margin-right: -6px; }
