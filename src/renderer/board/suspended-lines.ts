@@ -1,9 +1,9 @@
-// How many lines of cards the Suspended row shows: as few as fit them all, at most two; past that it scrolls sideways.
+// The Suspended row wraps like Pinned (cards per line from the width) for up to two lines; past that it keeps two
+// lines and scrolls sideways, which is why it then flows by column.
 const MAX_LINES: number = 2;
 
-export function suspendedLines(cardCount: number, cardsPerLine: number): number {
-  if (cardCount <= 0 || cardsPerLine <= 0) return 1;
-  return Math.min(Math.ceil(cardCount / cardsPerLine), MAX_LINES);
+export function suspendedScrolls(cardCount: number, cardsPerLine: number): boolean {
+  return cardCount > cardsPerLine * MAX_LINES;
 }
 
 // How many cards of this width fit side by side in a row of this width, at least one.

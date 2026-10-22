@@ -310,9 +310,10 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 .suspended-toggle:hover .suspended-caret { color: var(--secondary); }
 /* Up to two lines of cards (board/fit-suspended-row.ts sets how many), filled column by column; more scroll sideways */
 .suspended-cards {
-  display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--suspended-lines, 1), auto); grid-auto-columns: 250px;
+  display: grid; grid-template-columns: repeat(var(--suspended-columns, 1), 250px);
   gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 6px; margin: 2px -4px -4px;
 }
+.suspended-cards.is-scrolling { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: repeat(2, auto); grid-auto-columns: 250px; }
 .suspended-cards .card { width: auto; min-width: 0; }
 .suspended-row.is-drop-placeholder .suspended-cards { min-height: 44px; }
 .board { height: 100%; display: grid; grid-template-columns: 0.9fr 1.2fr 1fr; gap: 12px; padding: 0 20px 20px; }

@@ -1,19 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { cardsPerLineOf, suspendedLines } from '../src/renderer/board/suspended-lines';
+import { cardsPerLineOf, suspendedScrolls } from '../src/renderer/board/suspended-lines';
 
-describe('suspendedLines', () => {
-  it('uses one line while every card fits side by side', () => {
-    expect(suspendedLines(4, 5)).toBe(1);
+describe('suspendedScrolls', () => {
+  it('wraps into two lines while every card fits', () => {
+    expect(suspendedScrolls(4, 4)).toBe(false);
+    expect(suspendedScrolls(6, 4)).toBe(false);
+    expect(suspendedScrolls(8, 4)).toBe(false);
   });
 
-  it('adds a second line when they do not, and never a third', () => {
-    expect(suspendedLines(6, 5)).toBe(2);
-    expect(suspendedLines(40, 5)).toBe(2);
-  });
-
-  it('handles an empty or unmeasured row', () => {
-    expect(suspendedLines(0, 5)).toBe(1);
-    expect(suspendedLines(3, 0)).toBe(1);
+  it('scrolls sideways once two lines are full', () => {
+    expect(suspendedScrolls(9, 4)).toBe(true);
   });
 });
 
