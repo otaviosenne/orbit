@@ -1,4 +1,4 @@
-import { sendOnVoiceCommand } from './voice/voice-send';
+import { runVoiceCommand } from './voice/voice-command-runner';
 import type { DictationStart, DictationTranscript, TranscriptionResult } from '../../shared/types';
 import type { DraftAnchor, PlacedText } from './dictation-placement';
 import { placeDictation } from './dictation-placement';
@@ -169,7 +169,7 @@ export class Dictation {
     this.anchor = null;
     this.handlers.onState('idle');
     // Last, so the send goes out with the dictation already settled and nothing left to write into the field.
-    if (result.ok) sendOnVoiceCommand(this.input);
+    if (result.ok) runVoiceCommand(this.input, true);
   }
 
   // Talking into a muted microphone otherwise ends with nothing at all, as if the key had not been held.

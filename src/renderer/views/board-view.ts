@@ -8,6 +8,7 @@ import { formatDuration } from '../format';
 import { INFO_ICON } from '../icons';
 import { chatColor, textOnChatColor } from '../palette';
 import { renderSpinner } from '../spinner';
+import { renderChatNumber } from '../voice-nav/voice-number';
 import { renderAgentRows } from './agent-rows';
 import type { BoardColumn, RestingPin, UnseenCheck } from './board-columns';
 import { toBoardColumns } from './board-columns';
@@ -126,8 +127,16 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   if (chat.status === 'busy') time.prepend(renderSpinner());
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());
   top.append(renderTitle(chat.name, marks.devicesOf(chat.sessionId)), time);
-  card.append(top, element('div', 'card-repo', chat.repository.name), ...renderAgentRows(chat.agents, now));
+  card.append(top, renderRepository(chat), ...renderAgentRows(chat.agents, now));
   return card;
+}
+
+// The repository, led by the chat's voice number (shown only while voice is active).
+function renderRepository(chat: ChatSnapshot): HTMLElement {
+  const repository: HTMLDivElement = element('div', 'card-repo', chat.repository.name);
+  const number: HTMLSpanElement | null = renderChatNumber(chat.sessionId);
+  if (number !== null) repository.prepend(number);
+  return repository;
 }
 
 // The name with the chat's device icons right after it; the name gives way to them when space runs short.

@@ -9,15 +9,18 @@ import { renderLauncherMenu } from './new-chat/launcher-menu';
 import { ShortcutForm } from './new-chat/shortcut-form';
 import { actionShortcut } from './shortcuts/shortcut-catalog';
 import { shortcutKeysText, withShortcut } from './shortcuts/shortcut-hint';
+import { labelOptions } from './voice-nav/voice-number';
+import type { VoiceSelector } from './voice-nav/voice-selector';
 
 const LAST_LAUNCHER_KEY: string = 'orbit.lastLauncher';
 const CLOSE_KEY: string = 'Escape';
+const ITEM_SELECTOR: string = '.new-chat-item';
 // Long enough to read "Opening…"; the new chat opens on another workspace, so nothing else shows it started.
 const FEEDBACK_MS: number = 1500;
 
 // Top-right "New chat": left click reopens the last project, right click (or the caret) lists every SUPER+D entry.
 // On a phone it is one "+" that lists them at once: there is no right click, and no room for the caret.
-export class NewChatButton {
+export class NewChatButton implements VoiceSelector {
   private readonly main: HTMLButtonElement = element('button', 'new-chat-main');
   private readonly label: HTMLSpanElement = element('span', 'new-chat-label', 'New chat');
   private readonly menu: HTMLDivElement = element('div', 'new-chat-menu');
@@ -56,6 +59,26 @@ export class NewChatButton {
       if (event.key === CLOSE_KEY) this.closeMenu();
     });
     void this.load();
+  }
+
+  get isOpen(): boolean {
+    return !this.menu.hidden;
+  }
+
+  // Voice: option N of the open menu, counting projects then "Add Shortcut…"; false when it has no such row.
+  pick(number: number): boolean {
+    const item: HTMLElement | undefined = [...this.menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR)][number - 1];
+    item?.click();
+    return item !== undefined;
+  }
+
+  close(): void {
+    this.closeMenu();
+  }
+
+  // Voice: opens the project menu, whatever state it was in.
+  openMenu(): void {
+    if (!this.isOpen) void this.toggleMenu();
   }
 
   // What N does: the same as clicking the button.
@@ -139,6 +162,7 @@ export class NewChatButton {
         addShortcut: (): void => this.showForm(),
       }),
     );
+    labelOptions([...this.menu.querySelectorAll<HTMLElement>(ITEM_SELECTOR)]);
   }
 
   private showForm(): void {

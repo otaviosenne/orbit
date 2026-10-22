@@ -3,6 +3,8 @@
 export type DictationTarget =
   | { readonly kind: 'chat'; readonly sessionId: string }
   | { readonly kind: 'starting' }
+  // No composer on screen: the words go to a hidden field that only listens for spoken commands.
+  | { readonly kind: 'commands' }
   | { readonly kind: 'tile'; readonly sessionId: string };
 
 // none: same composer. pause: no composer on screen. resume: a composer is back after a pause.
@@ -26,6 +28,6 @@ export function startsAtDraftEnd(plan: RetargetPlan, isHandsFreeOn: boolean): bo
 
 function isSameTarget(from: DictationTarget | null, to: DictationTarget | null): boolean {
   if (from === null || to === null) return from === to;
-  if (from.kind === 'starting' || to.kind === 'starting') return from.kind === to.kind;
+  if (from.kind === 'starting' || to.kind === 'starting' || from.kind === 'commands' || to.kind === 'commands') return from.kind === to.kind;
   return from.kind === to.kind && from.sessionId === to.sessionId;
 }

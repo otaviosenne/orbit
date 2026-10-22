@@ -93,6 +93,13 @@ export class GridView {
   }
 
   // Hands-free words go to the focused tile while the Panel is the view on screen.
+  // Voice "chat N": the chat's tile gets the cursor; false when it is not in the Panel.
+  focusTile(sessionId: string): boolean {
+    const tile: GridTile | undefined = this.tiles.get(sessionId);
+    tile?.focusComposer();
+    return tile !== undefined;
+  }
+
   setShown(isShown: boolean): void {
     this.voice.showSurface(isShown ? 'panel' : 'drawer');
   }

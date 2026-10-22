@@ -3,6 +3,7 @@ import type { ChatDevices, ChatSnapshot } from '../../../shared/types';
 import { element } from '../../dom';
 import { formatDuration } from '../../format';
 import { CLOSE_ICON } from '../../icons';
+import { VOICE_NUMBER_CLASS, showChatNumber } from '../../voice-nav/voice-number';
 import { chatStatusLabel } from '../../status-label';
 import { setText, showSpinner } from './in-place';
 import type { DeviceOpen } from './tile-devices';
@@ -16,6 +17,7 @@ export interface TileHeaderHandlers {
 // A tile's title bar: it names the chat, shows how it is doing, and is the handle tiles are dragged by.
 export class TileHeader {
   readonly root: HTMLElement = element('header', 'tile-header');
+  private readonly number: HTMLElement = element('span', `${VOICE_NUMBER_CLASS} tile-number`);
   private readonly name: HTMLElement = element('span', 'tile-name');
   private readonly spinner: HTMLElement = element('span', 'tile-spinner');
   private readonly status: HTMLElement = element('span', 'tile-status');
@@ -29,10 +31,11 @@ export class TileHeader {
     const actions: HTMLDivElement = element('div', 'tile-actions');
     actions.append(remove);
     this.status.append(this.statusLabel, this.statusTime);
-    this.root.append(this.name, this.spinner, this.status, actions);
+    this.root.append(this.number, this.name, this.spinner, this.status, actions);
   }
 
   update(chat: ChatSnapshot, now: number, devices: ChatDevices): void {
+    showChatNumber(this.number, chat.sessionId);
     setText(this.name, chat.name);
     this.devices.show(devices);
     this.root.title = chat.repository.name;

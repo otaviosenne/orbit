@@ -296,6 +296,11 @@ export class ChatSheet {
     void this.messages.syncPicker(this.chat.status === 'waiting');
   }
 
+  // Voice: after "chat N" opens the panel, the words that follow go to this composer.
+  focusComposer(): void {
+    this.composer.focus();
+  }
+
   close(): void {
     this.settleWaiters(null);
     this.root.classList.remove(CLOSED_CLASS);

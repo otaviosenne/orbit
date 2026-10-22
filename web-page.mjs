@@ -20,7 +20,7 @@ const WEB_STYLES = ['<link rel="stylesheet" href="web.css" />', '<link rel="styl
 
 // Cloudflare overrides the server's no-cache on .js and .css with a browser cache of hours, so a phone would keep
 // an old script under a new page; a per-build query makes every release a different URL.
-const VERSIONED_ASSETS = [/(href=")(styles\.css|attachments\.css|web\.css|phone\.css)(")/g, /(src=")(app\.js)(")/g];
+const VERSIONED_ASSETS = [/(href=")(styles\.css|attachments\.css|voice-nav\.css|web\.css|phone\.css)(")/g, /(src=")(app\.js)(")/g];
 
 // The server sends Orbit Web's policy as a header, which also lets the page open its dictation socket. A browser
 // enforces every policy it is given, so the desktop page's own (no sockets allowed) must not come along.

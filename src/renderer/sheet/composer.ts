@@ -83,6 +83,10 @@ export class Composer {
     this.reserveSpaceInThread();
   }
 
+  focus(): void {
+    this.input.focus();
+  }
+
   // Dictation from outside the field: the caret goes to the end of the draft, where the words will land.
   startDictation(): void {
     if (document.activeElement !== this.input) {

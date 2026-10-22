@@ -6,6 +6,7 @@ import { FILTER_ICON, SEARCH_ICON } from '../icons';
 import { loadResumeFilters, saveResumeFilters } from './filter-store';
 import { FiltersMenu } from './filters-menu';
 import { PAST_CHAT_ATTRIBUTE, renderPastChats } from './past-chat-list';
+import { labelOptions } from '../voice-nav/voice-number';
 import type { ResumeFilters } from './resume-filters';
 import { activeFilterCount, applyFilters, repositoryNames } from './resume-filters';
 
@@ -72,6 +73,13 @@ export class ResumePopover {
     if (!isTouchWeb()) this.search.focus();
   }
 
+  // Voice: picks the Nth row shown; false when the list has no such row.
+  pickNumber(number: number): boolean {
+    const row: HTMLElement | undefined = this.rows()[number - 1];
+    this.pickRowAt(row ?? null);
+    return row !== undefined;
+  }
+
   show(chats: readonly PastChat[]): void {
     this.chats = chats;
     if (this.isOpen) this.renderList();
@@ -134,6 +142,7 @@ export class ResumePopover {
     const shown: readonly PastChat[] = this.visible.slice(0, this.shownCount);
     this.list.replaceChildren(...renderPastChats(shown, this.filters.sort, Date.now()));
     this.list.scrollTop = scrollTop;
+    labelOptions(this.rows(), (row: HTMLElement): HTMLElement => row.querySelector<HTMLElement>('.resume-row-title') ?? row);
     this.highlight(Math.min(this.activeIndex, shown.length - 1), false);
   }
 

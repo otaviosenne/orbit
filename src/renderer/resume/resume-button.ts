@@ -4,6 +4,7 @@ import { HISTORY_ICON } from '../icons';
 import type { LaunchListener } from '../launch-watch';
 import { resumedChatTarget } from '../launch-watch';
 import { withShortcut } from '../shortcuts/shortcut-hint';
+import type { VoiceSelector } from '../voice-nav/voice-selector';
 import { ResumePopover } from './resume-popover';
 
 const IDLE_LABEL: string = 'Resume';
@@ -12,7 +13,7 @@ const IDLE_TITLE: string = withShortcut('Reopen a past chat from any project', '
 const FEEDBACK_MS: number = 1500;
 
 // Top-bar "Resume": like Claude Code's /resume across every project, for chats that are not open right now.
-export class ResumeButton {
+export class ResumeButton implements VoiceSelector {
   private readonly button: HTMLButtonElement = element('button', 'resume-button');
   private readonly label: HTMLSpanElement = element('span', 'resume-label', IDLE_LABEL);
   // The last listing, for the title the panel shows while a picked chat starts.
@@ -37,6 +38,23 @@ export class ResumeButton {
     document.addEventListener('pointerdown', (event: PointerEvent): void => {
       if (!root.contains(event.target as Node)) this.popover.close();
     });
+  }
+
+  get isOpen(): boolean {
+    return this.popover.isOpen;
+  }
+
+  pick(number: number): boolean {
+    return this.popover.pickNumber(number);
+  }
+
+  close(): void {
+    this.popover.close();
+  }
+
+  // Voice: opens the list, whatever state it was in.
+  open(): void {
+    if (!this.popover.isOpen) this.toggle();
   }
 
   toggle(): void {

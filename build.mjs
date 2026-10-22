@@ -4,7 +4,7 @@ import { webPage } from './web-page.mjs';
 
 const OUT_DIR = 'dist';
 const RENDERER_OUT_DIR = `${OUT_DIR}/renderer`;
-const RENDERER_STATIC_FILES = ['index.html', 'styles.css', 'attachments.css'];
+const RENDERER_STATIC_FILES = ['index.html', 'styles.css', 'attachments.css', 'voice-nav.css'];
 const FONT_FILES = ['inter-latin-wght-normal.woff2'];
 const WEB_OUT_DIR = `${OUT_DIR}/web`;
 // Base 36 keeps the per-build cache-busting version short in Orbit Web's asset URLs.
@@ -13,6 +13,7 @@ const BUILD_VERSION_RADIX = 36;
 const WEB_STATIC_FILES = [
   ['src/renderer/styles.css', 'styles.css'],
   ['src/renderer/attachments.css', 'attachments.css'],
+  ['src/renderer/voice-nav.css', 'voice-nav.css'],
   ['src/web/web.css', 'web.css'],
   ['src/web/phone.css', 'phone.css'],
   // The phone's tab bar draws these as masks in the tab's color (phone.css).

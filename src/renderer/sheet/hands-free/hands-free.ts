@@ -1,4 +1,4 @@
-import { sendOnVoiceCommand } from '../voice/voice-send';
+import { runVoiceCommand } from '../voice/voice-command-runner';
 import type { TranscriptionResult } from '../../../shared/types';
 import { PcmRecorder } from '../pcm-recorder';
 import { DictatedSpan } from './dictated-span';
@@ -211,7 +211,7 @@ export class HandsFree {
     if (binding.sink.kind !== 'field') return;
     this.hooks.onWords();
     // The send word is never said for anything else, so it goes out the moment it shows, on the words already there.
-    sendOnVoiceCommand(binding.sink.field.input);
+    runVoiceCommand(binding.sink.field.input, false);
   }
 
   private settle(segment: LaneSegment, result: TranscriptionResult): void {
@@ -221,7 +221,7 @@ export class HandsFree {
     // An empty final keeps whatever the live words showed.
     if (binding !== undefined && result.text.length > 0) this.writer.write(binding, segment.id, result.text);
     // Only a field on screen can be sent from; words kept for a composer that went away just wait there.
-    if (binding?.sink.kind === 'field') sendOnVoiceCommand(binding.sink.field.input);
+    if (binding?.sink.kind === 'field') runVoiceCommand(binding.sink.field.input, true);
   }
 
   // New words go into the target composer's field as it is now; a later move does not take this span along.

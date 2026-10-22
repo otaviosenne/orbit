@@ -10,7 +10,8 @@ export class DictationRouter {
   private drawer: DictationPlace | null = null;
   private tile: DictationPlace | null = null;
 
-  constructor(private readonly onPlace: PlaceListener) {}
+  // commands: where words go when neither surface offers a composer, so spoken commands still work.
+  constructor(private readonly onPlace: PlaceListener, private readonly commands: DictationPlace) {}
 
   followDrawer(place: DictationPlace | null): void {
     this.drawer = place;
@@ -28,6 +29,6 @@ export class DictationRouter {
   }
 
   private publish(): void {
-    this.onPlace(resolvePlace({ surface: this.surface, drawer: this.drawer, tile: this.tile }));
+    this.onPlace(resolvePlace({ surface: this.surface, drawer: this.drawer, tile: this.tile }) ?? this.commands);
   }
 }

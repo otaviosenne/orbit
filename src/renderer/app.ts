@@ -75,7 +75,7 @@ import { isTimelineMode, loadTimelineMode, saveTimelineMode } from './views/time
 import { TIMELINE_MODE_ATTRIBUTE } from './views/timeline-mode-control';
 import { TimelineLinesView } from './views/timeline-lines/timeline-lines-view';
 import { renderWordmark } from './wordmark';
-import { isWebHost } from './host';
+import { isTouchWeb, isWebHost } from './host';
 import { RemoteSection } from './views/remote-section';
 import { ResourcesSection } from './views/resources-section';
 import { BoardFocus } from './board/board-focus';
@@ -86,6 +86,10 @@ import { installShortcutDispatcher } from './shortcuts/shortcut-dispatcher';
 import { appShortcutBindings } from './shortcuts/bindings/app-bindings';
 import { isOverlayOpen } from './shortcuts/overlay-guard';
 import { installShortcutTooltips } from './shortcuts/shortcut-tooltips';
+import { installVoiceCommandContext } from './sheet/voice/commands/command-context';
+import { chatNumbers } from './voice-nav/chat-numbers';
+import { createNavigationContext } from './voice-nav/navigation-context';
+import type { VoiceSelector } from './voice-nav/voice-selector';
 
 const CHATS_POLL_MS: number = 2000;
 const USAGE_POLL_MS: number = 30_000;
@@ -231,6 +235,7 @@ async function refreshChats(): Promise<void> {
 function showChats(): void {
   const now: number = Date.now();
   chats = suspension.visible(closing.hide(pendingEdits.apply(polledChats, now)));
+  chatNumbers.sync(chats.map((chat: ChatSnapshot) => chat.sessionId), now);
   pinnedInfo.remember(chats.filter((chat: ChatSnapshot) => pins.has(chat.sessionId)));
   announceNeedsYou(now);
   trackViewing(now);
@@ -449,6 +454,15 @@ function openSheet(sessionId: string): void {
   void refreshSheet();
 }
 
+// Voice "chat N": the panel opens on the chat with its composer ready for the words that follow. The Panel has no side
+// panel, so there the chat's tile takes the cursor. A touch screen is left alone: focusing raises the keyboard.
+function openChatByVoice(sessionId: string): boolean {
+  if (view === 'grid') return grid.focusTile(sessionId);
+  openSheet(sessionId);
+  if (!isTouchWeb()) sheet.focusComposer();
+  return sheet.sessionId === sessionId;
+}
+
 function closeSheet(): void {
   sheet.close();
   trackViewing(Date.now());
@@ -644,6 +658,22 @@ installShortcutDispatcher(
   isWebHost(),
 );
 installShortcutTooltips();
+const voiceSelectors: readonly VoiceSelector[] = [newChatButton, resumeButton];
+installVoiceCommandContext(createNavigationContext({
+  setView,
+  openChat: openChatByVoice,
+  closePanel: closeSheet,
+  selectors: voiceSelectors,
+  // Only one popover at a time.
+  openNewChat: (): void => {
+    resumeButton.close();
+    newChatButton.openMenu();
+  },
+  openResume: (): void => {
+    newChatButton.close();
+    resumeButton.open();
+  },
+}));
 applyTheme(theme);
 void refreshChats();
 void refreshUsage();

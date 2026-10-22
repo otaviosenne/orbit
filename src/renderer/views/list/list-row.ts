@@ -6,6 +6,7 @@ import { formatClock, formatDuration } from '../../format';
 import { PIN_FILLED_ICON } from '../../icons';
 import { chatColor } from '../../palette';
 import { renderSpinner } from '../../spinner';
+import { renderChatNumber } from '../../voice-nav/voice-number';
 import { GRIP_ICON } from './list-icons';
 import type { ListStatus } from './list-status';
 
@@ -61,6 +62,8 @@ function renderMain(state: RowState): HTMLElement {
   if (state.isPinned) title.append(renderPinMark());
   if (state.hasUnreadReply) title.append(renderUnseenDot(state.chat.status === 'waiting'));
   const detail: HTMLSpanElement = element('span', 'list-row-detail');
+  const number: HTMLSpanElement | null = renderChatNumber(state.chat.sessionId);
+  if (number !== null) detail.append(number);
   detail.append(element('span', 'list-row-repo', state.chat.repository.name));
   const agents: number = runningAgents(state.chat.agents);
   if (agents > 0) detail.append(element('span', 'list-row-agents', agentLabel(agents)));

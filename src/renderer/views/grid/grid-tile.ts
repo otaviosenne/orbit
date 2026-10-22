@@ -93,6 +93,10 @@ export class GridTile {
     return this.composer.hasFocus;
   }
 
+  focusComposer(): void {
+    this.composer.focus();
+  }
+
   // The composer as the Panel's hands-free target; a folded one opens for the words.
   becomeDictationTarget(): DictationPlace {
     this.composer.becomeTarget();

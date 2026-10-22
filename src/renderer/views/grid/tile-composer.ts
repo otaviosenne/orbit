@@ -95,6 +95,12 @@ export class TileComposer {
     if (!this.isOpen) this.expand();
   }
 
+  // Voice: "chat N" lands here; a folded field opens first.
+  focus(): void {
+    this.becomeTarget();
+    this.input.focus();
+  }
+
   dictationPlace(sessionId: string): DictationPlace {
     return this.field.place(sessionId);
   }

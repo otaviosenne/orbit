@@ -1,4 +1,5 @@
 import { isTouchWeb, isWebHost } from '../../host';
+import { setVoiceActive } from '../../voice-nav/voice-activity';
 import { suspendCaptureAudio } from '../capture-context';
 import { rememberHandsFree, wasHandsFreeOn } from '../hands-free/hands-free-memory';
 import { composerState } from '../hands-free/composer-state';
@@ -8,6 +9,7 @@ import type { HandsFreeState } from '../hands-free/hands-free';
 import { HandsFreeIndicator } from '../hands-free/hands-free-indicator';
 import { isTextField } from '../space-to-talk';
 import type { DictationPlace } from './dictation-place';
+import { createCommandPlace } from './commands/command-place';
 import { DictationRouter } from './dictation-router';
 import { FieldVoice } from './field-voice';
 import type { MicPress } from './mic-press';
@@ -44,7 +46,9 @@ export class VoiceHub {
       onWords: (): void => this.focusTarget(),
     });
     this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.handsFree.turnOff());
-    this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place));
+    this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place), createCommandPlace());
+    // Nothing is on screen yet: hands-free starts out listening for commands only.
+    this.router.showSurface('drawer');
     if (usesSpaceGestures()) {
       this.listenForOtherKeys();
       this.listenForDoubleTapAnywhere();
@@ -221,6 +225,12 @@ export class VoiceHub {
       const handsFree: HandsFreeState = voice.field === target ? this.handsFreeState : 'off';
       voice.show(composerState(handsFree, voice.pushToTalkState));
     });
+    this.showVoiceActivity();
+  }
+
+  // The chat number badges are on screen only while a spoken command can be heard.
+  private showVoiceActivity(): void {
+    setVoiceActive(this.handsFree.isOn || [...this.voices].some((voice: FieldVoice): boolean => voice.dictation.listening));
   }
 }
 

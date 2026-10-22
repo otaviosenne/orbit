@@ -1,0 +1,29 @@
+/* Voice navigation: number badges that name what "chat N" / "orbit N" reach. They exist in the DOM all the time and
+   show only while voice is active (hands-free on, or Space held), so nothing is rebuilt when it turns on. Collapsed
+   they take no room, so a card's height never changes; the repository name only slides sideways when they appear. */
+.voice-number {
+  display: inline-block; box-sizing: border-box; flex: none; width: 0; margin: 0; padding: 0; overflow: hidden; opacity: 0;
+  border-radius: 6px; vertical-align: 1px; white-space: nowrap; text-align: center; font-size: 10.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums; line-height: 15px; letter-spacing: 0.01em; pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+}
+html[data-voice-active] .voice-number { width: auto; min-width: 20px; margin-right: 6px; padding: 0 5px; opacity: 1; }
+.voice-number[hidden] { display: none; }
+/* A flex row adds its gap even around a zero-width badge */
+.tile-number:not([hidden]) { margin-right: -6px; }
+html[data-voice-active] .tile-number:not([hidden]) { margin-right: 0; }
+/* The repository line stays on one row, so a badge appearing can never add a line */
+.card-repo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-row-detail .voice-number { margin-right: 0; }
+html[data-voice-active] .list-row-detail .voice-number { margin-right: 6px; }
+/* Options of New chat and Resume lead with their number; the menu's grid gets a column for it, which cancels its gap
+   while the badge is collapsed */
+.new-chat-item:has(.voice-number) { grid-template-columns: auto 14px auto minmax(0, 1fr); }
+.new-chat-item .voice-number { margin-right: -8px; }
+html[data-voice-active] .new-chat-item .voice-number { margin-right: 0; }
+.resume-row.is-active .voice-number, .new-chat-item:hover .voice-number { background: rgb(255 255 255 / 0.25); color: inherit; }
+.voice-notice {
+  position: fixed; z-index: 70; left: 16px; bottom: 16px; padding: 6px 11px; border-radius: 10px; pointer-events: none;
+  box-shadow: var(--shadow-card); background: var(--danger); color: #ffffff; font-size: 12px; font-weight: 600;
+  animation: copy-toast-fade 2.2s ease-out forwards;
+}
