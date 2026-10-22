@@ -37,6 +37,9 @@ export class VoiceHub {
   // The last hands-free target: a segment can still fail after its field stopped being the target.
   private lastTarget: VoiceField | null = null;
   private handsFreeState: HandsFreeState = 'off';
+  // Closing the window stops the microphone, which turns hands-free off by itself; that is the window going away, not
+  // the user turning it off, so it must not be remembered (it would come back off after every restart).
+  private isUnloading: boolean = false;
 
   constructor(indicator: HTMLButtonElement) {
     this.handsFree = new HandsFree({
@@ -55,6 +58,7 @@ export class VoiceHub {
     }
     // The desktop window picks the mode up where the last run left it. A browser never does: it opens the microphone
     // only on a tap, and an unexpected open mic on a phone is the worse mistake.
+    for (const type of ['pagehide', 'beforeunload'] as const) window.addEventListener(type, (): void => void (this.isUnloading = true));
     if (!isWebHost() && wasHandsFreeOn()) this.handsFree.turnOn(Promise.resolve());
     if (isWebHost()) onPageHidden((): void => this.stopListening());
   }
@@ -212,7 +216,7 @@ export class VoiceHub {
     this.handsFreeState = state;
     // Finishing is the tail of turning off; paused is still on, only with no composer to write to.
     // Remembered for the desktop's next start only; Orbit Web never turns it back on by itself.
-    if (state !== 'finishing' && !isWebHost()) rememberHandsFree(state !== 'off');
+    if (state !== 'finishing' && !isWebHost() && !this.isUnloading) rememberHandsFree(state !== 'off');
     this.indicator.show(state);
     this.showStates();
     this.focusTarget();
