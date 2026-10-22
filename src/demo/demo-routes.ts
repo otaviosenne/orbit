@@ -46,6 +46,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetImage: (): null => null,
   GetAttachment: (): null => null,
   RevealFile: (): void => undefined,
+  NotifyNeedsYou: (): void => undefined,
   GetTurnProgress: (sessionId: unknown): TurnProgress | null => demoTurnProgress(demoChatSnapshot(sessionId, Date.now()), Date.now()),
   GetChatColor: (sessionId: unknown): string | null => findDemoChat(sessionId)?.color ?? demoPastChatColor(sessionId),
   GetUsage: (): UsageSnapshot => demoUsage(Date.now()),

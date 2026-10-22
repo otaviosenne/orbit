@@ -36,6 +36,10 @@ const api: RadarApi = {
   getImage: (sessionId: string, key: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetImage, sessionId, key),
   getAttachment: (path: string): Promise<AttachmentBlob | null> => ipcRenderer.invoke(IpcChannel.GetAttachment, path),
   revealFile: (path: string): Promise<void> => ipcRenderer.invoke(IpcChannel.RevealFile, path),
+  notifyNeedsYou: (sessionId: string, chatName: string): Promise<void> => ipcRenderer.invoke(IpcChannel.NotifyNeedsYou, sessionId, chatName),
+  onOpenChatRequest: (listener: (sessionId: string) => void): void => {
+    ipcRenderer.on(IpcChannel.OpenChatRequest, (_event: IpcRendererEvent, sessionId: string): void => listener(sessionId));
+  },
   getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => ipcRenderer.invoke(IpcChannel.GetTurnProgress, sessionId),
   getChatColor: (sessionId: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetChatColor, sessionId),
   listLaunchers: (): Promise<LauncherEntry[]> => ipcRenderer.invoke(IpcChannel.ListLaunchers),

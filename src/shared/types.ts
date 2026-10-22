@@ -395,6 +395,9 @@ export interface RadarApi {
   finishDictation(session: number): Promise<TranscriptionResult>;
   cancelDictation(session: number): void;
   onDictationTranscript(listener: (transcript: DictationTranscript) => void): void;
+  // A chat that just needs the user: a desktop notification that, clicked, asks the window to open that chat.
+  notifyNeedsYou(sessionId: string, chatName: string): Promise<void>;
+  onOpenChatRequest(listener: (sessionId: string) => void): void;
   getChats(): Promise<ChatSnapshot[]>;
   // The last `limit` items (150 when left out); fewer than asked means the thread has nothing older.
   getTranscript(sessionId: string, limit?: number): Promise<TranscriptItem[]>;

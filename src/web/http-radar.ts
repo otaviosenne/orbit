@@ -46,6 +46,9 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     getAttachment: (path: string): Promise<AttachmentBlob | null> => call('GetAttachment', [path]),
     // The file manager is on the desktop; the web shows the path to copy instead.
     revealFile: (): Promise<void> => Promise.resolve(),
+    // Notifications belong to the desktop app; a browser asks for none.
+    notifyNeedsYou: (): Promise<void> => Promise.resolve(),
+    onOpenChatRequest: (): void => undefined,
     getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => call('GetTurnProgress', [sessionId]),
     getChatColor: (sessionId: string): Promise<string | null> => call('GetChatColor', [sessionId]),
     listLaunchers: (): Promise<LauncherEntry[]> => call('ListLaunchers', []),

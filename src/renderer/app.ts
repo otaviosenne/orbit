@@ -1,3 +1,4 @@
+import { NeedsYouWatch } from './needs-you-watch';
 import { fitBoard } from './board/fit-board';
 import { ChatSuspension } from './suspend/chat-suspension';
 import type { ClosedChat } from './suspend/closed-chats';
@@ -103,6 +104,7 @@ window.addEventListener('resize', (): void => {
 new CardPreview(viewRoot);
 // Cards glide to their new place instead of jumping there when the board is rebuilt.
 const boardMotion: BoardMotion = new BoardMotion();
+const needsYouWatch: NeedsYouWatch = new NeedsYouWatch();
 const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: availableQuestions(isWebHost()) });
 const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] =>
   toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
@@ -230,6 +232,7 @@ function showChats(): void {
   const now: number = Date.now();
   chats = suspension.visible(closing.hide(pendingEdits.apply(polledChats, now)));
   pinnedInfo.remember(chats.filter((chat: ChatSnapshot) => pins.has(chat.sessionId)));
+  announceNeedsYou(now);
   trackViewing(now);
   renderView();
   const open: ChatSnapshot | undefined = chats.find((chat: ChatSnapshot) => chat.sessionId === sheet.sessionId);
@@ -411,6 +414,24 @@ async function resumeLaunched(sessionId: string, launchedAt: number): Promise<vo
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
 }
 
+// A chat newly in Needs you gets a desktop notification, unless it is already in front of the user: its terminal
+// has focus, or its panel is open in a focused Orbit. Orbit Web never notifies.
+function announceNeedsYou(now: number): void {
+  if (isWebHost()) return;
+  const needs: readonly ChatSnapshot[] = toBoardColumns(chats, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat))
+    .find((column: BoardColumn) => column.key === 'needs')?.chats ?? [];
+  for (const chat of needsYouWatch.arrivals(needs)) {
+    const inView: boolean = chat.isFocused || (sheet.sessionId === chat.sessionId && document.hasFocus());
+    if (!inView) void window.radar.notifyNeedsYou(chat.sessionId, chat.name);
+  }
+}
+
+// A clicked notification: Orbit is already brought up by the main process; the chat opens on the board.
+function openFromNotification(sessionId: string): void {
+  if (view !== 'board') setView('board');
+  if (sheet.sessionId !== sessionId) openSheet(sessionId);
+}
+
 function openSheet(sessionId: string): void {
   if (view === 'grid') return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
@@ -580,6 +601,7 @@ settingsButton.innerHTML = GEAR_ICON;
 settingsButton.addEventListener('click', (): void => setView(view === 'settings' ? viewBeforeSettings : 'settings'));
 installTooltips();
 renderWordmark(requireElement('#app-title'));
+window.radar.onOpenChatRequest(openFromNotification);
 attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), remoteSection === null ? null : {
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,

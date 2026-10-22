@@ -5,6 +5,8 @@ export const IpcChannel = {
   GetImage: 'radar:get-image',
   GetAttachment: 'radar:get-attachment',
   RevealFile: 'radar:reveal-file',
+  NotifyNeedsYou: 'radar:notify-needs-you',
+  OpenChatRequest: 'radar:open-chat-request',
   GetTurnProgress: 'radar:get-turn-progress',
   GetChatColor: 'radar:get-chat-color',
   GetUsage: 'radar:get-usage',

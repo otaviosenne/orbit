@@ -5,7 +5,7 @@ export type ChannelKey = keyof typeof IpcChannel;
 // Sent with ipcRenderer.send rather than invoked, so they get listeners instead of routes.
 export const LISTENER_CHANNELS = ['DictationPrepare', 'DictationAudio', 'DictationCancel'] as const satisfies readonly ChannelKey[];
 // Main pushes on these; the renderer listens.
-export const PUSH_CHANNELS = ['DictationTranscript'] as const satisfies readonly ChannelKey[];
+export const PUSH_CHANNELS = ['DictationTranscript', 'OpenChatRequest'] as const satisfies readonly ChannelKey[];
 // Orbit Web's own settings: the remote server answers them, in the app and in the demo alike, so no route table does.
 export const REMOTE_SETTINGS_CHANNELS = [
   'GetRemoteSettings',

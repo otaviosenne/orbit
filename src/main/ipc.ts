@@ -1,5 +1,8 @@
+import { showNeedsYouNotification } from './notifications/needs-you-notification';
+import { focusOwnWindow } from './own-window-focus';
+import { HUB_TITLE } from './window';
 import { ipcMain } from 'electron';
-import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron';
+import type { IpcMainEvent, IpcMainInvokeEvent, WebContents } from 'electron';
 import type { ActionResult, DictationStart, TranscriptionResult } from '../shared/types';
 import { IpcChannel } from '../shared/ipc-channels';
 import { closeChat } from './chat-closer';
@@ -40,6 +43,9 @@ function registerDesktopHandlers(chatWindows: ChatWindows): void {
     isPid(pid) ? closeChat(pid) : Promise.resolve(failure('Not a chat')),
   );
   ipcMain.handle(IpcChannel.RevealFile, (_event: IpcMainInvokeEvent, path: unknown): Promise<void> => revealFile(path));
+  ipcMain.handle(IpcChannel.NotifyNeedsYou, (event: IpcMainInvokeEvent, sessionId: unknown, chatName: unknown): void => {
+    if (typeof sessionId === 'string' && typeof chatName === 'string') void notifyAndOpen(event.sender, sessionId, chatName);
+  });
   ipcMain.handle(IpcChannel.OpenChatWindow, (_event: IpcMainInvokeEvent, sessionId: unknown): void => {
     // The id ends up in a file URL, so anything but a real id is ignored.
     if (typeof sessionId === 'string' && sessionId.length > 0) chatWindows.open(sessionId);
@@ -61,4 +67,11 @@ function registerDictationHandlers(dictation: DictationService): void {
     IpcChannel.DictationFinish,
     (_event: IpcMainInvokeEvent, session: number): Promise<TranscriptionResult> => dictation.finish(session),
   );
+}
+
+// Not awaited by the window: the notification waits for its click, and only then brings Orbit up on that chat.
+async function notifyAndOpen(sender: WebContents, sessionId: string, chatName: string): Promise<void> {
+  if (!(await showNeedsYouNotification(chatName)) || sender.isDestroyed()) return;
+  await focusOwnWindow(HUB_TITLE);
+  sender.send(IpcChannel.OpenChatRequest, sessionId);
 }

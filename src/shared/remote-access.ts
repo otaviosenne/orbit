@@ -15,6 +15,8 @@ export const REMOTE_ACCESS = {
   GetAttachment: 'read',
   // Opens the desktop's file manager.
   RevealFile: 'desktop',
+  // Desktop notifications; the clicked one opens the chat in the desktop window.
+  NotifyNeedsYou: 'desktop',
   GetTurnProgress: 'read',
   GetChatColor: 'read',
   GetUsage: 'read',
