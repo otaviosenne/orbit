@@ -1,19 +1,18 @@
 import { element } from '../dom';
 import { isTouchWeb } from '../host';
+import { COPY_ICON } from '../icons';
 
-// Long enough to read, short enough not to sit over the text being read.
-const TOAST_MS: number = 900;
-// Offset from the pointer, so the label never covers the selection's end.
-const TOAST_OFFSET_PX: number = 12;
+// Long enough to read; it sits in the window's corner, out of the way of the text being read.
+const TOAST_MS: number = 1200;
 const TOAST_TEXT: string = 'Copied';
 
 // Selecting text in the thread copies it, like a terminal: no Ctrl+C needed. A phone keeps its own selection menu.
 export function installCopyOnSelect(thread: HTMLElement): void {
   if (isTouchWeb()) return;
-  thread.addEventListener('mouseup', (event: MouseEvent): void => {
+  thread.addEventListener('mouseup', (): void => {
     const text: string = selectedTextIn(thread);
     if (text.length === 0) return;
-    void navigator.clipboard.writeText(text).then((): void => showToast(event.clientX, event.clientY), (): void => undefined);
+    void navigator.clipboard.writeText(text).then((): void => showToast(), (): void => undefined);
   });
 }
 
@@ -26,10 +25,12 @@ function selectedTextIn(thread: HTMLElement): string {
   return selection.toString().trim();
 }
 
-function showToast(x: number, y: number): void {
-  const toast: HTMLDivElement = element('div', 'copy-toast', TOAST_TEXT);
-  toast.style.left = `${x + TOAST_OFFSET_PX}px`;
-  toast.style.top = `${y + TOAST_OFFSET_PX}px`;
+// Always in the same place, the window's bottom-left corner; a newer copy replaces the note still showing.
+function showToast(): void {
+  document.querySelector('.copy-toast')?.remove();
+  const toast: HTMLDivElement = element('div', 'copy-toast');
+  toast.innerHTML = COPY_ICON;
+  toast.append(element('span', '', TOAST_TEXT));
   document.body.append(toast);
   window.setTimeout((): void => toast.remove(), TOAST_MS);
 }

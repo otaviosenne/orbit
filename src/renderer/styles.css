@@ -327,13 +327,15 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
    new slot: just above the board, under the chat panel (which must hide it, full screen on a phone), menus,
    tooltips and the drag's own lifted card */
 .card-flight { position: fixed; z-index: 1; margin: 0; pointer-events: none; }
-/* The "Copied" note by the pointer after selecting text in a chat (sheet/copy-on-select.ts) */
+/* The "Copied" note after selecting text in a chat (sheet/copy-on-select.ts), always in the bottom-left corner */
 .copy-toast {
-  position: fixed; z-index: 70; padding: 3px 9px; border-radius: 8px; pointer-events: none;
-  background: var(--text); color: var(--window); font-size: 11.5px; font-weight: 600;
-  animation: copy-toast-fade 0.9s ease-out forwards;
+  position: fixed; z-index: 70; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 10px; pointer-events: none; box-shadow: var(--shadow-card);
+  background: var(--text); color: var(--window); font-size: 12px; font-weight: 600;
+  animation: copy-toast-fade 1.2s ease-out forwards;
 }
-@keyframes copy-toast-fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+.copy-toast svg { width: 14px; height: 14px; fill: currentColor; }
+@keyframes copy-toast-fade { 0% { opacity: 0; transform: translateY(4px); } 12%, 70% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 .card.is-arriving { visibility: hidden; }
 /* Only a from step, so the fade ends on the card's own opacity (a closed pin stays faded) */
 @keyframes card-enter { from { opacity: 0; transform: scale(0.97); } }
