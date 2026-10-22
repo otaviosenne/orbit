@@ -1456,7 +1456,8 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .remote-qr svg { display: block; width: 100%; height: 100%; }
 
 /* ---------- Hands-free dictation indicator ---------- */
-/* Beside the wordmark while the mic is always on: it breathes with your voice, dims while paused; click turns it off */
+/* Beside the wordmark, always: it breathes with your voice while on, dims while paused, and sits faded with no
+   background while off; click flips the mode */
 .hands-free-indicator {
   --voice-level: 0;
   width: 24px; height: 24px; margin-left: 8px; padding: 4px; display: grid; place-items: center;
@@ -1466,6 +1467,10 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 }
 .hands-free-indicator[hidden] { display: none; }
 .hands-free-indicator svg { width: 14px; height: 14px; fill: currentColor; }
+.hands-free-indicator[data-state='off'] {
+  background: transparent; box-shadow: none; transform: none; color: var(--text); opacity: 0.3; transition: opacity 0.15s;
+}
+.hands-free-indicator[data-state='off']:hover { opacity: 0.65; }
 .hands-free-indicator[data-state='paused'] { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); box-shadow: none; }
 /* Collapsed rows, "Title · value", each unfolding its controls; one open at a time */
 .chat-settings-disclosure { gap: 0; }

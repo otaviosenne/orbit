@@ -48,7 +48,9 @@ export class VoiceHub {
       onError: (message: string): void => this.showHandsFreeError(message),
       onWords: (): void => this.focusTarget(),
     });
-    this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.handsFree.turnOff());
+    this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.toggleFromMic());
+    // The mic shows from the start, faded; the mode's own reports only come when it changes.
+    this.indicator.show('off');
     this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place), createCommandPlace());
     // Nothing is on screen yet: hands-free starts out listening for commands only.
     this.router.showSurface('drawer');
