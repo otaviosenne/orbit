@@ -27,9 +27,9 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
       ['flippa'],
       ['flip'],
     ],
-    // Known mis-transcriptions of "Orbit enviar" ("Orbit VR", "Orbit In VR", "Orbit em VR", "OrbitInVR", however spaced): add any
+    // Known mis-transcriptions of "Orbit enviar" ("Orbit VR", "Orbit In VR", "Orbit em VR", "Orbiting VR", "OrbitInVR", however spaced): add any
     // new variant here.
-    gluedPhrases: ['orbitinvr', 'orbitemvr', 'orbitvr'],
+    gluedPhrases: ['orbitinvr', 'orbitingvr', 'orbitemvr', 'orbitvr'],
   },
   { command: { action: 'view', view: 'board' }, phrases: [['orbit', 'board']] },
   { command: { action: 'view', view: 'grid' }, phrases: [['orbit', 'panel'], ['orbit', 'painel'], ['orbit', 'grid']] },

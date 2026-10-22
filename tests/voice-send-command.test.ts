@@ -37,6 +37,8 @@ describe('the send command', () => {
     expect(sentText('corrige o bug orbit in V R')).toBe('corrige o bug');
     expect(sentText('corrige o bug Orbit VR')).toBe('corrige o bug');
     expect(sentText('corrige o bug Orbit em VR')).toBe('corrige o bug');
+    expect(sentText('corrige o bug Orbiting VR')).toBe('corrige o bug');
+    expect(sentText('Corrige o bug. Orbiting, VR.')).toBe('Corrige o bug');
     expect(sentText('Corrige o bug. Orbit, em VR.')).toBe('Corrige o bug');
     expect(sentText('Corrige o bug. Orbit, VR.')).toBe('Corrige o bug');
     expect(sentText('corrige o bug orbitvr')).toBe('corrige o bug');
