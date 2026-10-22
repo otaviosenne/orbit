@@ -1,5 +1,9 @@
-import { fitPinnedRows } from './board/fit-pinned-rows';
-import { fitRestingColumns } from './board/fit-resting-columns';
+import { fitBoard } from './board/fit-board';
+import { ChatSuspension } from './suspend/chat-suspension';
+import type { ClosedChat } from './suspend/closed-chats';
+import { ClosedChats } from './suspend/closed-chats';
+import { SUSPENDED_TOGGLE_SELECTOR } from './views/suspended-row';
+import { closedCardLabel } from './views/closed-card';
 import { CardPreview } from './board/card-preview';
 import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
 import type { BoardColumn } from './views/board-columns';
@@ -93,10 +97,7 @@ const viewRoot: HTMLElement = requireElement('#view');
 const boardFocus: BoardFocus = new BoardFocus(viewRoot);
 // The Active/Idle split depends on the window's height too.
 window.addEventListener('resize', (): void => {
-  if (view !== 'board') return;
-  // The pinned row's height decides how much the columns get, so it is settled first.
-  fitPinnedRows(viewRoot);
-  fitRestingColumns(viewRoot);
+  if (view === 'board') fitBoard(viewRoot);
 });
 // A finger has no hover, so Orbit Web on a phone never shows the card preview (it listens to the mouse only).
 new CardPreview(viewRoot);
@@ -116,6 +117,8 @@ const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
+const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
+const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats);
 const boardDevices: BoardDevices = new BoardDevices(
   (sessionId: string): Promise<ChatDevices> => window.radar.getChatDevices(sessionId),
   (): void => {
@@ -133,6 +136,7 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
         const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === id);
         if (chat !== undefined) restingPins.set(chat, to);
       },
+      suspend: (id: string): void => requestSuspend(id, null),
     });
     // Optimistic: the card lands in its new place now, not at the next poll.
     boardMotion.land(landingCardKey(sessionId, action), landing);
@@ -155,7 +159,10 @@ const cardMenu: CardMenu = new CardMenu({
     const card: HTMLElement | null = liveCard(target);
     if (card !== null) cardRename.start(card, target.sessionId, target.name);
   },
+  suspend: (target: CardMenuTarget): void => requestSuspend(target.sessionId, liveCard(target)),
   close: (target: CardMenuTarget): void => void closeChat(target.sessionId),
+  reopen: (target: CardMenuTarget): void => void reopenClosed(target.sessionId),
+  removeSuspended: (target: CardMenuTarget): void => suspension.remove(target.sessionId),
 });
 const closing: ClosingChats = new ClosingChats();
 const sheet: ChatSheet = new ChatSheet(closeSheet, {
@@ -167,7 +174,10 @@ const sheet: ChatSheet = new ChatSheet(closeSheet, {
     pendingEdits.drop(sessionId, field);
     showChats();
   },
-}, (): void => void refreshSheet(), (sessionId: string): void => void closeChat(sessionId));
+}, (): void => void refreshSheet(), (sessionId: string): void => void closeChat(sessionId), {
+  suspend: isWebHost() ? null : (sessionId: string): void => suspendNow(sessionId),
+  reopen: reopenClosed,
+});
 const launches: LaunchPanel = new LaunchPanel(new LaunchWatch((): string | null => sheet.sessionId), {
   sheet,
   colorPreview: {
@@ -207,6 +217,7 @@ const timelineHistory: TimelineHistoryFeed = new TimelineHistoryFeed((): void =>
 async function refreshChats(): Promise<void> {
   polledChats = await window.radar.getChats();
   closing.settle(polledChats, Date.now());
+  suspension.settle(polledChats, Date.now());
   showChats();
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
@@ -217,7 +228,7 @@ async function refreshChats(): Promise<void> {
 // Re-renders from the last poll plus pending edits, without waiting for the next poll.
 function showChats(): void {
   const now: number = Date.now();
-  chats = closing.hide(pendingEdits.apply(polledChats, now));
+  chats = suspension.visible(closing.hide(pendingEdits.apply(polledChats, now)));
   pinnedInfo.remember(chats.filter((chat: ChatSnapshot) => pins.has(chat.sessionId)));
   trackViewing(now);
   renderView();
@@ -242,8 +253,7 @@ function renderView(): void {
   if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
     boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
-    fitPinnedRows(viewRoot);
-    fitRestingColumns(viewRoot);
+    fitBoard(viewRoot);
     boardFocus.paint();
   }
   else if (view === 'grid') showGrid(now);
@@ -307,7 +317,9 @@ function boardMarks(): BoardMarks {
     isUnseen: (chat: ChatSnapshot): boolean => seen.isUnseen(chat),
     hasUnreadReply: (chat: ChatSnapshot): boolean => seen.hasUnreadReply(chat),
     pinnedOrder: pins.order,
-    closedPins: closedPins(),
+    closedPins: closedChats.pinned(),
+    suspended: suspension.snapshots(),
+    isSuspendedCollapsed: suspension.isCollapsed,
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
     devicesOf: (sessionId: string): ChatDevices => boardDevices.devicesOf(sessionId),
   };
@@ -335,27 +347,44 @@ async function renameChat(sessionId: string, name: string): Promise<void> {
 }
 
 // Optimistic: the chat leaves the board (and the panel) at once and comes back only if the close fails.
-async function closeChat(sessionId: string): Promise<void> {
+async function closeChat(sessionId: string): Promise<boolean> {
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-  if (chat === undefined) return;
+  if (chat === undefined) return false;
   closing.start(sessionId, Date.now());
   if (sheet.sessionId === sessionId) sheet.close();
   showChats();
   const result: ActionResult = await window.radar.closeChat(chat.pid);
-  if (result.ok) return;
+  if (result.ok) return true;
   console.error(`Could not close ${chat.name}: ${result.error ?? 'unknown error'}`);
   closing.cancel(sessionId);
   showChats();
+  return false;
+}
+
+// From the board: asks above the card first when suspending would stop work. A drop has no card to point at once
+// the drag ends, so it asks above the chat's card wherever the board redrew it.
+function requestSuspend(sessionId: string, anchor: HTMLElement | null): void {
+  const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  const card: HTMLElement | null = anchor ?? viewRoot.querySelector<HTMLElement>(`.board [data-${SESSION_ATTRIBUTE}="${CSS.escape(sessionId)}"]`);
+  if (chat !== undefined && card !== null) suspension.request(chat, card);
+}
+
+// The panel's Suspend has already asked, if it had to.
+function suspendNow(sessionId: string): void {
+  const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  if (chat !== undefined) void suspension.suspend(chat);
 }
 
 async function refreshSheet(): Promise<void> {
   const sessionId: string | null = sheet.sessionId;
   if (sessionId === null) return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-  const closed: ChatSnapshot | undefined = chat === undefined && sheet.isShowingClosed ? closedPin(sessionId) : undefined;
-  if (closed !== undefined) return loadThread(sheet, closed);
+  const closed: ClosedChat | undefined = chat === undefined && sheet.isShowingClosed ? closedChats.find(sessionId) : undefined;
+  if (closed !== undefined) return loadThread(sheet, closed.chat);
   if (chat === undefined) return closeSheet();
-  sheet.update(chat);
+  // A closed chat reopened some other way (Resume, its terminal) turns live in place.
+  if (sheet.isShowingClosed) sheet.open(chat);
+  else sheet.update(chat);
   await loadThread(sheet, chat);
 }
 
@@ -365,28 +394,19 @@ function toggleSheet(sessionId: string): void {
   else openSheet(sessionId);
 }
 
-// Pinned chats that are closed now, as read-only stand-ins in the order they were pinned.
-function closedPins(): ChatSnapshot[] {
-  return pins.order
-    .filter((sessionId: string) => !chats.some((chat: ChatSnapshot) => chat.sessionId === sessionId))
-    .flatMap((sessionId: string): ChatSnapshot[] => {
-      const closed: ChatSnapshot | null = pinnedInfo.closedSnapshot(sessionId);
-      return closed === null ? [] : [closed];
-    });
-}
-
-function closedPin(sessionId: string): ChatSnapshot | undefined {
-  return closedPins().find((chat: ChatSnapshot) => chat.sessionId === sessionId);
-}
-
-// Reopen in the closed chat's panel: resumed like Resume does, so the panel turns into the live chat in place.
+// Reopen a closed pinned or suspended chat: resumed like Resume does, so its panel turns into the live chat in place.
+// Resolves once the starting placeholder is up; a message sent from the closed panel waits there until the chat is live.
 async function reopenClosed(sessionId: string): Promise<void> {
-  const closed: ChatSnapshot | undefined = closedPin(sessionId);
+  const closed: ClosedChat | undefined = closedChats.find(sessionId);
   if (closed === undefined) return;
+  const launchedAt: number = Date.now();
+  launches.expect(resumedChatTarget(sessionId, closed.chat.name), launchedAt);
+  void resumeLaunched(sessionId, launchedAt);
+}
+
+async function resumeLaunched(sessionId: string, launchedAt: number): Promise<void> {
   // The main process only resumes chats from its own latest list of past chats.
   await window.radar.listPastChats();
-  const launchedAt: number = Date.now();
-  launches.expect(resumedChatTarget(sessionId, closed.name), launchedAt);
   const result: ActionResult = await window.radar.resumeChat(sessionId);
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
 }
@@ -394,9 +414,9 @@ async function reopenClosed(sessionId: string): Promise<void> {
 function openSheet(sessionId: string): void {
   if (view === 'grid') return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-  const closed: ChatSnapshot | undefined = chat === undefined ? closedPin(sessionId) : undefined;
+  const closed: ClosedChat | undefined = chat === undefined ? closedChats.find(sessionId) : undefined;
   if (closed !== undefined) {
-    sheet.openClosed(closed);
+    sheet.openClosed(closed.chat, closedCardLabel(closed.kind));
     renderView();
     void refreshSheet();
     return;
@@ -502,12 +522,21 @@ viewRoot.addEventListener('contextmenu', (event: MouseEvent): void => {
   const card: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>(`[data-${SESSION_ATTRIBUTE}]`);
   const sessionId: string | undefined = card?.dataset[SESSION_ATTRIBUTE];
   const live: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-  const chat: ChatSnapshot | undefined = live ?? (sessionId === undefined ? undefined : closedPin(sessionId));
+  const closed: ClosedChat | undefined = live === undefined && sessionId !== undefined ? closedChats.find(sessionId) : undefined;
+  const chat: ChatSnapshot | undefined = live ?? closed?.chat;
   if (card === null || chat === undefined || cardRename.isActive) return;
   event.preventDefault();
   const inPinnedRow: boolean = card.closest('.pinned-row') !== null;
-  const target: CardMenuTarget = { sessionId: chat.sessionId, name: chat.name, isPinned: pins.has(chat.sessionId), inPinnedRow, isClosed: live === undefined };
+  const target: CardMenuTarget = {
+    sessionId: chat.sessionId, name: chat.name, isPinned: pins.has(chat.sessionId), inPinnedRow,
+    isClosed: live === undefined, isSuspended: closed?.kind === 'suspended',
+  };
   cardMenu.open(target, event.clientX, event.clientY);
+});
+
+// A click, not a press: on a phone a press also starts every scroll. A click lost to a rebuild is simply repeated.
+viewRoot.addEventListener('click', (event: MouseEvent): void => {
+  if ((event.target as HTMLElement).closest(SUSPENDED_TOGGLE_SELECTOR) !== null) suspension.toggleCollapsed();
 });
 
 // The board is rebuilt every poll, so the card that was right-clicked may be gone by the time a menu item is picked.
@@ -570,7 +599,7 @@ installShortcutDispatcher(
     canOpenChats: (): boolean => view !== 'grid',
     boardFocus,
     openChat: openSheet,
-    pinnedOrder: (): readonly string[] => pins.order,
+    pinnedOrder: (): readonly string[] => suspension.pinnedInRow(pins.order),
     sheet,
     togglePin: (sessionId: string): void => {
       pins.toggle(sessionId);

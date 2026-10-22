@@ -2,8 +2,10 @@ import type { EffortLevel, ModelChoice } from '../../../shared/chat-settings';
 import type { CycledPermissionMode } from '../../../shared/permission-modes';
 import { PERMISSION_MODE_TITLES } from '../../../shared/permission-modes';
 import type { ActionResult, ChatPermissions, ChatSettings, ChatSnapshot } from '../../../shared/types';
+import { element } from '../../dom';
 import { SLIDERS_ICON } from '../../icons';
 import { CloseChatAction } from './close-chat-action';
+import { SuspendChatAction } from './suspend-chat-action';
 import type { SectionKey } from './disclosure';
 import { choiceLabel, effortLabel } from './model-label';
 import type { SettingField } from './pending-settings';
@@ -19,6 +21,8 @@ export interface SettingsPopoverHost {
   readonly report: (result: ActionResult, successText: string) => void;
   // Closes the chat the way the board's card menu does: it leaves the board and the panel at once.
   readonly closeChat: (sessionId: string) => void;
+  // Closes it into the board's Suspended section; null where suspending is not offered (Orbit Web, chat windows).
+  readonly suspendChat: ((sessionId: string) => void) | null;
 }
 
 type SettingSender = (chat: ChatSnapshot) => Promise<ActionResult>;
@@ -30,7 +34,7 @@ const ACTIVE_CLASS: string = 'is-active';
 const CONFIRM_SELECTOR: string = '.confirm-popover';
 
 // The header's sliders button and its popover: collapsed Model, Effort, Permissions and Skills rows (one open at a
-// time, all closed on every open), and Close chat at the bottom.
+// time, all closed on every open), and Suspend beside Close chat at the bottom.
 export class ChatSettingsPopover {
   private readonly values: SettingsValues = new SettingsValues(
     {
@@ -49,6 +53,7 @@ export class ChatSettingsPopover {
     (): void => this.toggleSection('skills'),
   );
   private readonly closeAction: CloseChatAction = new CloseChatAction((): void => this.closeChat());
+  private readonly suspendAction: SuspendChatAction | null;
   private expanded: SectionKey | null = null;
   private readonly pending: PendingSettings = new PendingSettings();
   private chat: ChatSnapshot | null = null;
@@ -63,12 +68,13 @@ export class ChatSettingsPopover {
   ) {
     button.innerHTML = SLIDERS_ICON;
     button.addEventListener('click', (): void => this.toggle());
+    this.suspendAction = host.suspendChat === null ? null : new SuspendChatAction((): ChatSnapshot | null => this.chat, (): void => this.suspendChat());
     root.append(
       this.values.model.root,
       this.values.effort.root,
       this.permissions.disclosure.root,
       this.skills.disclosure.root,
-      this.closeAction.root,
+      this.renderEndActions(),
     );
     document.addEventListener('pointerdown', (event: PointerEvent): void => this.dismissOutside(event), true);
   }
@@ -89,6 +95,7 @@ export class ChatSettingsPopover {
 
   hide(): void {
     this.closeAction.dismiss();
+    this.suspendAction?.dismiss();
     this.root.hidden = true;
     this.button.classList.remove(ACTIVE_CLASS);
   }
@@ -105,6 +112,13 @@ export class ChatSettingsPopover {
     if (this.chat === null) return;
     if (!this.isOpen) this.toggle();
     this.closeAction.ask();
+  }
+
+  // Suspend, asking inside the open popover when it would stop work, like Close chat does.
+  askToSuspend(): void {
+    if (this.chat === null || this.suspendAction === null) return;
+    if (!this.isOpen) this.toggle();
+    this.suspendAction.ask();
   }
 
   toggle(): void {
@@ -209,6 +223,20 @@ export class ChatSettingsPopover {
     const chat: ChatSnapshot | null = this.chat;
     this.hide();
     if (chat !== null) this.host.closeChat(chat.sessionId);
+  }
+
+  private suspendChat(): void {
+    const chat: ChatSnapshot | null = this.chat;
+    this.hide();
+    if (chat !== null) this.host.suspendChat?.(chat.sessionId);
+  }
+
+  // Both end the chat's process, so they sit apart from the settings, below a divider.
+  private renderEndActions(): HTMLElement {
+    const row: HTMLDivElement = element('div', 'chat-settings-danger');
+    if (this.suspendAction !== null) row.append(this.suspendAction.root);
+    row.append(this.closeAction.root);
+    return row;
   }
 
   private pickSkill(name: string): void {

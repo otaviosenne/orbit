@@ -5,17 +5,18 @@ import { renderCardDevices } from '../board/card-devices';
 import type { BoardZone } from '../board/drop-rules';
 import { element } from '../dom';
 import { formatDuration } from '../format';
-import { INFO_ICON, PIN_FILLED_ICON } from '../icons';
+import { INFO_ICON } from '../icons';
 import { chatColor, textOnChatColor } from '../palette';
 import { renderSpinner } from '../spinner';
 import { renderAgentRows } from './agent-rows';
 import type { BoardColumn, RestingPin, UnseenCheck } from './board-columns';
 import { toBoardColumns } from './board-columns';
+import { DROP_ZONE_ATTRIBUTE, SESSION_ATTRIBUTE } from './board-attributes';
+import { renderPinMark } from './card-marks';
+import { renderClosedCard } from './closed-card';
+import { renderSuspendedRow } from './suspended-row';
 
-export const SESSION_ATTRIBUTE: string = 'session';
-// Marks the Pinned row and each column with the zone a dragged card can be dropped on.
-export const DROP_ZONE_ATTRIBUTE: string = 'dropZone';
-export const DROP_ZONE_SELECTOR: string = '[data-drop-zone]';
+export { DROP_ZONE_ATTRIBUTE, DROP_ZONE_SELECTOR, SESSION_ATTRIBUTE } from './board-attributes';
 const PINNED_TITLE: string = 'Pinned';
 const COLUMNS_ZONE: BoardZone = 'columns';
 
@@ -29,18 +30,23 @@ export interface BoardMarks {
   readonly pinnedOrder: readonly string[];
   // Pinned chats that are closed now: they keep their place in the Pinned row, faded.
   readonly closedPins: readonly ChatSnapshot[];
+  // Suspended chats, newest first, in their own section under the columns (a suspended pin shows only there).
+  readonly suspended: readonly ChatSnapshot[];
+  readonly isSuspendedCollapsed: boolean;
   // Active or Idle chosen by dragging, for the rest of the chat's resting stretch.
   readonly restingPin: RestingPin;
   // The emulator and Chrome tab the chat has open, shown as icons beside its name.
   readonly devicesOf: (sessionId: string) => ChatDevices;
 }
 
-// Pinned chats in a row on top (they also keep their place below), then Needs you | Working | Active over Idle.
+// Pinned chats in a row on top (they also keep their place below), then Needs you | Working | Active over Idle,
+// then Suspended at the bottom.
 export function renderBoard(chats: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
   const layout: HTMLDivElement = element('div', 'board-layout');
   const pinned: ChatSnapshot[] = pinnedChats([...chats, ...marks.closedPins], marks.pinnedOrder);
   if (pinned.length > 0) layout.append(renderPinnedRow(pinned, marks, now));
   layout.append(renderColumns(chats, marks, now));
+  if (marks.suspended.length > 0) layout.append(renderSuspendedRow(marks.suspended, marks.isSuspendedCollapsed, marks.pinnedOrder));
   return layout;
 }
 
@@ -51,7 +57,7 @@ function pinnedChats(chats: readonly ChatSnapshot[], order: readonly string[]): 
 function renderPinnedRow(pinned: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
   const section: HTMLElement = renderPinnedSection();
   const cards: HTMLDivElement = element('div', 'pinned-cards');
-  cards.append(...pinned.map((chat: ChatSnapshot) => (marks.closedPins.includes(chat) ? renderClosedCard(chat) : renderCard(chat, marks, now))));
+  cards.append(...pinned.map((chat: ChatSnapshot) => (marks.closedPins.includes(chat) ? renderClosedCard(chat, 'closed-pin', true) : renderCard(chat, marks, now))));
   section.append(cards);
   return section;
 }
@@ -125,25 +131,4 @@ function renderTitle(name: string, devices: ChatDevices): HTMLElement {
   const title: HTMLDivElement = element('div', 'card-title');
   title.append(element('span', 'card-name', name), ...renderCardDevices(devices));
   return title;
-}
-
-// Pinning happens from the card's right-click menu or by dragging the card onto Pinned; a pinned chat shows a filled pin left of its time.
-function renderPinMark(): HTMLSpanElement {
-  const mark: HTMLSpanElement = element('span', 'card-pin');
-  mark.setAttribute('aria-label', 'Pinned');
-  mark.innerHTML = PIN_FILLED_ICON;
-  return mark;
-}
-
-// A pinned chat whose window is closed: same card, faded, saying so instead of a time.
-function renderClosedCard(chat: ChatSnapshot): HTMLElement {
-  const card: HTMLElement = element('article', 'card is-closed');
-  card.dataset[SESSION_ATTRIBUTE] = chat.sessionId;
-  card.style.setProperty('--chat', chatColor(chat.color));
-  const top: HTMLDivElement = element('div', 'card-top');
-  const time: HTMLSpanElement = element('span', 'card-time', 'Closed');
-  time.prepend(renderPinMark());
-  top.append(element('span', 'card-name', chat.name), time);
-  card.append(top, element('div', 'card-repo', chat.repository.name));
-  return card;
 }

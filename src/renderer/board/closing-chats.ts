@@ -1,7 +1,7 @@
 import type { ChatSnapshot } from '../../shared/types';
 
 // Long enough for kitty to close the window and the chat process to exit; past it the close did not take.
-const CLOSE_GRACE_MS: number = 10_000;
+export const CLOSE_GRACE_MS: number = 10_000;
 
 // Chats being closed leave the board at once instead of after the next poll; they come back if the close fails.
 export class ClosingChats {

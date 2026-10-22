@@ -2,6 +2,8 @@ import { element } from '../dom';
 
 export interface ConfirmChoice {
   readonly confirmLabel: string;
+  // A line above the buttons saying what confirming will do, for when the label alone does not.
+  readonly note?: string;
   readonly onConfirm: () => void;
 }
 
@@ -13,12 +15,14 @@ const GAP_PX: number = 6;
 // Escape cancels it.
 export class ConfirmPopover {
   private readonly root: HTMLDivElement = element('div', 'card-menu confirm-popover');
+  private readonly note: HTMLParagraphElement = element('p', 'confirm-popover-note');
   private choice: ConfirmChoice | null = null;
 
   constructor() {
     const confirm: HTMLButtonElement = this.button('card-menu-item is-destructive confirm-popover-yes', (): void => this.confirm());
     const cancel: HTMLButtonElement = this.button('card-menu-item', (): void => void this.dismiss(), 'Cancel');
-    this.root.append(confirm, cancel);
+    this.note.hidden = true;
+    this.root.append(this.note, confirm, cancel);
     document.body.append(this.root);
     document.addEventListener('pointerdown', (event: PointerEvent): void => {
       if (!this.root.contains(event.target as Node)) this.dismiss();
@@ -32,6 +36,8 @@ export class ConfirmPopover {
     this.choice = choice;
     const label: HTMLElement | null = this.root.querySelector('.confirm-popover-yes span');
     if (label !== null) label.textContent = choice.confirmLabel;
+    this.note.textContent = choice.note ?? '';
+    this.note.hidden = choice.note === undefined;
     this.root.classList.add(OPEN_CLASS);
     const box: DOMRect = anchor.getBoundingClientRect();
     const left: number = Math.min(box.left, window.innerWidth - this.root.offsetWidth - GAP_PX);

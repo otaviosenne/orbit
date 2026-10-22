@@ -35,6 +35,12 @@ export const FAQ: readonly FaqEntry[] = [
     answer: 'Right-click its card and pick Close, or open it and use Chat settings → Close chat ({key:chat-close} asks the same way). Its terminal window closes too.',
   },
   {
+    id: 'suspend-chat',
+    question: 'What does suspending a chat do?',
+    answer: 'It closes the chat but keeps it, faded, in Suspended at the bottom of the board (click its header to fold it). Use Suspend in Chat settings, on a card’s right-click menu, by dragging the card there, or {key:chat-suspend}. Send it a message, or press Reopen chat, and it comes back.',
+    desktopOnly: true,
+  },
+  {
     id: 'pin-chat',
     question: 'How do I pin a chat?',
     answer: 'Drag its card onto Pinned, right-click it and pick Pin, or press {key:chat-pin} with the chat open. Pinned chats also sit in a row above the columns; {key:open-pinned} opens them in order, and dragging one out unpins it.',
@@ -42,7 +48,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'reopen-chat',
     question: 'How do I reopen a closed chat?',
-    answer: 'Resume ({key:resume}) lists closed chats from every project; pick one to reopen it where it left off. A closed pinned chat stays faded in the Pinned row: open it and press Reopen chat.',
+    answer: 'Resume ({key:resume}) lists closed chats from every project; pick one to reopen it where it left off. A closed pinned chat stays faded in the Pinned row: open it and press Reopen chat, or just send it a message.',
   },
   {
     id: 'answer-questions',

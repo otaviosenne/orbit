@@ -4,14 +4,16 @@ import { dropActionFor, dropHint, isZoneInPlay } from '../src/renderer/board/dro
 import type { ColumnKey } from '../src/renderer/views/board-columns';
 
 const COLUMNS: readonly ColumnKey[] = ['needs', 'busy', 'active', 'idle'];
-const ZONES: readonly BoardZone[] = ['pinned', 'columns', ...COLUMNS];
+const ZONES: readonly BoardZone[] = ['pinned', 'columns', ...COLUMNS, 'suspended'];
 const NONE: DropAction = { kind: 'none' };
 
 function fromColumn(column: ColumnKey, isPinned: boolean = false): DragSource {
-  return { zone: column, isPinned };
+  return { zone: column, isPinned, canSuspend: true };
 }
 
-const FROM_PINNED_ROW: DragSource = { zone: 'pinned', isPinned: true };
+const FROM_PINNED_ROW: DragSource = { zone: 'pinned', isPinned: true, canSuspend: true };
+const FROM_CLOSED_PIN: DragSource = { zone: 'pinned', isPinned: true, canSuspend: false };
+const FROM_SUSPENDED: DragSource = { zone: 'suspended', isPinned: false, canSuspend: false };
 
 describe('dropActionFor', () => {
   it('moves a resting chat between Active and Idle', () => {
@@ -57,15 +59,42 @@ describe('dropActionFor', () => {
   });
 });
 
+describe('suspending by drag', () => {
+  it('suspends any open chat dropped on Suspended, from a column or the Pinned row', () => {
+    COLUMNS.forEach((column: ColumnKey) => expect(dropActionFor(fromColumn(column), 'suspended')).toEqual({ kind: 'suspend' }));
+    expect(dropActionFor(fromColumn('busy', true), 'suspended')).toEqual({ kind: 'suspend' });
+    expect(dropActionFor(FROM_PINNED_ROW, 'suspended')).toEqual({ kind: 'suspend' });
+  });
+
+  it('does not suspend a closed pin (no process to close), nor anything where suspending is not offered', () => {
+    expect(dropActionFor(FROM_CLOSED_PIN, 'suspended')).toEqual(NONE);
+    expect(dropActionFor({ zone: 'idle', isPinned: false, canSuspend: false }, 'suspended')).toEqual(NONE);
+    expect(dropActionFor(FROM_CLOSED_PIN, 'columns')).toEqual({ kind: 'unpin' });
+  });
+
+  it('does nothing with a suspended card wherever it is dropped', () => {
+    ZONES.forEach((zone: BoardZone) => expect(dropActionFor(FROM_SUSPENDED, zone)).toEqual(NONE));
+  });
+});
+
 describe('isZoneInPlay', () => {
-  it('offers a Pinned row card only Pinned and the whole columns area', () => {
+  it('offers a Pinned row card only Pinned, the whole columns area and Suspended', () => {
     const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_PINNED_ROW, zone));
+    expect(inPlay).toEqual(['pinned', 'columns', 'suspended']);
+  });
+
+  it('offers a closed pin only Pinned and the whole columns area', () => {
+    const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_CLOSED_PIN, zone));
     expect(inPlay).toEqual(['pinned', 'columns']);
   });
 
-  it('offers a column card Pinned and every single column', () => {
+  it('offers a column card Pinned, every single column and Suspended', () => {
     const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(fromColumn('idle'), zone));
-    expect(inPlay).toEqual(['pinned', ...COLUMNS]);
+    expect(inPlay).toEqual(['pinned', ...COLUMNS, 'suspended']);
+  });
+
+  it('offers a suspended card nothing, so no zone lights up or fades', () => {
+    expect(ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_SUSPENDED, zone))).toEqual([]);
   });
 });
 
@@ -74,6 +103,7 @@ describe('dropHint', () => {
     expect(dropHint({ kind: 'pin' })).toBe('Pin');
     expect(dropHint({ kind: 'unpin' })).toBe('Unpin');
     expect(dropHint({ kind: 'rest', column: 'active' })).toBe('Move here');
+    expect(dropHint({ kind: 'suspend' })).toBe('Suspend');
     expect(dropHint(NONE)).toBeNull();
   });
 });

@@ -40,7 +40,7 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
 /* ---------- Touch: 44px targets, nothing that only appears on hover ---------- */
 @media (pointer: coarse) {
   .tab, .button, .link-button, .resume-button, .new-chat-main, .new-chat-more, .card-menu-item, .new-chat-item,
-  .agent-strip-row, .agent-strip-toggle, #composer-send { min-height: var(--web-touch); }
+  .agent-strip-row, .agent-strip-toggle, .suspended-toggle, #composer-send { min-height: var(--web-touch); }
   .icon-button, .composer-attach { min-width: var(--web-touch); min-height: var(--web-touch); }
   .sheet-dot { margin: 0 6px; }
   .agent-strip-stop { opacity: 0.6; width: 32px; height: 32px; }
@@ -54,6 +54,7 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
 @media (hover: none) {
   .card:hover { background: var(--card); opacity: 1; }
   .card.is-closed:hover { opacity: 0.5; }
+  .card.is-suspended:hover { opacity: 0.6; }
   .lane:hover { background: transparent; }
 }
 
@@ -74,6 +75,11 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
     padding: 0 var(--web-gutter) calc(var(--web-gutter) + env(safe-area-inset-bottom));
   }
   .board .column-stack { display: contents; }
+  /* Suspended is the last group, foldable like on the desktop; it takes over the board's safe-area padding */
+  .board-layout:has(> .suspended-row) > .board { padding-bottom: 0; }
+  .suspended-row { margin: 10px var(--web-gutter) calc(var(--web-gutter) + env(safe-area-inset-bottom)); }
+  .suspended-cards { flex-direction: column; flex-wrap: nowrap; overflow: visible; }
+  .suspended-cards .card { width: auto; }
   .board .column, .column-stack .column-active, .column-stack .column-idle { flex: none; min-height: auto; max-height: none; overflow: visible; }
 
   .settings { padding: 4px var(--web-gutter) calc(var(--web-gutter) + env(safe-area-inset-bottom)); }

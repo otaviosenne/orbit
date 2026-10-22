@@ -3,22 +3,19 @@ import { ConfirmPopover } from '../confirm-popover';
 
 const CLOSE_LABEL: string = 'Close chat';
 
-// The popover's last row: closes the chat, after the same Close / Cancel confirmation used elsewhere.
+// Closes the chat, after the same Close / Cancel confirmation used elsewhere.
 export class CloseChatAction {
-  readonly root: HTMLDivElement = element('div', 'chat-settings-danger');
+  readonly root: HTMLButtonElement = element('button', 'chat-settings-end chat-settings-close', CLOSE_LABEL);
   private readonly confirm: ConfirmPopover = new ConfirmPopover();
 
-  private readonly button: HTMLButtonElement = element('button', 'chat-settings-close', CLOSE_LABEL);
-
   constructor(private readonly onConfirm: () => void) {
-    this.button.type = 'button';
-    this.button.addEventListener('click', (): void => this.ask());
-    this.root.append(this.button);
+    this.root.type = 'button';
+    this.root.addEventListener('click', (): void => this.ask());
   }
 
   // Anchored on the button, so the popover holding it must be open first.
   ask(): void {
-    this.confirm.open(this.button, { confirmLabel: CLOSE_LABEL, onConfirm: this.onConfirm });
+    this.confirm.open(this.root, { confirmLabel: CLOSE_LABEL, onConfirm: this.onConfirm });
   }
 
   dismiss(): void {

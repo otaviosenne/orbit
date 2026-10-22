@@ -59,6 +59,8 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { kind: 'action', id: 'chat-scroll-up', group: 'Open chat', description: 'Scroll the thread up, even while typing', keys: [{ key: 'ArrowUp', alt: true }], repeats: true, whileTyping: true },
   { kind: 'action', id: 'chat-scroll-down', group: 'Open chat', description: 'Scroll the thread down, even while typing', keys: [{ key: 'ArrowDown', alt: true }], repeats: true, whileTyping: true },
   { kind: 'action', id: 'chat-interrupt', group: 'Open chat', description: 'Interrupt Claude while it works (asks first)', keys: [{ key: 'i' }] },
+  // Z for sleep; it asks first only when the chat is working, running agents or background shells.
+  { kind: 'action', id: 'chat-suspend', group: 'Open chat', description: 'Suspend the chat (closes it, keeps it under Suspended)', keys: [{ key: 'z' }], desktopOnly: true },
   { kind: 'action', id: 'chat-close', group: 'Open chat', description: 'Close the chat (asks first)', keys: [{ key: 'Backspace', ctrl: true }], desktopOnly: true },
   { kind: 'reference', id: 'thread-zoom', group: 'Open chat', description: 'Make the thread text bigger or smaller', keys: [{ key: 'Wheel', ctrl: true }] },
 

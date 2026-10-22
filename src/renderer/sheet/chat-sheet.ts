@@ -42,6 +42,15 @@ export interface OptimisticEdits {
   show(sessionId: string, patch: ChatPatch): void;
   undo(sessionId: string, field: keyof ChatPatch): void;
 }
+// What the panel may do with a chat's process beyond the chat itself; the popped-out chat window offers neither.
+export interface ChatLifecycle {
+  // Closes the chat into the board's Suspended section; null where suspending is not offered.
+  readonly suspend: ((sessionId: string) => void) | null;
+  // Starts reopening the closed chat shown, resolving once its starting placeholder is up; null where there is none.
+  readonly reopen: ((sessionId: string) => Promise<void>) | null;
+}
+
+const NO_LIFECYCLE: ChatLifecycle = { suspend: null, reopen: null };
 const PANEL_OPEN_CLASS: string = 'panel-open';
 const CLOSED_CLASS: string = 'is-closed';
 
@@ -72,14 +81,12 @@ export class ChatSheet {
   // Sends written while the chat was still starting, released once it is live (or dropped if it never is).
   private liveWaiters: ((chat: ChatSnapshot | null) => void)[] = [];
   // Model, effort and skills, behind the header's sliders button.
-  private readonly settings: ChatSettingsPopover = new ChatSettingsPopover(requireElement('#action-settings'), requireElement('#chat-settings'), {
-    insertSkill: (name: string): void => this.composer.insertCommand(`/${name} `),
-    report: (result: ActionResult, successText: string): void => this.report(result, successText),
-    closeChat: (sessionId: string): void => this.onCloseChat(sessionId),
-  });
+  private readonly settings: ChatSettingsPopover;
   // The Emulator and Browser pills, for a chat that tests on an emulator or in Chrome.
   private readonly devices: DeviceLinks = new DeviceLinks((text: string, isError: boolean): void => this.showStatus(text, isError));
   private chat: ChatSnapshot | null = null;
+  // Why the closed chat shown has no process: "Closed" (a closed pin) or "Suspended".
+  private closedLabel: string = '';
   private statusTimer: number | undefined;
   private readonly navigator: MessageNavigator;
   private readonly threadScroller: ThreadScroller = new ThreadScroller(requireElement('#sheet-messages'));
@@ -90,8 +97,15 @@ export class ChatSheet {
     onClose: () => void,
     private readonly edits: OptimisticEdits,
     onThreadChange: () => void,
-    private readonly onCloseChat: (sessionId: string) => void,
+    onCloseChat: (sessionId: string) => void,
+    private readonly lifecycle: ChatLifecycle = NO_LIFECYCLE,
   ) {
+    this.settings = new ChatSettingsPopover(requireElement('#action-settings'), requireElement('#chat-settings'), {
+      insertSkill: (name: string): void => this.composer.insertCommand(`/${name} `),
+      report: (result: ActionResult, successText: string): void => this.report(result, successText),
+      closeChat: onCloseChat,
+      suspendChat: lifecycle.suspend,
+    });
     this.placeholder = new PendingPlaceholder(this.root, onClose);
     this.agentView = new AgentView(
       this.root,
@@ -168,6 +182,10 @@ export class ChatSheet {
     if (this.showsLiveChat) this.settings.askToClose();
   }
 
+  askToSuspend(): void {
+    if (this.showsLiveChat) this.settings.askToSuspend();
+  }
+
   askToInterrupt(): void {
     if (this.showsLiveChat) this.working.askToInterrupt();
   }
@@ -213,8 +231,9 @@ export class ChatSheet {
     this.settleWaiters(null);
   }
 
-  // A pinned chat that is closed: its history, read-only, with Reopen in place of the composer.
-  openClosed(chat: ChatSnapshot): void {
+  // A closed pinned or suspended chat: its history, read-only, with Reopen over the composer; sending reopens it.
+  openClosed(chat: ChatSnapshot, label: string): void {
+    this.closedLabel = label;
     this.open(chat);
     this.root.classList.add(CLOSED_CLASS);
     this.update(chat);
@@ -254,7 +273,7 @@ export class ChatSheet {
     const agent: AgentTitle | null = this.agentView.title(now);
     this.name.textContent = agent?.name ?? chat.name;
     if (agent !== null) return void this.meta.replaceChildren(document.createTextNode(agent.meta));
-    if (this.isShowingClosed) return void this.meta.replaceChildren(document.createTextNode(`${chat.repository.name} · Closed`));
+    if (this.isShowingClosed) return void this.meta.replaceChildren(document.createTextNode(`${chat.repository.name} · ${this.closedLabel}`));
     const status: string = `${chat.repository.name} · ${chatStatusLabel(chat.status)} for ${formatDuration(statusAge(chat, now))}`;
     this.meta.replaceChildren(...(chat.status === 'busy' ? [renderSpinner()] : []), document.createTextNode(status));
   }
@@ -352,6 +371,8 @@ export class ChatSheet {
   }
 
   private async send(text: string, attachments: readonly AttachmentUpload[]): Promise<boolean> {
+    // The placeholder must be up before waiting: opening it drops any waiter already registered.
+    if (this.isShowingClosed) await this.startReopen();
     if (this.chat === null && this.placeholder.isActive) this.placeholder.showQueued(text.trim());
     const chat: ChatSnapshot | null = await this.whenLive();
     if (chat === null) return false;
@@ -364,8 +385,14 @@ export class ChatSheet {
     return result?.ok ?? false;
   }
 
+  // A closed chat that did not start reopening has no process to deliver to, so the message stays in the composer.
+  private async startReopen(): Promise<void> {
+    const sessionId: string | null = this.sessionId;
+    if (sessionId !== null && this.lifecycle.reopen !== null) await this.lifecycle.reopen(sessionId);
+  }
+
   private whenLive(): Promise<ChatSnapshot | null> {
-    if (this.chat !== null) return Promise.resolve(this.chat);
+    if (this.chat !== null) return Promise.resolve(this.isShowingClosed ? null : this.chat);
     if (!this.placeholder.isActive) return Promise.resolve(null);
     return new Promise((resolve: (chat: ChatSnapshot | null) => void): void => void this.liveWaiters.push(resolve));
   }

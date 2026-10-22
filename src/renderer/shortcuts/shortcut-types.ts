@@ -31,6 +31,7 @@ export type ActionShortcutId =
   | 'chat-scroll-up'
   | 'chat-scroll-down'
   | 'chat-interrupt'
+  | 'chat-suspend'
   | 'chat-close'
   | 'timeline-mode'
   | 'timeline-scope'

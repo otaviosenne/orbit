@@ -1,35 +1,43 @@
 import type { ColumnKey, RestingColumn } from '../views/board-columns';
 
 // Every place on the board a card can be picked up from or dropped on. "columns" is the whole area under the
-// Pinned row, which a card taken out of Pinned treats as one zone.
-export type BoardZone = 'pinned' | 'columns' | ColumnKey;
+// Pinned row, which a card taken out of Pinned treats as one zone; "suspended" is the section under the columns.
+export type BoardZone = 'pinned' | 'columns' | 'suspended' | ColumnKey;
 
 export interface DragSource {
   // Where the card was picked up: a pinned chat has a card in the Pinned row and one in its column.
   readonly zone: BoardZone;
   readonly isPinned: boolean;
+  // False for a closed chat's stand-in (no process to close) and on Orbit Web, where closing chats is desktop-only.
+  readonly canSuspend: boolean;
 }
 
 export type DropAction =
   | { readonly kind: 'none' }
   | { readonly kind: 'pin' }
   | { readonly kind: 'unpin' }
+  | { readonly kind: 'suspend' }
   | { readonly kind: 'rest'; readonly column: RestingColumn };
 
 const NO_ACTION: DropAction = { kind: 'none' };
 const PIN: DropAction = { kind: 'pin' };
 const UNPIN: DropAction = { kind: 'unpin' };
+const SUSPEND: DropAction = { kind: 'suspend' };
 
 // A card taken out of Pinned only means "unpin", so the columns act as one zone for it; a column card keeps the
-// individual zones (Pinned and each column).
+// individual zones (Pinned and each column). Any open chat can be dropped on Suspended; a suspended card is
+// reopened from its panel, never by a drop, so nothing is in play for it.
 export function isZoneInPlay(source: DragSource, zone: BoardZone): boolean {
+  if (source.zone === 'suspended') return false;
+  if (zone === 'suspended') return source.canSuspend;
   return source.zone === 'pinned' ? zone === 'pinned' || zone === 'columns' : zone !== 'columns';
 }
 
 // Needs you and Working follow the chat's live state, so a drop can never put a card there; only the
-// Pinned row and the Active/Idle split are choices the user owns.
+// Pinned row, the Active/Idle split and suspending are choices the user owns.
 export function dropActionFor(source: DragSource, to: BoardZone): DropAction {
   if (to === source.zone || !isZoneInPlay(source, to)) return NO_ACTION;
+  if (to === 'suspended') return SUSPEND;
   if (source.zone === 'pinned') return UNPIN;
   if (to === 'pinned') return source.isPinned ? NO_ACTION : PIN;
   const rest: RestingColumn | null = restingMove(source.zone, to);
@@ -49,6 +57,7 @@ function isRestingColumn(zone: BoardZone): zone is RestingColumn {
 export function dropHint(action: DropAction): string | null {
   if (action.kind === 'pin') return 'Pin';
   if (action.kind === 'unpin') return 'Unpin';
+  if (action.kind === 'suspend') return 'Suspend';
   if (action.kind === 'rest') return 'Move here';
   return null;
 }

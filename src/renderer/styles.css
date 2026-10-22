@@ -280,6 +280,23 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
    height) the row scrolls down instead of pushing the columns away */
 .pinned-cards { display: flex; flex-wrap: wrap; gap: 8px; overflow-y: auto; padding: 6px; margin: -4px; }
 .pinned-cards .card { width: 250px; }
+/* Suspended chats at the bottom, the opposite of Pinned: a foldable strip of faded cards, one line high
+   (board/fit-suspended-row.ts caps it, the rest scroll); folded it is only its header */
+.suspended-row { flex: none; margin: 0 20px 20px; padding: 6px 10px; border-radius: 14px; background: var(--well); }
+.suspended-row:not(.is-collapsed) { padding-bottom: 10px; }
+.board-layout:has(> .suspended-row) > .board { padding-bottom: 12px; }
+.suspended-row .column-title { padding: 2px 4px; }
+.suspended-toggle {
+  display: flex; align-items: center; gap: 8px; padding: 0; border: 0; border-radius: 6px;
+  background: transparent; color: inherit; font: inherit; cursor: default;
+}
+.suspended-caret { display: grid; place-items: center; width: 12px; color: var(--tertiary); transition: transform 0.15s; }
+.suspended-caret svg { width: 10px; height: 10px; fill: currentColor; }
+.suspended-row.is-collapsed .suspended-caret { transform: rotate(-90deg); }
+.suspended-toggle:hover .suspended-caret { color: var(--secondary); }
+.suspended-cards { display: flex; flex-wrap: wrap; gap: 8px; overflow-y: auto; padding: 6px; margin: 2px -4px -4px; }
+.suspended-cards .card { width: 250px; }
+.suspended-row.is-drop-placeholder .suspended-cards { min-height: 44px; }
 .board { height: 100%; display: grid; grid-template-columns: 0.9fr 1.2fr 1fr; gap: 12px; padding: 0 20px 20px; }
 .column { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; padding: 10px; border-radius: 14px; background: var(--well); }
 .column-title { display: flex; align-items: center; gap: 8px; padding: 2px 4px 4px; font-size: 13px; font-weight: 700; }
@@ -886,17 +903,24 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 .turn::before, .turn::after { content: ''; flex: 1; height: 1px; background: var(--separator); }
 
 /* Floating composer: no bar behind it, the thread scrolls underneath; only the field itself is frosted */
-/* A pinned chat that is closed: its history reads as usual, but Reopen stands where the composer would be */
-.reopen-bar { display: none; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; justify-content: center; padding: 12px 18px 16px; }
-.reopen-bar .button { padding: 7px 18px; border-radius: 16px; }
+/* A closed pinned or suspended chat: its history reads as usual, with Reopen just above the composer; sending a
+   message reopens the chat too, and the message goes out once it is live */
+.reopen-bar {
+  display: none; position: absolute; left: 0; right: 0; bottom: var(--composer-space, 64px); z-index: 2;
+  justify-content: center; padding: 0 18px 8px; pointer-events: none;
+}
+.reopen-bar .button { padding: 7px 18px; border-radius: 16px; pointer-events: auto; }
 .sheet.is-closed .reopen-bar { display: flex; }
-.sheet.is-closed .composer, .sheet.is-closed .working-indicator { display: none; }
+.sheet.is-closed .working-indicator, .sheet.is-closed #composer-mic { display: none; }
 .sheet.is-closed #action-focus, .sheet.is-closed #action-window, .sheet.is-closed #action-rename, .sheet.is-closed #action-color, .sheet.is-closed #action-settings {
   opacity: 0.45; pointer-events: none;
 }
-.sheet.is-closed .sheet-messages { padding-bottom: 72px; }
+.sheet.is-closed .sheet-messages { padding-bottom: calc(var(--composer-space, 64px) + 48px); }
 .card.is-closed { opacity: 0.5; }
 .card.is-closed:hover { opacity: 0.7; }
+/* Suspended chats were put away on purpose: a little less faded than a closed pin, and whole again on hover */
+.card.is-suspended { opacity: 0.6; }
+.card.is-suspended:hover { opacity: 1; }
 .composer {
   position: absolute; left: 0; right: 0; bottom: 0;
   display: flex; gap: 8px; align-items: flex-end; padding: var(--composer-padding-top) 18px 14px;
@@ -1078,6 +1102,9 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 /* Two choices only: no divider above the destructive one */
 .confirm-popover .card-menu-item.is-destructive { margin-top: 0; }
 .confirm-popover .card-menu-item.is-destructive::before { display: none; }
+/* What confirming would stop, such as a suspend cutting a turn short */
+.confirm-popover-note { max-width: 230px; margin: 0; padding: 5px 10px 6px; color: var(--secondary); font-size: 12px; line-height: 1.4; }
+.confirm-popover-note[hidden] { display: none; }
 
 /* ---------- Popped-out chat window ---------- */
 /* No board here: the panel is the whole window, so it neither slides, resizes, nor floats over anything */
@@ -1435,12 +1462,15 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .chat-settings-disclosure:not(.is-open) .chat-settings-caret { transform: rotate(-90deg); }
 .chat-settings-body { display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px 8px 10px; }
 .chat-settings-body[hidden] { display: none; }
-/* Close chat sits apart from the settings, below a divider, like the card menu's destructive item */
-.chat-settings-danger { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--separator); }
-.chat-settings-close {
-  width: 100%; padding: 8px; border: 0; border-radius: 7px; cursor: default; text-align: left;
-  background: transparent; color: var(--danger); font: inherit; font-size: 13px; font-weight: 500;
+/* Suspend and Close chat sit side by side apart from the settings, below a divider, like the card menu's destructive item */
+.chat-settings-danger { display: flex; gap: 4px; margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--separator); }
+.chat-settings-end {
+  flex: 1 1 0; min-width: 0; padding: 8px; border: 0; border-radius: 7px; cursor: default; text-align: left;
+  background: transparent; font: inherit; font-size: 13px; font-weight: 500;
 }
+.chat-settings-suspend { color: var(--text); }
+.chat-settings-suspend:hover { background: var(--disclosure-hover); }
+.chat-settings-close { color: var(--danger); }
 .chat-settings-close:hover { background: var(--danger); color: #ffffff; }
 
 /* ---------- Keyboard: the board's focus ring and Help (shortcuts and common questions, one tab at a time) ---------- */

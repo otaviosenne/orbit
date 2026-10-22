@@ -1,4 +1,5 @@
 import { DROP_ZONE_SELECTOR, renderPinnedDropZone } from '../views/board-view';
+import { renderSuspendedDropZone } from '../views/suspended-row';
 import { zoneOf } from './drag-source';
 import { DropHint } from './drop-hint';
 import type { BoardZone, DragSource, DropAction } from './drop-rules';
@@ -17,12 +18,14 @@ interface Zone {
 // The board's drop zones for one drag: which take the card, which are inert, and the one under the pointer.
 export class DropZones {
   private readonly zones: readonly Zone[];
-  private readonly placeholder: HTMLElement | null;
+  private readonly placeholders: readonly HTMLElement[];
   private readonly hint: DropHint = new DropHint();
   private hovered: Zone | null = null;
 
   constructor(root: HTMLElement, source: DragSource) {
-    this.placeholder = addMissingPinnedZone(root, source);
+    this.placeholders = [addMissingPinnedZone(root, source), addMissingSuspendedZone(root, source)].filter(
+      (zone: HTMLElement | null): zone is HTMLElement => zone !== null,
+    );
     this.zones = [...root.querySelectorAll<HTMLElement>(DROP_ZONE_SELECTOR)].flatMap((zone: HTMLElement): Zone[] => toZone(zone, source));
     this.zones.forEach((zone: Zone) => markZone(zone, source));
   }
@@ -43,7 +46,7 @@ export class DropZones {
 
   dispose(): void {
     this.hint.hide();
-    this.placeholder?.remove();
+    this.placeholders.forEach((zone: HTMLElement): void => zone.remove());
     this.zones.forEach((zone: Zone) => zone.element.classList.remove(ACCEPTS_CLASS, INERT_CLASS, HOVER_CLASS));
   }
 
@@ -56,9 +59,18 @@ export class DropZones {
 // Pinning needs somewhere to drop on even when nothing is pinned yet.
 function addMissingPinnedZone(root: HTMLElement, source: DragSource): HTMLElement | null {
   const layout: HTMLElement | null = root.querySelector<HTMLElement>('.board-layout');
-  if (source.isPinned || layout === null || layout.querySelector('.pinned-row') !== null) return null;
+  if (source.isPinned || !isZoneInPlay(source, 'pinned') || layout === null || layout.querySelector('.pinned-row') !== null) return null;
   const zone: HTMLElement = renderPinnedDropZone();
   layout.prepend(zone);
+  return zone;
+}
+
+// Suspending by drag needs somewhere to drop on even when nothing is suspended yet.
+function addMissingSuspendedZone(root: HTMLElement, source: DragSource): HTMLElement | null {
+  const layout: HTMLElement | null = root.querySelector<HTMLElement>('.board-layout');
+  if (!isZoneInPlay(source, 'suspended') || layout === null || layout.querySelector('.suspended-row') !== null) return null;
+  const zone: HTMLElement = renderSuspendedDropZone();
+  layout.append(zone);
   return zone;
 }
 

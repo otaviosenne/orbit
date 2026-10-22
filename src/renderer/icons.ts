@@ -34,6 +34,8 @@ import history from '@phosphor-icons/core/assets/bold/clock-counter-clockwise-bo
 import search from '@phosphor-icons/core/assets/regular/magnifying-glass.svg';
 import funnel from '@phosphor-icons/core/assets/regular/funnel-simple.svg';
 import sliders from '@phosphor-icons/core/assets/regular/sliders-horizontal.svg';
+import moon from '@phosphor-icons/core/assets/regular/moon.svg';
+import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg';
 import orbitO from '../../assets/orbit-o.svg';
 import orbitSpark from '../../assets/orbit-spark.svg';
 
@@ -74,6 +76,9 @@ export const HISTORY_ICON: string = history;
 export const SEARCH_ICON: string = search;
 export const FILTER_ICON: string = funnel;
 export const SLIDERS_ICON: string = sliders;
+// A chat put to sleep: closed, kept at the bottom of the board to come back to.
+export const SUSPEND_ICON: string = moon;
+export const REOPEN_ICON: string = arrowCounterClockwise;
 // The app's own wordmark pieces, drawn for this project from the chosen concept.
 export const ORBIT_O: string = orbitO;
 export const ORBIT_SPARK: string = orbitSpark;
