@@ -31,7 +31,7 @@ export interface BoardMarks {
   readonly pinnedOrder: readonly string[];
   // Pinned chats that are closed now: they keep their place in the Pinned row, faded.
   readonly closedPins: readonly ChatSnapshot[];
-  // Suspended chats, newest first, in their own section under the columns (a suspended pin stays in Pinned instead).
+  // Suspended chats, newest first, in their own section under the columns (a suspended pin is in Pinned too).
   readonly suspended: readonly ChatSnapshot[];
   readonly isSuspendedCollapsed: boolean;
   // Active or Idle chosen by dragging, for the rest of the chat's resting stretch.
@@ -47,9 +47,8 @@ export function renderBoard(chats: readonly ChatSnapshot[], marks: BoardMarks, n
   const pinned: ChatSnapshot[] = pinnedChats([...chats, ...marks.closedPins], marks.pinnedOrder);
   if (pinned.length > 0) layout.append(renderPinnedRow(pinned, marks, now));
   layout.append(renderColumns(chats, marks, now));
-  // A suspended pin stays in the Pinned row, so the Suspended section holds only the unpinned ones.
-  const unpinned: ChatSnapshot[] = marks.suspended.filter((chat: ChatSnapshot) => !marks.pinnedOrder.includes(chat.sessionId));
-  if (unpinned.length > 0) layout.append(renderSuspendedRow(unpinned, marks.isSuspendedCollapsed, marks.pinnedOrder));
+  // Every suspended chat is listed here, a pinned one too: it also stays in the Pinned row, labelled Suspended.
+  if (marks.suspended.length > 0) layout.append(renderSuspendedRow(marks.suspended, marks.isSuspendedCollapsed, marks.pinnedOrder));
   return layout;
 }
 

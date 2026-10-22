@@ -16,7 +16,7 @@ export interface ClosedChat {
 }
 
 // The board's closed chats: pinned ones in the Pinned row, suspended ones in Suspended. A chat both pinned and
-// suspended stays in Pinned (labelled Suspended) and is left out of the Suspended section.
+// suspended is in both: in Pinned (labelled Suspended) and in the Suspended section.
 export class ClosedChats {
   constructor(
     private readonly pins: PinnedChats,
