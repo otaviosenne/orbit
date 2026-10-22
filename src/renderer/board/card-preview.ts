@@ -85,7 +85,8 @@ export class CardPreview {
     const right: number = this.pointerX + POINTER_OFFSET_PX;
     const below: number = this.pointerY + POINTER_OFFSET_PX;
     const left: number = right + preview.width <= window.innerWidth - EDGE_PX ? right : this.pointerX - POINTER_OFFSET_PX - preview.width;
-    const top: number = below + preview.height <= window.innerHeight - EDGE_PX ? below : this.pointerY - POINTER_OFFSET_PX - preview.height;
+    // A tall message slides up until it fits, rather than leaving the window; one taller than the window starts at its top.
+    const top: number = Math.min(below, window.innerHeight - EDGE_PX - preview.height);
     this.root.style.left = `${Math.max(EDGE_PX, left)}px`;
     this.root.style.top = `${Math.max(EDGE_PX, top)}px`;
   }
