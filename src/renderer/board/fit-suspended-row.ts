@@ -1,12 +1,28 @@
 import { isPhoneLayout } from '../host';
-import { fitCardRows } from './fit-card-rows';
+import { cardsPerLineOf, suspendedLines } from './suspended-lines';
 
 const CARDS_SELECTOR: string = '.suspended-row .suspended-cards';
-// Suspended chats are put away, so they get one compact line and the rest scroll; the columns keep their height.
-const MAX_LINES: number = 1;
-// A phone lists the whole board in one scroll, so every suspended chat shows there.
-const UNCAPPED: number = Number.POSITIVE_INFINITY;
+const CARD_SELECTOR: string = ':scope > .card';
+const LINES_PROPERTY: string = '--suspended-lines';
 
+// Suspended chats are put away: up to two lines of cards, then the row scrolls sideways so the columns keep their
+// height. A phone lists the whole board in one scroll, so there they stack in one column and none are hidden.
 export function fitSuspendedRow(root: HTMLElement): void {
-  fitCardRows(root.querySelector<HTMLElement>(CARDS_SELECTOR), isPhoneLayout() ? UNCAPPED : MAX_LINES);
+  const cards: HTMLElement | null = root.querySelector<HTMLElement>(CARDS_SELECTOR);
+  if (cards === null) return;
+  const count: number = cards.querySelectorAll(CARD_SELECTOR).length;
+  const first: HTMLElement | null = cards.querySelector<HTMLElement>(CARD_SELECTOR);
+  const style: CSSStyleDeclaration = getComputedStyle(cards);
+  const padding: number = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const perLine: number = first === null ? 1 : cardsPerLineOf(cards.clientWidth - padding, first.offsetWidth, parseFloat(style.columnGap) || 0);
+  const lines: number = isPhoneLayout() ? Math.max(count, 1) : suspendedLines(count, perLine);
+  cards.style.setProperty(LINES_PROPERTY, String(lines));
+  cards.addEventListener('wheel', (event: WheelEvent): void => scrollSideways(cards, event), { passive: false });
+}
+
+// A mouse wheel turns the row sideways, since the row has nothing to scroll vertically.
+function scrollSideways(cards: HTMLElement, event: WheelEvent): void {
+  if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || cards.scrollWidth <= cards.clientWidth) return;
+  event.preventDefault();
+  cards.scrollLeft += event.deltaY;
 }
