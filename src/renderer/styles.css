@@ -1316,7 +1316,13 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .question-problem-link:hover { text-decoration: underline; }
 /* One step at a time: the line between questions only belongs to cards that show them all */
 .question-card.is-stepped .question + .question { padding-top: 0; border-top: 0; }
-.question-card.is-sending .question-submit { opacity: 0.7; }
+/* Driving the chat's picker takes a moment; a spinning ring in Submit shows it is on its way, not frozen */
+.question-card.is-sending .question-submit { opacity: 0.85; display: inline-flex; align-items: center; gap: 7px; }
+.question-card.is-sending .question-submit::before {
+  content: ''; flex: none; width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .question-card.is-sending .question-submit::before { animation-duration: 2s; } }
 /* Once settled, the question folds into one line in the thread, like a tool call */
 .question-summary-title { flex: none; font-weight: 600; color: var(--secondary); }
 .question-summary.is-answered .question-summary-title { color: var(--tag-green); }
