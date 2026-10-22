@@ -36,6 +36,9 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
   { command: { action: 'view', view: 'timeline' }, phrases: [['orbit', 'timeline'], ['orbit', 'linha', 'do', 'tempo']] },
   { command: { action: 'view', view: 'list' }, phrases: [['orbit', 'list'], ['orbit', 'lista']] },
   { command: { action: 'view', view: 'settings' }, phrases: [['orbit', 'settings'], ['orbit', 'configuracoes'], ['orbit', 'configuracao']] },
+  // The open chat's Emulator or Browser pill: nothing happens when it has none.
+  { command: { action: 'device', device: 'emulator' }, phrases: [['orbit', 'emulador'], ['orbit', 'emulator']] },
+  { command: { action: 'device', device: 'browser' }, phrases: [['orbit', 'navegador'], ['orbit', 'browser']] },
   { command: { action: 'new-chat' }, phrases: [['orbit', 'new', 'chat'], ['orbit', 'novo', 'chat'], ['orbit', 'nova', 'conversa']] },
   { command: { action: 'resume' }, phrases: [['orbit', 'resume'], ['orbit', 'retomar']] },
   {

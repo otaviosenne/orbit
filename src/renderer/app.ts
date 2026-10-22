@@ -664,6 +664,11 @@ installVoiceCommandContext(createNavigationContext({
   openChat: openChatByVoice,
   closePanel: closeSheet,
   selectors: voiceSelectors,
+  // The pills are hidden for a chat without that device, so a hidden one means there is nothing to open.
+  openDevice: (device: 'emulator' | 'browser'): void => {
+    const pill: HTMLButtonElement = requireElement(device === 'emulator' ? '#action-emulator' : '#action-browser');
+    if (!pill.hidden) pill.click();
+  },
   // Only one popover at a time.
   openNewChat: (): void => {
     resumeButton.close();

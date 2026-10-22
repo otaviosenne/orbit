@@ -7,6 +7,7 @@ export type VoiceCommand =
   | { readonly action: 'clear' }
   | { readonly action: 'view'; readonly view: ViewName }
   | { readonly action: 'choose'; readonly number: number }
+  | { readonly action: 'device'; readonly device: 'emulator' | 'browser' }
   | { readonly action: 'new-chat' }
   | { readonly action: 'resume' }
   | { readonly action: 'cancel' };

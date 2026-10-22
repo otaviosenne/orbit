@@ -27,6 +27,7 @@ interface Calls {
   reports: string[];
   closes: number;
   newChats: number;
+  devices: string[];
 }
 
 let calls: Calls;
@@ -39,6 +40,7 @@ function install(): void {
       calls.chats.push(number);
       return number <= 5;
     },
+    openDevice: (device: string): number => calls.devices.push(device),
     openNewChat: (): number => calls.newChats++,
     openResume: (): void => undefined,
     pick: (number: number): boolean => {
@@ -69,7 +71,7 @@ function handsFreeSegment(): { input: FakeInput; say: (text: string, isFinal: bo
 }
 
 beforeEach(() => {
-  calls = { views: [], chats: [], picks: [], reports: [], closes: 0, newChats: 0 };
+  calls = { views: [], chats: [], picks: [], reports: [], closes: 0, newChats: 0, devices: [] };
   isSelectorOpen = false;
   install();
 });

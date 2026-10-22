@@ -12,6 +12,8 @@ export interface NavigationDeps {
   readonly closePanel: () => void;
   // New chat and Resume, the popovers whose options have numbers.
   readonly selectors: readonly VoiceSelector[];
+  // The open chat's Emulator or Browser pill; nothing when the chat has none.
+  readonly openDevice: (device: 'emulator' | 'browser') => void;
   readonly openNewChat: () => void;
   readonly openResume: () => void;
 }
@@ -25,6 +27,7 @@ export function createNavigationContext(deps: NavigationDeps): VoiceCommandConte
       const sessionId: string | null = chatNumbers.sessionOf(number);
       return sessionId !== null && deps.openChat(sessionId);
     },
+    openDevice: deps.openDevice,
     openNewChat: deps.openNewChat,
     openResume: deps.openResume,
     pick: (number: number): boolean => openSelector()?.pick(number) ?? false,

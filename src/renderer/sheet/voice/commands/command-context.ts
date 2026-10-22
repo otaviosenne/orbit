@@ -5,6 +5,8 @@ export interface VoiceCommandContext {
   setView(view: ViewName): void;
   // Opens chat N in the side panel (or focuses its tile in the Panel) with its composer focused; false for an unknown number.
   openChat(number: number): boolean;
+  // Goes to the open chat's emulator window or browser tab; does nothing when it has none.
+  openDevice(device: 'emulator' | 'browser'): void;
   openNewChat(): void;
   openResume(): void;
   // Picks option N of the open selector; false for an unknown number.

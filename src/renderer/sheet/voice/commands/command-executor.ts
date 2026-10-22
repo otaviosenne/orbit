@@ -8,6 +8,8 @@ export function executeNavigation(command: VoiceCommand, context: VoiceCommandCo
       return context.setView(command.view);
     case 'choose':
       return choose(command.number, context);
+    case 'device':
+      return context.openDevice(command.device);
     case 'new-chat':
       return context.openNewChat();
     case 'resume':

@@ -97,3 +97,19 @@ describe('numbers while a selector is open', () => {
     expect(commandOf('I need 3', SELECTOR)).toBeNull();
   });
 });
+
+describe('device commands', () => {
+  it.each([
+    ['Orbit Emulador', 'emulator'],
+    ['orbit, emulator.', 'emulator'],
+    ['Orbit Navegador', 'browser'],
+    ['orbit browser', 'browser'],
+  ])('"%s" opens the chat\'s %s', (text: string, device: string) => {
+    expect(commandOf(text)).toEqual({ action: 'device', device });
+  });
+
+  it('takes the phrase off the draft and leaves ordinary sentences alone', () => {
+    expect(parseVoiceCommand('olha isso. Orbit navegador', FINAL)?.remainder).toBe('olha isso');
+    expect(commandOf('abre o navegador do orbit agora')).toBeNull();
+  });
+});
