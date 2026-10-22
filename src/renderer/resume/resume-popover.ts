@@ -5,13 +5,15 @@ import { element } from '../dom';
 import { FILTER_ICON, SEARCH_ICON } from '../icons';
 import { loadResumeFilters, saveResumeFilters } from './filter-store';
 import { FiltersMenu } from './filters-menu';
-import { PAST_CHAT_ATTRIBUTE, renderPastChats } from './past-chat-list';
+import { PAST_CHAT_ATTRIBUTE, renderPastChats, PEEK_SELECTOR } from './past-chat-list';
 import { labelOptions } from '../voice-nav/voice-number';
 import type { ResumeFilters } from './resume-filters';
 import { activeFilterCount, applyFilters, repositoryNames } from './resume-filters';
 
 export interface ResumePopoverActions {
   readonly pick: (sessionId: string) => void;
+  // The eye: show the chat's history read-only, reopening nothing.
+  readonly peek: (sessionId: string) => void;
   readonly close: () => void;
 }
 
@@ -186,7 +188,9 @@ export class ResumePopover {
 
   private pickRowAt(target: EventTarget | null): void {
     const sessionId: string | undefined = rowOf(target)?.dataset[PAST_CHAT_ATTRIBUTE];
-    if (sessionId !== undefined) this.actions.pick(sessionId);
+    if (sessionId === undefined) return;
+    if (target instanceof Element && target.closest(PEEK_SELECTOR) !== null) this.actions.peek(sessionId);
+    else this.actions.pick(sessionId);
   }
 
   private rows(): HTMLElement[] {

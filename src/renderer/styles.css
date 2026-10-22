@@ -229,6 +229,18 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
   background: transparent; color: var(--text); text-align: left;
 }
 .resume-row.is-active { background: var(--accent); color: var(--on-accent); }
+/* The eye at the row's right edge: look at the chat read-only, reopening nothing. Faint until the row is the active
+   one; always there on touch, which has no hover to reveal it */
+.resume-row { position: relative; }
+.resume-row-peek {
+  position: absolute; top: 50%; right: 6px; width: 26px; height: 26px; margin-top: -13px; display: grid; place-items: center;
+  border-radius: 7px; opacity: 0; color: inherit;
+}
+.resume-row-peek svg { width: 16px; height: 16px; fill: currentColor; }
+.resume-row.is-active .resume-row-peek, .resume-row:hover .resume-row-peek { opacity: 0.75; }
+.resume-row-peek:hover { opacity: 1 !important; background: rgb(127 127 127 / 0.22); }
+@media (pointer: coarse) { .resume-row-peek { opacity: 0.6; } }
+.resume-row-title, .resume-row-meta { padding-right: 30px; }
 .resume-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
 .resume-row-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--secondary); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .resume-row-repo { font-weight: 600; }

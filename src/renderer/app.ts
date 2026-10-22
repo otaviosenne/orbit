@@ -4,9 +4,10 @@ import { ChatSuspension } from './suspend/chat-suspension';
 import type { ClosedChat } from './suspend/closed-chats';
 import { ClosedChats } from './suspend/closed-chats';
 import { SUSPENDED_TOGGLE_SELECTOR } from './views/suspended-row';
+import { closedChatSnapshot } from './board/closed-chat-info';
 import { closedCardLabel } from './views/closed-card';
 import { CardPreview } from './board/card-preview';
-import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot } from '../shared/types';
+import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot, PastChat } from '../shared/types';
 import type { BoardColumn } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
 import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
@@ -388,8 +389,9 @@ async function refreshSheet(): Promise<void> {
   const sessionId: string | null = sheet.sessionId;
   if (sessionId === null) return;
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
-  const closed: ClosedChat | undefined = chat === undefined && sheet.isShowingClosed ? closedChats.find(sessionId) : undefined;
-  if (closed !== undefined) return loadThread(sheet, closed.chat);
+  // A closed chat shown read-only: a closed pin or suspended one, or a past chat looked at from Resume.
+  const closed: ChatSnapshot | undefined = chat === undefined && sheet.isShowingClosed ? (closedChats.find(sessionId)?.chat ?? peekedChats.get(sessionId)) : undefined;
+  if (closed !== undefined) return loadThread(sheet, closed);
   if (chat === undefined) return closeSheet();
   // A closed chat reopened some other way (Resume, its terminal) turns live in place.
   if (sheet.isShowingClosed) sheet.open(chat);
@@ -403,13 +405,29 @@ function toggleSheet(sessionId: string): void {
   else openSheet(sessionId);
 }
 
+// Past chats looked at from Resume's eye: shown read-only like a suspended one, and reopened the same way.
+const peekedChats: Map<string, ChatSnapshot> = new Map();
+
+function peekPastChat(past: PastChat): void {
+  const chat: ChatSnapshot = closedChatSnapshot(past.sessionId, {
+    name: past.title, color: null, repositoryName: past.repository.name, repositoryRoot: past.repository.root,
+    cwd: past.repository.root, lastReplyAt: past.lastActivityAt,
+  });
+  peekedChats.set(past.sessionId, chat);
+  // The side panel has no place in the Panel view.
+  if (view === 'grid') setView('board');
+  sheet.openClosed(chat, closedCardLabel('closed-pin'));
+  renderView();
+  void refreshSheet();
+}
+
 // Reopen a closed pinned or suspended chat: resumed like Resume does, so its panel turns into the live chat in place.
 // Resolves once the starting placeholder is up; a message sent from the closed panel waits there until the chat is live.
 async function reopenClosed(sessionId: string): Promise<void> {
-  const closed: ClosedChat | undefined = closedChats.find(sessionId);
-  if (closed === undefined) return;
+  const chat: ChatSnapshot | undefined = closedChats.find(sessionId)?.chat ?? peekedChats.get(sessionId);
+  if (chat === undefined) return;
   const launchedAt: number = Date.now();
-  launches.expect(resumedChatTarget(sessionId, closed.chat.name), launchedAt);
+  launches.expect(resumedChatTarget(sessionId, chat.name), launchedAt);
   void resumeLaunched(sessionId, launchedAt);
 }
 
@@ -623,7 +641,7 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
 });
 const weeklyUsage: WeeklyUsageBadge = new WeeklyUsageBadge(showUsageSettings);
 requireElement('#resume-chat').before(weeklyUsage.root);
-const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches);
+const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(
   appShortcutBindings({

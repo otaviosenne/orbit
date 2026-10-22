@@ -20,12 +20,14 @@ export class ResumeButton implements VoiceSelector {
   private chats: readonly PastChat[] = [];
   private readonly popover: ResumePopover = new ResumePopover({
     pick: (sessionId: string): void => void this.resume(sessionId),
+    peek: (sessionId: string): void => this.peekAt(sessionId),
     close: (): void => this.popover.close(),
   });
 
   constructor(
     root: HTMLElement,
     private readonly launches: LaunchListener,
+    private readonly peek: (chat: PastChat) => void = (): void => undefined,
   ) {
     this.button.type = 'button';
     this.button.title = IDLE_TITLE;
@@ -89,6 +91,14 @@ export class ResumeButton implements VoiceSelector {
       this.label.textContent = IDLE_LABEL;
       this.button.title = IDLE_TITLE;
     }, FEEDBACK_MS);
+  }
+
+  // The eye: the panel shows the chat read-only, and the list gives way to it.
+  private peekAt(sessionId: string): void {
+    const chat: PastChat | undefined = this.chats.find((candidate: PastChat) => candidate.sessionId === sessionId);
+    if (chat === undefined) return;
+    this.popover.close();
+    this.peek(chat);
   }
 
   private titleOf(sessionId: string): string {
