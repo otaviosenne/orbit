@@ -16,8 +16,19 @@ export interface RecordOrigin {
   readonly body?: string;
 }
 
+// What Claude Code logs in place of a user message while the chat is busy: the prompt waits in a queue, and this is
+// the only record of it until (and unless) it is consumed.
+export interface RecordAttachment {
+  readonly type?: string;
+  readonly prompt?: string | readonly ContentBlock[];
+  readonly commandMode?: string;
+  readonly origin?: RecordOrigin;
+  readonly delivery_id?: string;
+}
+
 export interface TranscriptRecord {
   readonly type: string;
+  readonly attachment?: RecordAttachment;
   readonly uuid?: string;
   readonly subtype?: string;
   readonly timestamp?: string;

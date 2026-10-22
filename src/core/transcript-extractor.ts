@@ -9,7 +9,7 @@ import type { TaskNotification } from './tagged-text';
 import { parseSlashCommand, parseTaskNotification } from './tagged-text';
 import type { ToolInput } from './tool-summary';
 import { describeToolInput, displayToolName, summarizeTool } from './tool-summary';
-import type { ContentBlock, TranscriptRecord } from './transcript-record';
+import type { ContentBlock, RecordAttachment, TranscriptRecord } from './transcript-record';
 import { recordTime } from './transcript-record';
 
 // Maps the pid of another chat's process to that chat's name.
@@ -51,6 +51,8 @@ class TranscriptBuilder {
   readonly items: TranscriptItem[] = [];
   private readonly tools: Map<string, MutableTool> = new Map();
   private readonly questions: QuestionTracker = new QuestionTracker();
+  // Queued prompts already shown, so the user record written if one is consumed later is not shown twice.
+  private readonly queued: Map<string, number> = new Map();
 
   constructor(
     private readonly resolveChat: ChatNameResolver,
@@ -65,6 +67,19 @@ class TranscriptBuilder {
     if (record.type === 'system') this.addSystem(record, id, timestamp);
     else if (record.type === 'assistant') this.addAssistant(record, id, timestamp);
     else if (record.type === 'user') this.addUser(record, id, timestamp);
+    else if (record.type === 'attachment') this.addQueued(record, id, timestamp);
+  }
+
+  // A message sent while the chat was working is logged only as a queued prompt. It is shown where it was sent, so
+  // the copy Orbit showed at send time is confirmed at once instead of waiting for a user record that may never come.
+  private addQueued(record: TranscriptRecord, id: string, timestamp: number): void {
+    const attachment: RecordAttachment | undefined = record.attachment;
+    if (attachment?.type !== QUEUED_COMMAND || attachment.commandMode !== PROMPT_MODE) return;
+    if (attachment.origin?.kind !== undefined && attachment.origin.kind !== HUMAN_ORIGIN) return;
+    const text: string = withoutPastedWrappers(queuedPromptText(attachment.prompt)).trim();
+    if (text.length === 0 || parseSlashCommand(text) !== null || parseTaskNotification(text) !== null || isNoiseText(text)) return;
+    this.queued.set(text, (this.queued.get(text) ?? 0) + 1);
+    this.items.push({ kind: 'message', id: `queued-${attachment.delivery_id ?? id}`, timestamp, role: 'user', text, images: [] });
   }
 
   private addSystem(record: TranscriptRecord, id: string, timestamp: number): void {
@@ -105,6 +120,13 @@ class TranscriptBuilder {
     return question !== null;
   }
 
+  private takeQueued(text: string): boolean {
+    const count: number = this.queued.get(text) ?? 0;
+    if (count === 0) return false;
+    this.queued.set(text, count - 1);
+    return true;
+  }
+
   private addUser(record: TranscriptRecord, id: string, timestamp: number): void {
     const blocks: readonly ContentBlock[] = contentBlocks(record);
     if (blocks.some((block: ContentBlock) => block.type === 'tool_result')) return blocks.forEach((block: ContentBlock) => this.attachResult(block, record));
@@ -120,6 +142,7 @@ class TranscriptBuilder {
     const command: string | null = parseSlashCommand(text);
     if (command !== null) return this.addNotice(id, timestamp, 'info', command, null);
     if (isNoiseText(text)) return;
+    if (this.takeQueued(text)) return;
     this.questions.expireOpen();
     this.items.push({ kind: 'message', id, timestamp, role: 'user', text, images: this.storeImages(record, id) });
   }
@@ -169,6 +192,15 @@ class TranscriptBuilder {
 function contentBlocks(record: TranscriptRecord): readonly ContentBlock[] {
   const content = record.message?.content;
   return Array.isArray(content) ? content : [];
+}
+
+const QUEUED_COMMAND: string = 'queued_command';
+const PROMPT_MODE: string = 'prompt';
+const HUMAN_ORIGIN: string = 'human';
+
+function queuedPromptText(prompt: RecordAttachment['prompt']): string {
+  if (typeof prompt === 'string') return prompt;
+  return (prompt ?? []).map((block: ContentBlock) => (block.type === 'text' ? (block.text ?? '') : '')).join('\n');
 }
 
 export function contentText(record: TranscriptRecord): string {
