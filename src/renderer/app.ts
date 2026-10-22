@@ -80,6 +80,7 @@ import { RemoteSection } from './views/remote-section';
 import { ResourcesSection } from './views/resources-section';
 import { BoardFocus } from './board/board-focus';
 import { HelpModal } from './help/help-modal';
+import { VOICE_HELP } from './help/voice-help';
 import { availableQuestions } from './help/faq';
 import { availableShortcuts } from './shortcuts/shortcut-catalog';
 import { installShortcutDispatcher } from './shortcuts/shortcut-dispatcher';
@@ -109,7 +110,7 @@ new CardPreview(viewRoot);
 // Cards glide to their new place instead of jumping there when the board is rebuilt.
 const boardMotion: BoardMotion = new BoardMotion();
 const needsYouWatch: NeedsYouWatch = new NeedsYouWatch();
-const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), questions: availableQuestions(isWebHost()) });
+const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), voice: VOICE_HELP, questions: availableQuestions(isWebHost()) });
 const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] =>
   toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
 );

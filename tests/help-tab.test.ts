@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { HelpTab } from '../src/renderer/help/help-tab';
 import { availableHelpTabs, initialHelpTab, otherTabMatchesLabel, parseHelpTab, steppedHelpTab } from '../src/renderer/help/help-tab';
 
-const BOTH: readonly HelpTab[] = ['shortcuts', 'questions'];
+const BOTH: readonly HelpTab[] = ['shortcuts', 'voice', 'questions'];
 const QUESTIONS_ONLY: readonly HelpTab[] = ['questions'];
 const PREVIOUS: number = -1;
 const NEXT: number = 1;
 const SHORTCUT_COUNT: number = 40;
 const QUESTION_COUNT: number = 28;
+const VOICE_COUNT: number = 14;
 const ONE_MATCH: number = 1;
 const SEVERAL_MATCHES: number = 3;
 
@@ -20,9 +21,9 @@ describe('help tabs', () => {
   });
 
   it('offers a tab only for a part with entries, in a fixed order', () => {
-    expect(availableHelpTabs({ shortcuts: SHORTCUT_COUNT, questions: QUESTION_COUNT })).toEqual(BOTH);
-    expect(availableHelpTabs({ shortcuts: 0, questions: QUESTION_COUNT })).toEqual(QUESTIONS_ONLY);
-    expect(availableHelpTabs({ shortcuts: 0, questions: 0 })).toEqual([]);
+    expect(availableHelpTabs({ shortcuts: SHORTCUT_COUNT, voice: VOICE_COUNT, questions: QUESTION_COUNT })).toEqual(BOTH);
+    expect(availableHelpTabs({ shortcuts: 0, voice: 0, questions: QUESTION_COUNT })).toEqual(QUESTIONS_ONLY);
+    expect(availableHelpTabs({ shortcuts: 0, voice: 0, questions: 0 })).toEqual([]);
   });
 
   it('opens on the last picked tab while the host still has it', () => {
@@ -38,7 +39,8 @@ describe('help tabs', () => {
   });
 
   it('steps through the tabs with wrap-around', () => {
-    expect(steppedHelpTab(BOTH, 'shortcuts', NEXT)).toBe('questions');
+    expect(steppedHelpTab(BOTH, 'shortcuts', NEXT)).toBe('voice');
+    expect(steppedHelpTab(BOTH, 'voice', NEXT)).toBe('questions');
     expect(steppedHelpTab(BOTH, 'questions', NEXT)).toBe('shortcuts');
     expect(steppedHelpTab(BOTH, 'shortcuts', PREVIOUS)).toBe('questions');
     expect(steppedHelpTab(QUESTIONS_ONLY, 'questions', NEXT)).toBe('questions');

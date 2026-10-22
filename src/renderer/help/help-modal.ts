@@ -14,7 +14,7 @@ const TOGGLE_KEY: string = '?';
 const BODY_ID: string = 'help-body';
 // Arrow keys on a tab step through the tabs; how far each one moves.
 const TAB_STEPS: Readonly<Record<string, number>> = { ArrowLeft: -1, ArrowRight: 1 };
-const SEARCH_HINTS: Readonly<Record<HelpTab, string>> = { shortcuts: 'Search shortcuts', questions: 'Search questions' };
+const SEARCH_HINTS: Readonly<Record<HelpTab, string>> = { shortcuts: 'Search shortcuts', voice: 'Search voice commands', questions: 'Search questions' };
 
 // Orbit's Help: a centered macOS-style sheet over a dark overlay, with the shortcuts and the common questions
 // in separate tabs, the open one filtered as you type. Escape clears a search first, then closes; so do the X

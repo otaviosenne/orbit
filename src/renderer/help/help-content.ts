@@ -6,25 +6,31 @@ import { matchingQuestions, renderQuestionCards } from './faq-list';
 import type { HelpTab, HelpTabSizes } from './help-tab';
 import { HELP_TABS, otherTabMatchesLabel } from './help-tab';
 import { matchingShortcuts, renderShortcutGroups } from './shortcut-list';
+import type { VoiceHelpEntry } from './voice-help';
+import { matchingVoiceCommands, renderVoiceGroups } from './voice-help';
 
-// What Help can show: the shortcuts this host has and the common questions.
+// What Help can show: the shortcuts this host has, the spoken commands and the common questions.
 export interface HelpSource {
   readonly shortcuts: readonly Shortcut[];
+  readonly voice: readonly VoiceHelpEntry[];
   readonly questions: readonly FaqEntry[];
 }
 
-const GRID_CLASSES: Readonly<Record<HelpTab, string>> = { shortcuts: 'help-shortcut-grid', questions: 'help-faq-grid' };
+const GRID_CLASSES: Readonly<Record<HelpTab, string>> = { shortcuts: 'help-shortcut-grid', voice: 'help-shortcut-grid', questions: 'help-faq-grid' };
 
 export function helpTabSizes(source: HelpSource): HelpTabSizes {
-  return { shortcuts: source.shortcuts.length, questions: source.questions.length };
+  return { shortcuts: source.shortcuts.length, voice: source.voice.length, questions: source.questions.length };
 }
 
 function tabMatchCount(source: HelpSource, tab: HelpTab, terms: readonly string[]): number {
-  return tab === 'shortcuts' ? matchingShortcuts(source.shortcuts, terms).length : matchingQuestions(source.questions, terms).length;
+  if (tab === 'shortcuts') return matchingShortcuts(source.shortcuts, terms).length;
+  if (tab === 'voice') return matchingVoiceCommands(source.voice, terms).length;
+  return matchingQuestions(source.questions, terms).length;
 }
 
 function renderTabItems(source: HelpSource, tab: HelpTab, terms: readonly string[]): readonly HTMLElement[] {
   if (tab === 'shortcuts') return renderShortcutGroups(matchingShortcuts(source.shortcuts, terms), terms);
+  if (tab === 'voice') return renderVoiceGroups(matchingVoiceCommands(source.voice, terms), terms);
   return renderQuestionCards(matchingQuestions(source.questions, terms), terms);
 }
 

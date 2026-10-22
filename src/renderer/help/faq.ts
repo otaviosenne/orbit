@@ -81,11 +81,6 @@ export const FAQ: readonly FaqEntry[] = [
     answer: 'Double-tap Space, or click the mic in a composer, to keep the mic on: words go to the chat on screen and follow you between chats. Double-tap again, or click either mic, to turn it off. In Orbit Web only the mic does it, and it turns off when the screen locks or you switch apps.',
   },
   {
-    id: 'voice-commands',
-    question: 'What can I say to Orbit?',
-    answer: 'End what you dictate with a command, in English or Portuguese. “Orbit board / panel / timeline / list / settings” switches view; “chat 3” (or “orbit 3”) opens the chat badged #3, shown while the mic is on; “orbit new chat” and “orbit resume” open their lists, then say a number to pick; “orbit cancel” closes them. “Orbit enviar” or “chinelo” sends, “orbit limpar” clears the draft. Works with hands-free on, even with no chat open.',
-  },
-  {
     id: 'chat-settings',
     question: 'How do I change the model, effort or permissions?',
     answer: 'Open the chat and click the sliders ({key:chat-settings}). A new model or effort also becomes the default for chats started later.',

@@ -1,9 +1,9 @@
-// Help shows one part at a time: the keyboard shortcuts or the common questions.
-export type HelpTab = 'shortcuts' | 'questions';
+// Help shows one part at a time: the keyboard shortcuts, the spoken commands or the common questions.
+export type HelpTab = 'shortcuts' | 'voice' | 'questions';
 
-export const HELP_TABS: readonly HelpTab[] = ['shortcuts', 'questions'];
+export const HELP_TABS: readonly HelpTab[] = ['shortcuts', 'voice', 'questions'];
 
-export const HELP_TAB_LABELS: Readonly<Record<HelpTab, string>> = { shortcuts: 'Shortcuts', questions: 'Questions' };
+export const HELP_TAB_LABELS: Readonly<Record<HelpTab, string>> = { shortcuts: 'Shortcuts', voice: 'Voice', questions: 'Questions' };
 
 // How many entries each part has on this host; a part with none gets no tab.
 export type HelpTabSizes = Readonly<Record<HelpTab, number>>;

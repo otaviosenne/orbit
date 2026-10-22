@@ -1546,6 +1546,9 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .help-group-title { padding: 9px 0 5px; font-size: 13px; font-weight: 600; }
 .help-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 0; border-top: 1px solid var(--separator); }
 .help-row-text { min-width: 0; font-size: 13px; }
+/* The Voice tab: what to say, as quoted chips beside what it does */
+.help-says { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 6px; }
+.help-say { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
 .help-keys { flex: none; display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 5px; max-width: 60%; }
 .help-chord { display: inline-flex; gap: 3px; }
 .help-key-word { color: var(--tertiary); font-size: 11.5px; }
