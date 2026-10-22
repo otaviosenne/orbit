@@ -16,7 +16,7 @@ export interface ClosedChat {
 }
 
 // The board's closed chats: pinned ones in the Pinned row, suspended ones in Suspended. A chat both pinned and
-// suspended shows only in Suspended (it keeps its pin, so it is back in Pinned once it is open again).
+// suspended stays in Pinned (labelled Suspended) and is left out of the Suspended section.
 export class ClosedChats {
   constructor(
     private readonly pins: PinnedChats,
@@ -25,12 +25,12 @@ export class ClosedChats {
     private readonly openChats: () => readonly ChatSnapshot[],
   ) {}
 
-  // Pinned chats that are closed now and not suspended, as read-only stand-ins in the order they were pinned.
+  // Pinned chats that are closed now, suspended or not, as read-only stand-ins in the order they were pinned.
   pinned(): ChatSnapshot[] {
     return this.pins.order
-      .filter((sessionId: string) => !this.isOpen(sessionId) && !this.suspension.has(sessionId))
+      .filter((sessionId: string) => !this.isOpen(sessionId))
       .flatMap((sessionId: string): ChatSnapshot[] => {
-        const closed: ChatSnapshot | null = this.pinnedInfo.closedSnapshot(sessionId);
+        const closed: ChatSnapshot | null = this.suspension.closedSnapshot(sessionId) ?? this.pinnedInfo.closedSnapshot(sessionId);
         return closed === null ? [] : [closed];
       });
   }

@@ -122,13 +122,13 @@ describe('ClosedChats', () => {
     return { closed: new ClosedChats(pins, info, suspended, (): readonly ChatSnapshot[] => open), pins, info, suspended };
   }
 
-  it('shows a pinned chat that is also suspended only in Suspended', () => {
+  it('keeps a pinned chat that is also suspended in Pinned, labelled Suspended', () => {
     const { closed, pins, info, suspended } = setUp([]);
     pins.pin('a');
     pins.pin('b');
     info.remember([chat('a', RUN), chat('b', RUN)]);
     suspended.add(chat('a', RUN), SUSPENDED_AT);
-    expect(ids(closed.pinned())).toEqual(['b']);
+    expect(ids(closed.pinned())).toEqual(['a', 'b']);
     expect(closed.find('a')?.kind).toBe('suspended');
     expect(closed.find('b')?.kind).toBe('closed-pin');
     expect(pins.has('a')).toBe(true);
