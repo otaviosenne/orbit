@@ -23,6 +23,8 @@ import type { CardDeviceKind } from './board/card-devices';
 import { cardDeviceAt, focusCardDevice } from './board/card-devices';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
+import { OpenChatsMemory, type RememberedChat } from './restore/open-chats-memory';
+import { restoreOpenChats } from './restore/startup-restore';
 import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
@@ -125,6 +127,7 @@ const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
+const openChats: OpenChatsMemory = new OpenChatsMemory();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats);
 const boardDevices: BoardDevices = new BoardDevices(
@@ -227,6 +230,7 @@ async function refreshChats(): Promise<void> {
   closing.settle(polledChats, Date.now());
   suspension.settle(polledChats, Date.now());
   showChats();
+  openChats.observe(chats, Date.now());
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
   launches.settle(Date.now());
@@ -364,7 +368,10 @@ async function closeChat(sessionId: string): Promise<boolean> {
   if (sheet.sessionId === sessionId) sheet.close();
   showChats();
   const result: ActionResult = await window.radar.closeChat(chat.pid);
-  if (result.ok) return true;
+  if (result.ok) {
+    openChats.forget(sessionId);
+    return true;
+  }
   console.error(`Could not close ${chat.name}: ${result.error ?? 'unknown error'}`);
   closing.cancel(sessionId);
   showChats();
@@ -431,11 +438,18 @@ async function reopenClosed(sessionId: string): Promise<void> {
   void resumeLaunched(sessionId, launchedAt);
 }
 
-async function resumeLaunched(sessionId: string, launchedAt: number): Promise<void> {
+async function resumeLaunched(sessionId: string, launchedAt: number): Promise<boolean> {
   // The main process only resumes chats from its own latest list of past chats.
   await window.radar.listPastChats();
   const result: ActionResult = await window.radar.resumeChat(sessionId);
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
+  return result.ok;
+}
+
+async function reopenRemembered(chat: RememberedChat): Promise<boolean> {
+  const launchedAt: number = Date.now();
+  launches.expect(resumedChatTarget(chat.sessionId, chat.name), launchedAt);
+  return resumeLaunched(chat.sessionId, launchedAt);
 }
 
 // A chat newly in Needs you gets a desktop notification, unless it is already in front of the user: its terminal
@@ -703,3 +717,13 @@ void refreshChats();
 void refreshUsage();
 setInterval((): void => void refreshChats(), CHATS_POLL_MS);
 setInterval((): void => void refreshUsage(), USAGE_POLL_MS);
+// Orbit Web only watches; the machine's chats are brought back by the desktop app.
+if (!isWebHost()) {
+  void restoreOpenChats({
+    memory: openChats,
+    livePoll: (): Promise<readonly ChatSnapshot[]> => window.radar.getChats(),
+    isSuspended: (sessionId: string): boolean => suspension.has(sessionId),
+    reopen: reopenRemembered,
+    pause: (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)),
+  });
+}
