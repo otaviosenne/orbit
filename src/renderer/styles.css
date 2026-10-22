@@ -3,6 +3,8 @@
 
 /* ---------- Tokens: macOS light (default), dark, and Auto via prefers-color-scheme ---------- */
 :root {
+  /* Yellow text that stays readable: pulled toward the text color, so darker on light and lighter on dark */
+  --caution-text: color-mix(in srgb, var(--tag-yellow) 70%, var(--text));
   --agent-spinner-width: 12px;
   --disclosure-hover: color-mix(in srgb, var(--text) 7%, transparent);
   --window: rgb(246 246 248 / 0.9);
@@ -437,6 +439,12 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card-menu-item.is-destructive { margin-top: 5px; position: relative; }
 .card-menu-item.is-destructive::before { content: ''; position: absolute; left: 4px; right: 4px; top: -3px; border-top: 1px solid var(--separator); }
 .card-menu-item:hover { background: var(--accent); color: #ffffff; }
+/* Suspend: yellow, opening the group that ends the chat, with Close right under it and no line between them */
+.card-menu-item.is-caution { margin-top: 5px; position: relative; color: var(--caution-text); }
+.card-menu-item.is-caution::before { content: ''; position: absolute; left: 4px; right: 4px; top: -3px; border-top: 1px solid var(--separator); }
+.card-menu-item.is-caution:hover { background: var(--tag-yellow); color: #1d1d1f; }
+.card-menu-item.is-caution + .card-menu-item.is-destructive { margin-top: 0; }
+.card-menu-item.is-caution + .card-menu-item.is-destructive::before { content: none; }
 .card-repo { color: var(--secondary); font-size: 12px; padding-left: 16px; }
 .agent { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; padding-left: 16px; font-size: 12.5px; }
 .agent-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1468,8 +1476,8 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
   flex: 1 1 0; min-width: 0; padding: 8px; border: 0; border-radius: 7px; cursor: default; text-align: left;
   background: transparent; font: inherit; font-size: 13px; font-weight: 500;
 }
-.chat-settings-suspend { color: var(--text); }
-.chat-settings-suspend:hover { background: var(--disclosure-hover); }
+.chat-settings-suspend { color: var(--caution-text); }
+.chat-settings-suspend:hover { background: var(--tag-yellow); color: #1d1d1f; }
 .chat-settings-close { color: var(--danger); }
 .chat-settings-close:hover { background: var(--danger); color: #ffffff; }
 

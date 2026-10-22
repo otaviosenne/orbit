@@ -29,6 +29,8 @@ interface MenuItem {
   readonly icon: string;
   readonly label: string;
   readonly isDestructive: boolean;
+  // Ends the chat's process but can be undone (Suspend): yellow, grouped with Close below the everyday items.
+  readonly isCaution?: boolean;
   readonly run: (target: CardMenuTarget) => void;
 }
 
@@ -70,7 +72,7 @@ export class CardMenu {
       { icon: TERMINAL_ICON, label: 'Go to chat', isDestructive: false, run: this.actions.goToChat },
       this.pinItem(target),
       { icon: PENCIL_ICON, label: 'Rename', isDestructive: false, run: this.actions.rename },
-      { icon: SUSPEND_ICON, label: 'Suspend', isDestructive: false, run: this.actions.suspend },
+      { icon: SUSPEND_ICON, label: 'Suspend', isDestructive: false, isCaution: true, run: this.actions.suspend },
       { icon: CLOSE_ICON, label: `Close ${target.name} chat`, isDestructive: true, run: this.actions.close },
     ];
   }
@@ -95,7 +97,7 @@ export class CardMenu {
   }
 
   private renderItem(item: MenuItem): HTMLButtonElement {
-    const button: HTMLButtonElement = element('button', `card-menu-item${item.isDestructive ? ' is-destructive' : ''}`);
+    const button: HTMLButtonElement = element('button', `card-menu-item${item.isDestructive ? ' is-destructive' : ''}${item.isCaution === true ? ' is-caution' : ''}`);
     button.type = 'button';
     button.innerHTML = item.icon;
     button.append(element('span', '', item.label));
