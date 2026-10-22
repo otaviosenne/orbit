@@ -23,6 +23,7 @@ const TITLE: string = 'Claude is asking';
 // Nothing on screen or in the transcript says what the question is, so the chat's own window is the way to it.
 const UNREADABLE_HINT: string = 'Claude is waiting on a question this window cannot show.';
 const SENDING_LABEL: string = 'Sending…';
+const DECLINING_CLASS: string = 'is-declining';
 
 // The question picker read off the chat's terminal, as a card at the end of the thread.
 export class PickerCard {
@@ -81,8 +82,10 @@ export class PickerCard {
     if (this.isSending) return;
     const label: string = this.button.textContent ?? '';
     this.setSending(true, SENDING_LABEL);
+    this.root.classList.add(DECLINING_CLASS);
     const result: ActionResult = await settleAction(this.actions.decline());
     if (result.ok) return this.actions.moved();
+    this.root.classList.remove(DECLINING_CLASS);
     this.problem.show(result.error ?? 'Could not dismiss the question');
     this.setSending(false, label);
   }

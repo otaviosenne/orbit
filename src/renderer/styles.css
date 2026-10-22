@@ -1299,6 +1299,16 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .question-head > .question-count { margin-left: auto; }
 .question-stepper + .question-dismiss, .question-count + .question-dismiss { margin-left: 4px; }
 .question-dismiss svg { width: 13px; height: 13px; fill: currentColor; }
+/* Dismissing takes a moment while the chat's picker closes; the X turns into a spinning ring until the card is gone,
+   so it is clear the click worked (and a second click does nothing) */
+.question-card.is-declining .question-dismiss { pointer-events: none; }
+.question-card.is-declining .question-dismiss svg { display: none; }
+.question-card.is-declining .question-dismiss::before {
+  content: ''; width: 13px; height: 13px; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.7s linear infinite;
+}
+/* The Submit button's own ring would say "sending answers" when none are being sent */
+.question-card.is-declining .question-submit::before { content: none; }
 /* "Question 2 of 4" is where the user is in the set, so it reads as a pill rather than a faint caption */
 .question-count {
   padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; font-variant-numeric: tabular-nums;

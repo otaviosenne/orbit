@@ -19,6 +19,7 @@ const SUBMIT_LABEL: string = 'Submit';
 const NEXT_LABEL: string = 'Next';
 const BACK_LABEL: string = 'Back';
 const SENDING_LABEL: string = 'Sending…';
+const DECLINING_CLASS: string = 'is-declining';
 const PREVIOUS_ARROW: string = '‹';
 const NEXT_ARROW: string = '›';
 
@@ -119,8 +120,11 @@ export class QuestionSetCard {
     if (this.isSending) return;
     this.problem.clear();
     this.setSending(true);
+    // The X spins until the card is gone; on success the card stays locked (and spinning) until the next read replaces it.
+    this.root.classList.add(DECLINING_CLASS);
     const result: ActionResult = await settleAction(this.actions.decline());
     if (result.ok) return this.actions.moved();
+    this.root.classList.remove(DECLINING_CLASS);
     this.problem.show(result.error ?? 'Could not dismiss the question');
     this.setSending(false);
   }
