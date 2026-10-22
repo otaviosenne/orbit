@@ -19,6 +19,8 @@ describe('withoutPastedWrappers', () => {
 });
 
 
+const RECENT_ITEMS: number = 10;
+
 describe('a pasted message sent from Orbit', () => {
   it('is confirmed by the transcript copy, so it shows once', () => {
     const sentAt: number = Date.parse('2026-10-22T14:28:00Z');
@@ -31,7 +33,7 @@ describe('a pasted message sent from Orbit', () => {
     } as unknown as TranscriptRecord;
     const pending: PendingMessages = new PendingMessages();
     pending.add(sent, [], sentAt);
-    const result = pending.reconcile(extractTranscript([record], () => null));
+    const result = pending.reconcile(extractTranscript([record], RECENT_ITEMS, () => null));
     expect(result.waiting).toHaveLength(0);
     expect(result.confirmed).toHaveLength(1);
   });
