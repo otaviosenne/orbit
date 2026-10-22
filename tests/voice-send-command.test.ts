@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stripSendCommand } from '../src/renderer/sheet/voice/send-command';
+import { stripSendCommand, voiceCommandOf } from '../src/renderer/sheet/voice/send-command';
 
 describe('stripSendCommand', () => {
   it('sends on "chinelo" at the end, in any case and punctuation', () => {
@@ -28,5 +28,17 @@ describe('stripSendCommand', () => {
 
   it('sends an empty draft when the command is all that was said', () => {
     expect(stripSendCommand('Chinelo.')).toBe('');
+  });
+});
+
+describe('voiceCommandOf', () => {
+  it('clears on "Orbit clear" or "chat clear", whatever the case and punctuation', () => {
+    expect(voiceCommandOf('texto que eu não quero. Orbit, clear.')).toEqual({ action: 'clear' });
+    expect(voiceCommandOf('outra coisa chat clear')).toEqual({ action: 'clear' });
+  });
+
+  it('sends with the text left over, and ignores "clear" in the middle of a sentence', () => {
+    expect(voiceCommandOf('faz o deploy chinelo')).toEqual({ action: 'send', text: 'faz o deploy' });
+    expect(voiceCommandOf('clear the cache and chat clear it later')).toBeNull();
   });
 });
