@@ -5,7 +5,7 @@ import { renderPinMark } from './card-marks';
 import { SESSION_ATTRIBUTE } from './board-attributes';
 
 // Why a chat's card stays on the board with no process behind it.
-export type ClosedCardKind = 'closed-pin' | 'suspended';
+export type ClosedCardKind = 'closed-pin' | 'suspended' | 'left-open';
 
 interface ClosedCardLook {
   // Shown where an open card has its time in status.
@@ -15,6 +15,7 @@ interface ClosedCardLook {
 
 const LOOKS: Readonly<Record<ClosedCardKind, ClosedCardLook>> = {
   'closed-pin': { label: 'Closed', className: 'card is-closed' },
+  'left-open': { label: 'Closed', className: 'card is-closed' },
   suspended: { label: 'Suspended', className: 'card is-closed is-suspended' },
 };
 

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FORGET_AFTER_MISSING_MS, OpenChatsMemory } from '../src/renderer/restore/open-chats-memory';
-import { RESTORE_DELAY_MS, restoreOpenChats } from '../src/renderer/restore/startup-restore';
 import type { ChatSnapshot } from '../src/shared/types';
 
 const NOW: number = 1_000_000;
+const columnOf = (): 'busy' => 'busy';
 let store: Map<string, string> = new Map();
 
 function chat(sessionId: string): ChatSnapshot {
@@ -27,58 +27,49 @@ afterEach(() => {
 
 describe('OpenChatsMemory', () => {
   it('remembers open chats across a restart', () => {
-    new OpenChatsMemory().observe([chat('a'), chat('b')], NOW);
+    new OpenChatsMemory().observe([chat('a'), chat('b')], columnOf, NOW);
     expect(new OpenChatsMemory().closed([]).map((remembered) => remembered.sessionId)).toEqual(['a', 'b']);
   });
 
   it('lists only the remembered chats that are not open', () => {
     const memory: OpenChatsMemory = new OpenChatsMemory();
-    memory.observe([chat('a'), chat('b')], NOW);
+    memory.observe([chat('a'), chat('b')], columnOf, NOW);
     expect(memory.closed([chat('a')]).map((remembered) => remembered.sessionId)).toEqual(['b']);
   });
 
   it('forgets a chat that stayed gone while watched, but not one that vanished with the machine', () => {
     const memory: OpenChatsMemory = new OpenChatsMemory();
-    memory.observe([chat('a')], NOW);
-    memory.observe([], NOW + 1);
-    memory.observe([], NOW + FORGET_AFTER_MISSING_MS + 2);
+    memory.observe([chat('a')], columnOf, NOW);
+    memory.observe([], columnOf, NOW + 1);
+    memory.observe([], columnOf, NOW + FORGET_AFTER_MISSING_MS + 2);
     expect(new OpenChatsMemory().closed([])).toEqual([]);
 
-    memory.observe([chat('b')], NOW);
+    memory.observe([chat('b')], columnOf, NOW);
     const restarted: OpenChatsMemory = new OpenChatsMemory();
-    restarted.observe([], NOW + FORGET_AFTER_MISSING_MS * 10);
+    restarted.observe([], columnOf, NOW + FORGET_AFTER_MISSING_MS * 10);
     expect(restarted.closed([]).map((remembered) => remembered.sessionId)).toEqual(['b']);
   });
 
   it('forgets a chat closed on purpose', () => {
     const memory: OpenChatsMemory = new OpenChatsMemory();
-    memory.observe([chat('a')], NOW);
+    memory.observe([chat('a')], columnOf, NOW);
     memory.forget('a');
     expect(new OpenChatsMemory().closed([])).toEqual([]);
   });
 });
 
-describe('restoreOpenChats', () => {
-  it('reopens the missing chats once, skipping suspended and already-open ones', async () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
-    memory.observe([chat('a'), chat('b'), chat('c'), chat('d')], NOW);
-    const reopened: string[] = [];
-    const waits: number[] = [];
-    await restoreOpenChats({
-      memory,
-      livePoll: async () => [chat('a')],
-      isSuspended: (sessionId: string): boolean => sessionId === 'c',
-      reopen: async (remembered): Promise<boolean> => { reopened.push(remembered.sessionId); return true; },
-      pause: async (ms: number): Promise<void> => void waits.push(ms),
-    });
-    expect(reopened).toEqual(['b', 'd']);
-    expect(waits[0]).toBe(RESTORE_DELAY_MS);
+describe('OpenChatsMemory columns', () => {
+  it('keeps the column a chat was in, with how its card looked', () => {
+    new OpenChatsMemory().observe([chat('a')], (): 'needs' => 'needs', NOW);
+    const [remembered] = new OpenChatsMemory().closed([]);
+    expect(remembered.column).toBe('needs');
+    expect(remembered.info.name).toBe('chat a');
   });
 
-  it('forgets a chat that could not be reopened', async () => {
+  it('follows the chat when it moves to another column', () => {
     const memory: OpenChatsMemory = new OpenChatsMemory();
-    memory.observe([chat('a')], NOW);
-    await restoreOpenChats({ memory, livePoll: async () => [], isSuspended: () => false, reopen: async () => false, pause: async () => undefined });
-    expect(new OpenChatsMemory().closed([])).toEqual([]);
+    memory.observe([chat('a')], (): 'busy' => 'busy', NOW);
+    memory.observe([chat('a')], (): 'idle' => 'idle', NOW + 1);
+    expect(new OpenChatsMemory().closed([])[0].column).toBe('idle');
   });
 });

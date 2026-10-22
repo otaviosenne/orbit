@@ -1,4 +1,6 @@
 import type { ChatSnapshot } from '../../shared/types';
+import { toClosedChatInfo, type ClosedChatInfo } from '../board/closed-chat-info';
+import type { ColumnKey } from '../views/board-columns';
 
 const STORAGE_KEY: string = 'orbit.open-chats';
 // A chat missing this long while Orbit watched it was closed on purpose. A shutdown takes Orbit down within seconds
@@ -7,10 +9,14 @@ export const FORGET_AFTER_MISSING_MS: number = 30_000;
 
 export interface RememberedChat {
   readonly sessionId: string;
-  readonly name: string;
+  readonly info: ClosedChatInfo;
+  // Where its card was on the board, so a chat left open by a shutdown keeps its place while closed.
+  readonly column: ColumnKey;
 }
 
-// The chats that were open the last time Orbit watched, so the next start can bring back the ones that are gone.
+export type ColumnOf = (chat: ChatSnapshot) => ColumnKey;
+
+// The chats that were open the last time Orbit watched. The ones gone at the next start stay on the board as closed cards.
 export class OpenChatsMemory {
   private chats: RememberedChat[] = load();
   // Only chats seen live in this run can be judged closed; the ones loaded from disk have not had the chance yet.
@@ -18,9 +24,9 @@ export class OpenChatsMemory {
   private readonly seenLive: Set<string> = new Set();
 
   // Called with every poll: remembers what is open and forgets what stayed gone while Orbit was watching.
-  observe(live: readonly ChatSnapshot[], now: number): void {
+  observe(live: readonly ChatSnapshot[], columnOf: ColumnOf, now: number): void {
     const before: string = JSON.stringify(this.chats);
-    live.forEach((chat: ChatSnapshot): void => this.see(chat));
+    live.forEach((chat: ChatSnapshot): void => this.see(chat, columnOf(chat)));
     this.chats.filter((chat: RememberedChat) => !live.some((candidate: ChatSnapshot) => candidate.sessionId === chat.sessionId))
       .forEach((chat: RememberedChat): void => this.miss(chat.sessionId, now));
     if (JSON.stringify(this.chats) !== before) save(this.chats);
@@ -37,13 +43,12 @@ export class OpenChatsMemory {
     return this.chats.filter((chat: RememberedChat) => !live.some((candidate: ChatSnapshot) => candidate.sessionId === chat.sessionId));
   }
 
-  private see(chat: ChatSnapshot): void {
+  private see(chat: ChatSnapshot, column: ColumnKey): void {
     this.seenLive.add(chat.sessionId);
     this.missingSince.delete(chat.sessionId);
-    const index: number = this.chats.findIndex((remembered: RememberedChat) => remembered.sessionId === chat.sessionId);
-    const entry: RememberedChat = { sessionId: chat.sessionId, name: chat.name };
-    if (index === -1) this.chats = [...this.chats, entry];
-    else if (this.chats[index].name !== chat.name) this.chats = this.chats.map((remembered: RememberedChat, at: number) => (at === index ? entry : remembered));
+    const entry: RememberedChat = { sessionId: chat.sessionId, info: toClosedChatInfo(chat), column };
+    const isKnown: boolean = this.chats.some((remembered: RememberedChat) => remembered.sessionId === chat.sessionId);
+    this.chats = isKnown ? this.chats.map((remembered: RememberedChat) => (remembered.sessionId === chat.sessionId ? entry : remembered)) : [...this.chats, entry];
   }
 
   private miss(sessionId: string, now: number): void {
@@ -65,7 +70,7 @@ function load(): RememberedChat[] {
 
 function isRemembered(value: unknown): value is RememberedChat {
   const chat: Partial<RememberedChat> = (value ?? {}) as Partial<RememberedChat>;
-  return typeof chat.sessionId === 'string' && typeof chat.name === 'string';
+  return typeof chat.sessionId === 'string' && typeof chat.column === 'string' && typeof chat.info === 'object' && chat.info !== null;
 }
 
 function save(chats: readonly RememberedChat[]): void {

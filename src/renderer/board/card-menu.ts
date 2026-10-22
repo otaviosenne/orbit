@@ -12,6 +12,8 @@ export interface CardMenuTarget {
   readonly isClosed: boolean;
   // Closed on purpose and kept in the Suspended section, which it can also be taken out of without reopening.
   readonly isSuspended: boolean;
+  // Left open by a shutdown: its card waits in its old column and can be dropped from the board without reopening.
+  readonly isLeftOpen: boolean;
 }
 
 export interface CardMenuActions {
@@ -23,6 +25,7 @@ export interface CardMenuActions {
   readonly close: (target: CardMenuTarget) => void;
   readonly reopen: (target: CardMenuTarget) => void;
   readonly removeSuspended: (target: CardMenuTarget) => void;
+  readonly removeLeftOpen: (target: CardMenuTarget) => void;
 }
 
 interface MenuItem {
@@ -81,6 +84,8 @@ export class CardMenu {
   private closedItems(target: CardMenuTarget): MenuItem[] {
     const reopen: MenuItem = { icon: REOPEN_ICON, label: 'Reopen chat', isDestructive: false, run: this.actions.reopen };
     const remove: MenuItem = { icon: CLOSE_ICON, label: 'Remove from Suspended', isDestructive: false, run: this.actions.removeSuspended };
+    const dismiss: MenuItem = { icon: CLOSE_ICON, label: 'Remove from board', isDestructive: false, run: this.actions.removeLeftOpen };
+    if (target.isLeftOpen) return [reopen, this.pinItem(target), dismiss];
     if (target.isSuspended) return [reopen, this.pinItem(target), remove];
     return [reopen, this.pinItem(target)];
   }

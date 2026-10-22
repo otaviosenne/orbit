@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CLOSE_GRACE_MS } from '../src/renderer/board/closing-chats';
 import { PinnedChats } from '../src/renderer/board/pinned-chats';
 import { PinnedInfoStore } from '../src/renderer/board/pinned-info';
-import { ClosedChats } from '../src/renderer/suspend/closed-chats';
+import { ClosedChats, type LeftOpenChat } from '../src/renderer/suspend/closed-chats';
 import { SuspendedChats } from '../src/renderer/suspend/suspended-chats';
 import type { ChatSnapshot } from '../src/shared/types';
 
@@ -115,12 +115,21 @@ describe('ClosedChats', () => {
     } as unknown as Storage;
   });
 
-  function setUp(open: ChatSnapshot[]): { closed: ClosedChats; pins: PinnedChats; info: PinnedInfoStore; suspended: SuspendedChats } {
+  function setUp(open: ChatSnapshot[], left: LeftOpenChat[] = []): { closed: ClosedChats; pins: PinnedChats; info: PinnedInfoStore; suspended: SuspendedChats } {
     const pins: PinnedChats = new PinnedChats();
     const info: PinnedInfoStore = new PinnedInfoStore();
     const suspended: SuspendedChats = new SuspendedChats();
-    return { closed: new ClosedChats(pins, info, suspended, (): readonly ChatSnapshot[] => open), pins, info, suspended };
+    return { closed: new ClosedChats(pins, info, suspended, (): readonly ChatSnapshot[] => open, (): readonly LeftOpenChat[] => left), pins, info, suspended };
   }
+
+  it('lists a chat left open by a shutdown in its column, unless it is open, pinned or suspended', () => {
+    const left: LeftOpenChat[] = ['a', 'b', 'c', 'd'].map((id: string): LeftOpenChat => ({ chat: chat(id, 0), column: 'busy' }));
+    const { closed, pins, suspended } = setUp([chat('a', 1)], left);
+    pins.toggle('b');
+    suspended.add(chat('c', 1), 5);
+    expect(closed.leftOpen().map((entry) => entry.chat.sessionId)).toEqual(['d']);
+    expect(closed.find('d')?.kind).toBe('left-open');
+  });
 
   it('keeps a pinned chat that is also suspended in Pinned, labelled Suspended', () => {
     const { closed, pins, info, suspended } = setUp([]);

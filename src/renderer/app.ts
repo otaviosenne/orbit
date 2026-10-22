@@ -8,7 +8,7 @@ import { closedChatSnapshot } from './board/closed-chat-info';
 import { closedCardLabel } from './views/closed-card';
 import { CardPreview } from './board/card-preview';
 import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot, PastChat } from '../shared/types';
-import type { BoardColumn } from './views/board-columns';
+import type { BoardColumn, ColumnKey } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
 import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
 import { CardDrag } from './board/card-drag';
@@ -24,7 +24,7 @@ import { cardDeviceAt, focusCardDevice } from './board/card-devices';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
 import { OpenChatsMemory, type RememberedChat } from './restore/open-chats-memory';
-import { restoreOpenChats } from './restore/startup-restore';
+import type { LeftOpenChat } from './suspend/closed-chats';
 import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
@@ -129,7 +129,7 @@ const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
-const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats);
+const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());
 const boardDevices: BoardDevices = new BoardDevices(
   (sessionId: string): Promise<ChatDevices> => window.radar.getChatDevices(sessionId),
   (): void => {
@@ -174,6 +174,10 @@ const cardMenu: CardMenu = new CardMenu({
   close: (target: CardMenuTarget): void => void closeChat(target.sessionId),
   reopen: (target: CardMenuTarget): void => void reopenClosed(target.sessionId),
   removeSuspended: (target: CardMenuTarget): void => suspension.remove(target.sessionId),
+  removeLeftOpen: (target: CardMenuTarget): void => {
+    openChats.forget(target.sessionId);
+    renderView();
+  },
 });
 const closing: ClosingChats = new ClosingChats();
 const sheet: ChatSheet = new ChatSheet(closeSheet, {
@@ -225,12 +229,22 @@ const timelineHistory: TimelineHistoryFeed = new TimelineHistoryFeed((): void =>
   if (view === 'timeline') renderView();
 });
 
+// Where a chat's card is on the board right now, remembered so a shutdown cannot lose its place.
+function columnOfChat(chat: ChatSnapshot): ColumnKey {
+  const columns: readonly BoardColumn[] = toBoardColumns([chat], (candidate: ChatSnapshot): boolean => seen.isUnseen(candidate), Date.now(), (candidate: ChatSnapshot): RestingColumn | null => restingPins.pinOf(candidate));
+  return columns.find((column: BoardColumn) => column.chats.length > 0)?.key ?? 'idle';
+}
+
+function leftOpenChats(): LeftOpenChat[] {
+  return openChats.closed(chats).map((entry: RememberedChat): LeftOpenChat => ({ chat: closedChatSnapshot(entry.sessionId, entry.info), column: entry.column }));
+}
+
 async function refreshChats(): Promise<void> {
   polledChats = await window.radar.getChats();
   closing.settle(polledChats, Date.now());
   suspension.settle(polledChats, Date.now());
   showChats();
-  openChats.observe(chats, Date.now());
+  openChats.observe(chats, columnOfChat, Date.now());
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
   launches.settle(Date.now());
@@ -332,6 +346,7 @@ function boardMarks(): BoardMarks {
     hasUnreadReply: (chat: ChatSnapshot): boolean => seen.hasUnreadReply(chat),
     pinnedOrder: pins.order,
     closedPins: closedChats.pinned(),
+    leftOpen: closedChats.leftOpen(),
     suspended: suspension.snapshots(),
     isSuspendedCollapsed: suspension.isCollapsed,
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
@@ -438,18 +453,11 @@ async function reopenClosed(sessionId: string): Promise<void> {
   void resumeLaunched(sessionId, launchedAt);
 }
 
-async function resumeLaunched(sessionId: string, launchedAt: number): Promise<boolean> {
+async function resumeLaunched(sessionId: string, launchedAt: number): Promise<void> {
   // The main process only resumes chats from its own latest list of past chats.
   await window.radar.listPastChats();
   const result: ActionResult = await window.radar.resumeChat(sessionId);
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
-  return result.ok;
-}
-
-async function reopenRemembered(chat: RememberedChat): Promise<boolean> {
-  const launchedAt: number = Date.now();
-  launches.expect(resumedChatTarget(chat.sessionId, chat.name), launchedAt);
-  return resumeLaunched(chat.sessionId, launchedAt);
 }
 
 // A chat newly in Needs you gets a desktop notification, unless it is already in front of the user: its terminal
@@ -597,7 +605,7 @@ viewRoot.addEventListener('contextmenu', (event: MouseEvent): void => {
   const inPinnedRow: boolean = card.closest('.pinned-row') !== null;
   const target: CardMenuTarget = {
     sessionId: chat.sessionId, name: chat.name, isPinned: pins.has(chat.sessionId), inPinnedRow,
-    isClosed: live === undefined, isSuspended: closed?.kind === 'suspended',
+    isClosed: live === undefined, isSuspended: closed?.kind === 'suspended', isLeftOpen: closed?.kind === 'left-open',
   };
   cardMenu.open(target, event.clientX, event.clientY);
 });
@@ -717,13 +725,3 @@ void refreshChats();
 void refreshUsage();
 setInterval((): void => void refreshChats(), CHATS_POLL_MS);
 setInterval((): void => void refreshUsage(), USAGE_POLL_MS);
-// Orbit Web only watches; the machine's chats are brought back by the desktop app.
-if (!isWebHost()) {
-  void restoreOpenChats({
-    memory: openChats,
-    livePoll: (): Promise<readonly ChatSnapshot[]> => window.radar.getChats(),
-    isSuspended: (sessionId: string): boolean => suspension.has(sessionId),
-    reopen: reopenRemembered,
-    pause: (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)),
-  });
-}

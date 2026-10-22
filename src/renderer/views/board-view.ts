@@ -16,6 +16,7 @@ import { DROP_ZONE_ATTRIBUTE, SESSION_ATTRIBUTE } from './board-attributes';
 import { renderPinMark } from './card-marks';
 import { renderClosedCard } from './closed-card';
 import { renderSuspendedRow } from './suspended-row';
+import type { LeftOpenChat } from '../suspend/closed-chats';
 
 export { DROP_ZONE_ATTRIBUTE, DROP_ZONE_SELECTOR, SESSION_ATTRIBUTE } from './board-attributes';
 const PINNED_TITLE: string = 'Pinned';
@@ -31,6 +32,8 @@ export interface BoardMarks {
   readonly pinnedOrder: readonly string[];
   // Pinned chats that are closed now: they keep their place in the Pinned row, faded.
   readonly closedPins: readonly ChatSnapshot[];
+  // Chats a shutdown left open: closed cards in the column they were in.
+  readonly leftOpen: readonly LeftOpenChat[];
   // Suspended chats, newest first, in their own section under the columns (a suspended pin is in Pinned too).
   readonly suspended: readonly ChatSnapshot[];
   readonly isSuspendedCollapsed: boolean;
@@ -96,9 +99,12 @@ function renderColumn(column: BoardColumn, marks: BoardMarks, now: number): HTML
   const section: HTMLElement = element('section', `column column-${column.key}`);
   section.dataset[DROP_ZONE_ATTRIBUTE] = column.key;
   const heading: HTMLHeadingElement = element('h2', 'column-title', column.title);
-  heading.append(element('span', `column-count${column.chats.length > 0 ? ' has-items' : ''}`, String(column.chats.length)));
+  const closed: LeftOpenChat[] = marks.leftOpen.filter((entry: LeftOpenChat) => entry.column === column.key);
+  const count: number = column.chats.length + closed.length;
+  heading.append(element('span', `column-count${count > 0 ? ' has-items' : ''}`, String(count)));
   if (column.info !== null) heading.append(renderInfo(column.info));
   section.append(heading, ...column.chats.map((chat: ChatSnapshot) => renderCard(chat, marks, now)));
+  section.append(...closed.map((entry: LeftOpenChat) => renderClosedCard(entry.chat, 'left-open', false)));
   return section;
 }
 
