@@ -7,8 +7,10 @@ import { lastMessage } from './last-message';
 const HOVER_DELAY_MS: number = 500;
 // Enough recent items to find the last message behind a run of tool calls.
 const RECENT_ITEMS: number = 40;
-// Room between the card and the preview, and from the window's edge.
-const GAP_PX: number = 10;
+// Offset from the pointer, so the preview opens beside it without covering what it rests on.
+const POINTER_OFFSET_PX: number = 14;
+// Kept this far from the window's edges.
+const EDGE_PX: number = 10;
 const CARD_SELECTOR: string = '.card[data-session]';
 const COLOR_PROPERTIES: readonly string[] = ['--chat', '--on-chat'];
 const CLIPPED_CLASS: string = 'is-clipped';
@@ -19,6 +21,9 @@ const CLIPPED_CLASS: string = 'is-clipped';
 export class CardPreview {
   private readonly root: HTMLDivElement = element('div', 'card-preview');
   private hovered: string | null = null;
+  // Where the pointer came to rest: wide cards made a preview at the card's edge open far from it.
+  private pointerX: number = 0;
+  private pointerY: number = 0;
   private timer: number | null = null;
   // Bumped on every change of hover, so a transcript that arrives late is not shown for a card already left.
   private generation: number = 0;
@@ -40,6 +45,8 @@ export class CardPreview {
     if (sessionId === this.hovered && !this.root.hidden) return;
     // Until then any movement restarts the wait: the preview is for a pointer that has come to rest.
     this.hovered = sessionId;
+    this.pointerX = event.clientX;
+    this.pointerY = event.clientY;
     this.hide();
     if (this.timer !== null) window.clearTimeout(this.timer);
     this.timer = window.setTimeout((): void => void this.show(sessionId), HOVER_DELAY_MS);
@@ -64,20 +71,23 @@ export class CardPreview {
     const message: MessageItem | null = lastMessage(items);
     const card: HTMLElement | null = this.board.querySelector<HTMLElement>(`${CARD_SELECTOR}[data-session="${CSS.escape(sessionId)}"]`);
     if (message === null || card === null || generation !== this.generation || this.hovered !== sessionId) return;
+    // The card is only read for its colors; the preview opens at the pointer.
     for (const property of COLOR_PROPERTIES) this.root.style.setProperty(property, card.style.getPropertyValue(property));
     this.root.replaceChildren(renderMessage(message, (): undefined => undefined));
     this.root.hidden = false;
     this.root.classList.toggle(CLIPPED_CLASS, this.root.scrollHeight > this.root.clientHeight);
-    this.place(card.getBoundingClientRect());
+    this.place();
   }
 
-  // Beside the card, on whichever side has room, kept inside the window.
-  private place(card: DOMRect): void {
+  // Below and right of the pointer, flipped to the other side where the window runs out.
+  private place(): void {
     const preview: DOMRect = this.root.getBoundingClientRect();
-    const fitsRight: boolean = card.right + GAP_PX + preview.width <= window.innerWidth - GAP_PX;
-    const left: number = fitsRight ? card.right + GAP_PX : Math.max(GAP_PX, card.left - GAP_PX - preview.width);
-    const top: number = Math.min(Math.max(GAP_PX, card.top), window.innerHeight - GAP_PX - preview.height);
-    this.root.style.left = `${left}px`;
-    this.root.style.top = `${top}px`;
+    const right: number = this.pointerX + POINTER_OFFSET_PX;
+    const below: number = this.pointerY + POINTER_OFFSET_PX;
+    const left: number = right + preview.width <= window.innerWidth - EDGE_PX ? right : this.pointerX - POINTER_OFFSET_PX - preview.width;
+    const top: number = below + preview.height <= window.innerHeight - EDGE_PX ? below : this.pointerY - POINTER_OFFSET_PX - preview.height;
+    this.root.style.left = `${Math.max(EDGE_PX, left)}px`;
+    this.root.style.top = `${Math.max(EDGE_PX, top)}px`;
   }
+
 }
