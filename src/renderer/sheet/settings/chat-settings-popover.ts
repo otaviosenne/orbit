@@ -11,7 +11,7 @@ import { choiceLabel, effortLabel } from './model-label';
 import type { SettingField } from './pending-settings';
 import { PendingSettings } from './pending-settings';
 import { PermissionsSection } from './permissions-section';
-import { SettingsValues } from './settings-values';
+import { ModelSummary } from './model-summary';
 import { SkillsSection } from './skills-section';
 
 // What the popover needs from the panel around it.
@@ -33,16 +33,10 @@ const ACTIVE_CLASS: string = 'is-active';
 // The confirmation floats outside the popover; a click on it must not count as a click elsewhere.
 const CONFIRM_SELECTOR: string = '.confirm-popover';
 
-// The header's sliders button and its popover: collapsed Model, Effort, Permissions and Skills rows (one open at a
-// time, all closed on every open), and Suspend beside Close chat at the bottom.
+// The header's sliders button and its popover: collapsed Permissions and Skills rows (one open at a time, all closed
+// on every open), and Suspend beside Close chat at the bottom. Model and effort live in the summary under the composer.
 export class ChatSettingsPopover {
-  private readonly values: SettingsValues = new SettingsValues(
-    {
-      model: (model: ModelChoice): void => void this.setModel(model),
-      effort: (effort: EffortLevel): void => void this.setEffort(effort),
-    },
-    (key: SectionKey): void => this.toggleSection(key),
-  );
+  private readonly summary: ModelSummary;
   private readonly permissions: PermissionsSection = new PermissionsSection({
     pick: (mode: CycledPermissionMode): void => void this.setPermissionMode(mode),
     openTerminal: (): void => this.openTerminal(),
@@ -65,13 +59,18 @@ export class ChatSettingsPopover {
     private readonly button: HTMLButtonElement,
     private readonly root: HTMLElement,
     private readonly host: SettingsPopoverHost,
+    summaryElements: { readonly button: HTMLButtonElement; readonly root: HTMLElement },
   ) {
+    this.summary = new ModelSummary(
+      summaryElements.button,
+      summaryElements.root,
+      { model: (model: ModelChoice): void => void this.setModel(model), effort: (effort: EffortLevel): void => void this.setEffort(effort) },
+      (): void => this.hide(),
+    );
     button.innerHTML = SLIDERS_ICON;
     button.addEventListener('click', (): void => this.toggle());
     this.suspendAction = host.suspendChat === null ? null : new SuspendChatAction((): ChatSnapshot | null => this.chat, (): void => this.suspendChat());
     root.append(
-      this.values.model.root,
-      this.values.effort.root,
       this.permissions.disclosure.root,
       this.skills.disclosure.root,
       this.renderEndActions(),
@@ -90,7 +89,8 @@ export class ChatSettingsPopover {
       this.clearPolled();
     }
     this.chat = chat;
-    if (this.isOpen) void this.refresh();
+    // Polled even while closed: the summary under the composer always shows the current model and effort.
+    void this.refresh();
   }
 
   hide(): void {
@@ -103,6 +103,7 @@ export class ChatSettingsPopover {
   // The panel left its chat (closed, or showing a chat still starting): no pick may reach the old one.
   forget(): void {
     this.hide();
+    this.summary.clear();
     this.chat = null;
     this.clearPolled();
   }
@@ -123,6 +124,7 @@ export class ChatSettingsPopover {
 
   toggle(): void {
     if (this.isOpen || this.chat === null) return this.hide();
+    this.summary.close();
     this.root.hidden = false;
     this.button.classList.add(ACTIVE_CLASS);
     this.expanded = null;
@@ -139,8 +141,6 @@ export class ChatSettingsPopover {
   }
 
   private showExpanded(): void {
-    this.values.model.setOpen(this.expanded === 'model');
-    this.values.effort.setOpen(this.expanded === 'effort');
     this.permissions.disclosure.setOpen(this.expanded === 'permissions');
     this.skills.disclosure.setOpen(this.expanded === 'skills');
   }
@@ -177,13 +177,14 @@ export class ChatSettingsPopover {
     const mode: ChatPermissions['mode'] = this.pending.applyMode(this.chat.sessionId, this.polledPermissions.mode, now);
     // One change at a time across all rows: a slash command and Shift+Tab presses must not interleave.
     const isPending: boolean = this.pending.hasPending(this.chat.sessionId);
-    this.values.show(settings, isPending);
+    this.summary.show(settings, isPending);
     this.permissions.show(mode, this.polledPermissions.lockedReason, isPending);
   }
 
   private clearPolled(): void {
     this.polled = UNKNOWN_SETTINGS;
     this.polledPermissions = UNKNOWN_PERMISSIONS;
+    this.summary.clear();
   }
 
   private setModel(model: ModelChoice): Promise<void> {

@@ -43,7 +43,7 @@
           <button id="action-browser" class="link-button device-link" type="button" hidden>Browser</button>
         </div>
         <div class="sheet-actions">
-          <button id="action-settings" class="icon-button" type="button" title="Model, effort and skills" aria-label="Chat settings" aria-haspopup="dialog"></button>
+          <button id="action-settings" class="icon-button" type="button" title="Permissions and skills" aria-label="Chat settings" aria-haspopup="dialog"></button>
           <button id="action-window" class="link-button" type="button" title="Open this chat in its own Orbit window">New window</button>
           <button id="sheet-close" class="icon-button" type="button" title="Close (Esc)"></button>
         </div>
@@ -75,6 +75,10 @@
         </div>
         <button id="composer-send" type="submit" class="button button-primary">Send</button>
       </form>
+      <div id="model-bar" class="model-bar">
+        <button id="model-summary" class="model-summary" type="button" aria-haspopup="dialog" title="Change model and effort"></button>
+        <div id="model-popover" class="chat-settings model-popover" role="dialog" aria-label="Model and effort" hidden></div>
+      </div>
       <p id="sheet-status" class="sheet-status" role="status"></p>
     </section>
     <div id="lightbox" class="lightbox" hidden><img id="lightbox-image" class="lightbox-image" alt="" /></div>

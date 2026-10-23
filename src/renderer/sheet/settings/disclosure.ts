@@ -1,7 +1,7 @@
 import { element } from '../../dom';
 import { CARET_DOWN_ICON } from '../../icons';
 
-export type SectionKey = 'model' | 'effort' | 'permissions' | 'skills';
+export type SectionKey = 'permissions' | 'skills';
 
 const OPEN_CLASS: string = 'is-open';
 

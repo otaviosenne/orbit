@@ -81,7 +81,7 @@ export class ChatSheet {
   private readonly placeholder: PendingPlaceholder;
   // Sends written while the chat was still starting, released once it is live (or dropped if it never is).
   private liveWaiters: ((chat: ChatSnapshot | null) => void)[] = [];
-  // Model, effort and skills, behind the header's sliders button.
+  // Permissions and skills, behind the header's sliders button; model and effort have their summary under the composer.
   private readonly settings: ChatSettingsPopover;
   // The Emulator and Browser pills, for a chat that tests on an emulator or in Chrome.
   private readonly devices: DeviceLinks = new DeviceLinks((text: string, isError: boolean): void => this.showStatus(text, isError));
@@ -106,7 +106,7 @@ export class ChatSheet {
       report: (result: ActionResult, successText: string): void => this.report(result, successText),
       closeChat: onCloseChat,
       suspendChat: lifecycle.suspend,
-    });
+    }, { button: requireElement('#model-summary'), root: requireElement('#model-popover') });
     this.placeholder = new PendingPlaceholder(this.root, onClose);
     this.agentView = new AgentView(
       this.root,
