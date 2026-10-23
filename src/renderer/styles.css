@@ -87,8 +87,9 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 /* ---------- Toolbar ---------- */
 .topbar { height: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 20px; }
 .app-title { display: flex; align-items: center; white-space: nowrap; }
-/* Only the wordmark itself opens the menu about Orbit (repository, issues), not the empty bar around it */
-.wordmark.has-menu { cursor: default; padding: 4px 6px; margin-left: -6px; border-radius: 8px; transition: background 0.12s; }
+/* Only the wordmark itself opens the menu about Orbit (repository, issues), not the empty bar around it. The drawn
+   letters and symbol sit low in their line box, so the padding is uneven to center them in the hover pill. */
+.wordmark.has-menu { cursor: default; padding: 2px 6px 6px; margin-left: -6px; border-radius: 8px; transition: background 0.12s; }
 .wordmark.has-menu:hover { background: var(--disclosure-hover); }
 .app-menu a { text-decoration: none; }
 /* Wordmark: orbit O + "rb" + dotless i under a spark + "t"; the letters take the theme's text color */
