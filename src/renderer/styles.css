@@ -185,6 +185,7 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 }
 .weekly-usage:hover { background: var(--disclosure-hover); }
 .weekly-usage[hidden] { display: none; }
+.weekly-usage[data-level='low'] { color: var(--tag-green); }
 .weekly-usage[data-level='warning'] { color: color-mix(in srgb, var(--tag-yellow) 80%, var(--text)); }
 .weekly-usage[data-level='critical'] { color: var(--danger); }
 .weekly-usage[data-level='exhausted'] { color: var(--tag-purple); }
