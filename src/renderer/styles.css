@@ -949,7 +949,7 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 .card.is-suspended:hover { opacity: 1; }
 .composer {
   position: absolute; left: 0; right: 0; bottom: 0;
-  display: flex; gap: 8px; align-items: flex-end; padding: var(--composer-padding-top) 18px var(--composer-bottom-padding);
+  display: flex; gap: 8px; align-items: flex-end; padding: var(--composer-padding-top) 18px 14px;
   background: transparent; pointer-events: none;
 }
 .composer > * { pointer-events: auto; }
@@ -1690,10 +1690,9 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 .pace-dot.is-over { fill: var(--danger); }
 .pace-dot.is-under { fill: var(--tag-green); }
 
-/* ---------- Model and effort summary under the composer ---------- */
-.composer { --composer-bottom-padding: 30px; }
-.model-bar { position: absolute; left: 24px; bottom: 6px; z-index: 6; }
-.sheet.is-agent .model-bar { display: none; }
+/* ---------- Model and effort summary: right under the header's New window and close buttons ---------- */
+.sheet-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.sheet.is-agent .model-summary { display: none; }
 .model-summary {
   display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 0; border-radius: 8px; background: transparent;
   color: var(--secondary); font: inherit; font-size: 11.5px; cursor: pointer;
@@ -1701,5 +1700,6 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 .model-summary[hidden] { display: none; }
 .model-summary:hover, .model-summary.is-active { background: var(--disclosure-hover); color: var(--text); }
 .model-summary-dot { color: var(--tertiary); }
-.chat-settings.model-popover { top: auto; right: auto; left: 0; bottom: calc(100% + 4px); width: min(340px, calc(100vw - 48px)); gap: 10px; padding: 10px; }
+.chat-settings.model-popover { gap: 10px; padding: 10px; }
+.sheet.is-agent .model-popover { display: none; }
 .model-popover-group { display: flex; flex-direction: column; gap: 6px; }
