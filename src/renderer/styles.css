@@ -1722,3 +1722,7 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 }
 .pace-tip[hidden] { display: none; }
 .pace-tip-day { color: var(--secondary); font-size: 11px; font-weight: 600; }
+
+/* ---------- Reordering: where the dragged card would land ---------- */
+.reorder-marker { position: fixed; z-index: 90; border-radius: 2px; background: var(--accent); pointer-events: none; }
+.reorder-marker[hidden] { display: none; }

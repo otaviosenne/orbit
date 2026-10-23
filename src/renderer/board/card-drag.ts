@@ -97,7 +97,7 @@ export class CardDrag {
     document.body.append(ghost);
     document.body.classList.add(DRAGGING_BODY_CLASS);
     press.card.classList.add(DRAG_SOURCE_CLASS);
-    return { ghost, zones: new DropZones(this.root, press.source), grabX: press.startX - box.left, grabY: press.startY - box.top };
+    return { ghost, zones: new DropZones(this.root, press.source, press.sessionId), grabX: press.startX - box.left, grabY: press.startY - box.top };
   }
 
   // The board is rebuilt before the drop zones go: the cards are measured where the user saw them (below a

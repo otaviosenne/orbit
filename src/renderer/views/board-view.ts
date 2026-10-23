@@ -2,7 +2,6 @@ import { renderUnseenDot } from '../unseen-dot';
 import { statusAge } from '../../shared/chat-time';
 import type { ChatDevices, ChatSnapshot } from '../../shared/types';
 import { renderCardDevices } from '../board/card-devices';
-import type { BoardZone } from '../board/drop-rules';
 import { element } from '../dom';
 import { formatDuration } from '../format';
 import { INFO_ICON } from '../icons';
@@ -16,6 +15,7 @@ import { DROP_ZONE_ATTRIBUTE, SESSION_ATTRIBUTE } from './board-attributes';
 import { renderPinMark } from './card-marks';
 import { renderClosedCard } from './closed-card';
 import { renderSuspendedRow } from './suspended-row';
+import type { BoardZone } from '../board/drop-rules';
 import type { LeftOpenChat } from '../suspend/closed-chats';
 
 export { DROP_ZONE_ATTRIBUTE, DROP_ZONE_SELECTOR, SESSION_ATTRIBUTE } from './board-attributes';
@@ -34,6 +34,8 @@ export interface BoardMarks {
   readonly closedPins: readonly ChatSnapshot[];
   // Chats a shutdown left open: closed cards in the column they were in.
   readonly leftOpen: readonly LeftOpenChat[];
+  // The order the user gave a section's cards by dragging them.
+  readonly ordered: <T extends { readonly sessionId: string }>(zone: BoardZone, cards: readonly T[]) => T[];
   // Suspended chats, newest first, in their own section under the columns (a suspended pin is in Pinned too).
   readonly suspended: readonly ChatSnapshot[];
   readonly isSuspendedCollapsed: boolean;
@@ -51,7 +53,7 @@ export function renderBoard(chats: readonly ChatSnapshot[], marks: BoardMarks, n
   if (pinned.length > 0) layout.append(renderPinnedRow(pinned, marks, now));
   layout.append(renderColumns(chats, marks, now));
   // Every suspended chat is listed here, a pinned one too: it also stays in the Pinned row, labelled Suspended.
-  if (marks.suspended.length > 0) layout.append(renderSuspendedRow(marks.suspended, marks.isSuspendedCollapsed, marks.pinnedOrder));
+  if (marks.suspended.length > 0) layout.append(renderSuspendedRow(marks.ordered('suspended', marks.suspended), marks.isSuspendedCollapsed, marks.pinnedOrder));
   return layout;
 }
 
@@ -103,7 +105,7 @@ function renderColumn(column: BoardColumn, marks: BoardMarks, now: number): HTML
   const count: number = column.chats.length + closed.length;
   heading.append(element('span', `column-count${count > 0 ? ' has-items' : ''}`, String(count)));
   if (column.info !== null) heading.append(renderInfo(column.info));
-  section.append(heading, ...column.chats.map((chat: ChatSnapshot) => renderCard(chat, marks, now)));
+  section.append(heading, ...marks.ordered(column.key, column.chats).map((chat: ChatSnapshot) => renderCard(chat, marks, now)));
   section.append(...closed.map((entry: LeftOpenChat) => renderClosedCard(entry.chat, 'left-open', false)));
   return section;
 }

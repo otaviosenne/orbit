@@ -24,6 +24,14 @@ export class PinnedChats {
     save(this.sessionIds);
   }
 
+  // The row's new order; a pin the row did not show (no card info yet) keeps its place at the end.
+  setOrder(order: readonly string[]): void {
+    const shown: string[] = order.filter((sessionId: string) => this.has(sessionId));
+    const hidden: string[] = this.sessionIds.filter((sessionId: string) => !shown.includes(sessionId));
+    this.sessionIds.splice(0, this.sessionIds.length, ...shown, ...hidden);
+    save(this.sessionIds);
+  }
+
   unpin(sessionId: string): void {
     const index: number = this.sessionIds.indexOf(sessionId);
     if (index === -1) return;

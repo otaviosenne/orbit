@@ -1,4 +1,5 @@
 import type { ColumnKey, RestingColumn } from '../views/board-columns';
+import type { ReorderTarget } from './reorder-target';
 
 // Every place on the board a card can be picked up from or dropped on. "columns" is the whole area under the
 // Pinned row, which a card taken out of Pinned treats as one zone; "suspended" is the section under the columns.
@@ -17,7 +18,9 @@ export type DropAction =
   | { readonly kind: 'pin' }
   | { readonly kind: 'unpin' }
   | { readonly kind: 'suspend' }
-  | { readonly kind: 'rest'; readonly column: RestingColumn };
+  | { readonly kind: 'rest'; readonly column: RestingColumn }
+  // Within the section the card came from; the target is where the pointer put it, null until it is over a card.
+  | { readonly kind: 'reorder'; readonly zone: BoardZone; readonly target: ReorderTarget | null };
 
 const NO_ACTION: DropAction = { kind: 'none' };
 const PIN: DropAction = { kind: 'pin' };
@@ -26,8 +29,9 @@ const SUSPEND: DropAction = { kind: 'suspend' };
 
 // A card taken out of Pinned only means "unpin", so the columns act as one zone for it; a column card keeps the
 // individual zones (Pinned and each column). Any open chat can be dropped on Suspended; a suspended card is
-// reopened from its panel, never by a drop, so nothing is in play for it.
+// reopened from its panel, never by a drop, so only its own section is in play for it (to reorder).
 export function isZoneInPlay(source: DragSource, zone: BoardZone): boolean {
+  if (zone === source.zone) return true;
   if (source.zone === 'suspended') return false;
   if (zone === 'suspended') return source.canSuspend;
   return source.zone === 'pinned' ? zone === 'pinned' || zone === 'columns' : zone !== 'columns';
@@ -36,7 +40,8 @@ export function isZoneInPlay(source: DragSource, zone: BoardZone): boolean {
 // Needs you and Working follow the chat's live state, so a drop can never put a card there; only the
 // Pinned row, the Active/Idle split and suspending are choices the user owns.
 export function dropActionFor(source: DragSource, to: BoardZone): DropAction {
-  if (to === source.zone || !isZoneInPlay(source, to)) return NO_ACTION;
+  if (to === source.zone) return { kind: 'reorder', zone: to, target: null };
+  if (!isZoneInPlay(source, to)) return NO_ACTION;
   if (to === 'suspended') return SUSPEND;
   if (source.zone === 'pinned') return UNPIN;
   if (to === 'pinned') return source.isPinned ? NO_ACTION : PIN;

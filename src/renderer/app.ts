@@ -17,6 +17,10 @@ import type { DropAction } from './board/drop-rules';
 import { BoardMotion } from './board/board-motion';
 import type { CardBox } from './board/card-moves';
 import { landingCardKey } from './board/card-keys';
+import { CardOrder } from './board/card-order';
+import type { BoardZone } from './board/drop-rules';
+import type { ReorderTarget } from './board/reorder-target';
+import { moveInOrder } from './board/reorder-target';
 import { RestingPins } from './board/resting-pins';
 import { BoardDevices } from './board/board-devices';
 import type { CardDeviceKind } from './board/card-devices';
@@ -128,6 +132,7 @@ const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
+const cardOrder: CardOrder = new CardOrder();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());
 const boardDevices: BoardDevices = new BoardDevices(
@@ -148,6 +153,7 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
         if (chat !== undefined) restingPins.set(chat, to);
       },
       suspend: (id: string): void => requestSuspend(id, null),
+      reorder: (id: string, zone: BoardZone, target: ReorderTarget): void => reorderCards(id, zone, target),
     });
     // Optimistic: the card lands in its new place now, not at the next poll.
     boardMotion.land(landingCardKey(sessionId, action), landing);
@@ -155,6 +161,18 @@ const cardDrag: CardDrag = new CardDrag(viewRoot, {
   },
   changed: (): void => renderView(),
 });
+// The section's cards in the order they are drawn, which is the order the user's drag moves one of them within.
+function displayedOrder(zone: BoardZone): string[] {
+  const cards: NodeListOf<HTMLElement> = viewRoot.querySelectorAll<HTMLElement>(`[data-drop-zone="${zone}"] .card[data-${SESSION_ATTRIBUTE}]`);
+  return [...cards].flatMap((card: HTMLElement): string[] => (card.dataset[SESSION_ATTRIBUTE] === undefined ? [] : [card.dataset[SESSION_ATTRIBUTE]]));
+}
+
+function reorderCards(sessionId: string, zone: BoardZone, target: ReorderTarget): void {
+  const order: string[] = moveInOrder(displayedOrder(zone), sessionId, target);
+  if (zone === 'pinned') pins.setOrder(order);
+  else cardOrder.set(zone, order);
+}
+
 const cardRename: CardRename = new CardRename((sessionId: string, name: string): void => void renameChat(sessionId, name), (): void => renderView());
 const cardMenu: CardMenu = new CardMenu({
   openWindow: (target: CardMenuTarget): void => void window.radar.openChatWindow(target.sessionId),
@@ -347,6 +365,7 @@ function boardMarks(): BoardMarks {
     pinnedOrder: pins.order,
     closedPins: closedChats.pinned(),
     leftOpen: closedChats.leftOpen(),
+    ordered: <T extends { readonly sessionId: string }>(zone: BoardZone, cards: readonly T[]): T[] => cardOrder.apply(zone, cards),
     suspended: suspension.snapshots(),
     isSuspendedCollapsed: suspension.isCollapsed,
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),

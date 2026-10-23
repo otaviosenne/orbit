@@ -29,15 +29,16 @@ describe('dropActionFor', () => {
     expect(dropActionFor(fromColumn('active', true), 'pinned')).toEqual(NONE);
   });
 
-  it('does nothing when a card goes back to the zone it came from', () => {
-    expect(dropActionFor(FROM_PINNED_ROW, 'pinned')).toEqual(NONE);
-    COLUMNS.forEach((column: ColumnKey) => expect(dropActionFor(fromColumn(column), column)).toEqual(NONE));
+  it('reorders when a card is dropped in the section it came from', () => {
+    expect(dropActionFor(FROM_PINNED_ROW, 'pinned')).toEqual({ kind: 'reorder', zone: 'pinned', target: null });
+    expect(dropActionFor(FROM_SUSPENDED, 'suspended')).toEqual({ kind: 'reorder', zone: 'suspended', target: null });
+    COLUMNS.forEach((column: ColumnKey) => expect(dropActionFor(fromColumn(column), column)).toEqual({ kind: 'reorder', zone: column, target: null }));
   });
 
   it('never moves a chat into Needs you or Working, which follow its live state', () => {
     COLUMNS.forEach((column: ColumnKey) => {
-      expect(dropActionFor(fromColumn(column), 'needs')).toEqual(NONE);
-      expect(dropActionFor(fromColumn(column), 'busy')).toEqual(NONE);
+      if (column !== 'needs') expect(dropActionFor(fromColumn(column), 'needs')).toEqual(NONE);
+      if (column !== 'busy') expect(dropActionFor(fromColumn(column), 'busy')).toEqual(NONE);
     });
   });
 
@@ -72,8 +73,9 @@ describe('suspending by drag', () => {
     expect(dropActionFor(FROM_CLOSED_PIN, 'columns')).toEqual({ kind: 'unpin' });
   });
 
-  it('does nothing with a suspended card wherever it is dropped', () => {
-    ZONES.forEach((zone: BoardZone) => expect(dropActionFor(FROM_SUSPENDED, zone)).toEqual(NONE));
+  it('does nothing with a suspended card dropped outside Suspended, and reorders it inside', () => {
+    ZONES.filter((zone: BoardZone) => zone !== 'suspended').forEach((zone: BoardZone) => expect(dropActionFor(FROM_SUSPENDED, zone)).toEqual(NONE));
+    expect(dropActionFor(FROM_SUSPENDED, 'suspended')).toEqual({ kind: 'reorder', zone: 'suspended', target: null });
   });
 });
 
@@ -93,8 +95,8 @@ describe('isZoneInPlay', () => {
     expect(inPlay).toEqual(['pinned', ...COLUMNS, 'suspended']);
   });
 
-  it('offers a suspended card nothing, so no zone lights up or fades', () => {
-    expect(ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_SUSPENDED, zone))).toEqual([]);
+  it('offers a suspended card only its own section, so no other zone lights up or fades', () => {
+    expect(ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_SUSPENDED, zone))).toEqual(['suspended']);
   });
 });
 

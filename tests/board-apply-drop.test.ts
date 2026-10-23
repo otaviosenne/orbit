@@ -9,6 +9,7 @@ function recorder(): { readonly calls: string[]; readonly effects: DropEffects }
     unpin: (id: string): void => void calls.push(`unpin ${id}`),
     rest: (id: string, column: string): void => void calls.push(`rest ${id} ${column}`),
     suspend: (id: string): void => void calls.push(`suspend ${id}`),
+    reorder: (id: string, zone: string, target): void => void calls.push(`reorder ${id} ${zone} ${target.placement} ${target.sessionId}`),
   };
   return { calls, effects };
 }
@@ -21,6 +22,13 @@ describe('applyDrop', () => {
     applyDrop('c', { kind: 'rest', column: 'idle' }, effects);
     applyDrop('d', { kind: 'suspend' }, effects);
     expect(calls).toEqual(['pin a', 'unpin b', 'rest c idle', 'suspend d']);
+  });
+
+  it('reorders only once the pointer is over a card', () => {
+    const { calls, effects } = recorder();
+    applyDrop('a', { kind: 'reorder', zone: 'idle', target: null }, effects);
+    applyDrop('a', { kind: 'reorder', zone: 'idle', target: { sessionId: 'b', placement: 'after' } }, effects);
+    expect(calls).toEqual(['reorder a idle after b']);
   });
 
   it('does nothing for a drop the rules turned down', () => {
