@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withSample } from '../src/core/usage-history-log';
+import { recentSamples, withSample } from '../src/core/usage-history-log';
 import { buildPaceModel, paceGap } from '../src/renderer/usage/pace-model';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src/renderer/usage/work-schedule';
 
@@ -49,7 +49,24 @@ describe('pace model', () => {
   });
 });
 
+describe('past weeks', () => {
+  it('marks a finished week and ends its even pace at 100%', () => {
+    const lastWeekEnd: number = RESETS_AT - 7 * 24 * HOUR;
+    const model = buildPaceModel(lastWeekEnd, [{ at: lastWeekEnd - 2 * HOUR, percent: 87 }], RESETS_AT);
+    expect(model.isPast).toBe(true);
+    expect(model.expectedNow).toBe(100);
+    expect(model.actualNow).toBe(87);
+  });
+});
+
 describe('usage history log', () => {
+  it('keeps old weeks on disk but sends only the recent ones to the page', () => {
+    const now: number = RESETS_AT;
+    const history = [{ at: now - 200 * 24 * HOUR, percent: 5 }, { at: now - 10 * 24 * HOUR, percent: 40 }];
+    expect(recentSamples(history, now).map((sample) => sample.percent)).toEqual([40]);
+    expect(withSample(history, { at: now, percent: 41 })).toHaveLength(3);
+  });
+
   it('skips an unchanged reading soon after the last one but keeps a changed one', () => {
     const first = withSample([], { at: 1_000, percent: 10 });
     expect(withSample(first, { at: 2_000, percent: 10 })).toHaveLength(1);

@@ -1,7 +1,7 @@
 import type { UsageSample } from '../../shared/types';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from './work-schedule';
 
-const WEEK_MS: number = 7 * 24 * 60 * 60_000;
+export const WEEK_MS: number = 7 * 24 * 60 * 60_000;
 const FULL_PERCENT: number = 100;
 
 export interface PacePoint {
@@ -22,6 +22,8 @@ export interface PaceModel {
   // Where the straight line says usage should be right now, and where it really is.
   readonly expectedNow: number;
   readonly actualNow: number | null;
+  // A week that is over: its line is whatever it ended at, not a reading to act on.
+  readonly isPast: boolean;
 }
 
 // The week's chart: the straight line of an even pace against what was really used, both over working time.
@@ -41,6 +43,7 @@ export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[]
     actual: inWindow.map((sample: UsageSample): PacePoint => ({ x: position(sample.at), percent: sample.percent })),
     expectedNow: position(Math.min(now, resetsAt)) * FULL_PERCENT,
     actualNow: last === undefined ? null : last.percent,
+    isPast: now > resetsAt,
   };
 }
 

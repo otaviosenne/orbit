@@ -22,14 +22,21 @@ export function demoUsage(now: number): UsageSnapshot {
   };
 }
 
-// A week that started fast: the demo's chart shows a reading above the pace line.
-const DEMO_HISTORY_POINTS: number = 8;
-const DEMO_HISTORY_SPAN_MS: number = 2 * DAY_MS;
-const DEMO_HISTORY_END_PERCENT: number = 63;
+// Two weeks of readings: last week ended high, this one is partway and above an even pace, so both chart views have data.
+const DEMO_WEEK_MS: number = 7 * DAY_MS;
+const DEMO_POINTS_PER_WEEK: number = 10;
+const DEMO_THIS_WEEK_PERCENT: number = 63;
+const DEMO_LAST_WEEK_PERCENT: number = 91;
+const DEMO_THIS_WEEK_ELAPSED_MS: number = DEMO_WEEK_MS - WEEK_RESET_MS;
 
 function demoHistory(now: number): UsageSample[] {
-  return Array.from({ length: DEMO_HISTORY_POINTS }, (_unused: unknown, index: number): UsageSample => ({
-    at: now - DEMO_HISTORY_SPAN_MS + (DEMO_HISTORY_SPAN_MS * index) / (DEMO_HISTORY_POINTS - 1),
-    percent: (DEMO_HISTORY_END_PERCENT * (index + 1)) / DEMO_HISTORY_POINTS,
+  const lastWeek: UsageSample[] = rampOver(now - DEMO_THIS_WEEK_ELAPSED_MS - DEMO_WEEK_MS, DEMO_WEEK_MS - HOUR_MS, DEMO_LAST_WEEK_PERCENT);
+  return [...lastWeek, ...rampOver(now - DEMO_THIS_WEEK_ELAPSED_MS + HOUR_MS, DEMO_THIS_WEEK_ELAPSED_MS - HOUR_MS, DEMO_THIS_WEEK_PERCENT)];
+}
+
+function rampOver(start: number, span: number, endPercent: number): UsageSample[] {
+  return Array.from({ length: DEMO_POINTS_PER_WEEK }, (_unused: unknown, index: number): UsageSample => ({
+    at: start + (span * index) / (DEMO_POINTS_PER_WEEK - 1),
+    percent: (endPercent * (index + 1)) / DEMO_POINTS_PER_WEEK,
   }));
 }

@@ -1,5 +1,5 @@
 import { element } from '../dom';
-import { buildPaceModel, paceGap, type PaceDay, type PaceModel, type PacePoint } from './pace-model';
+import { WEEK_MS, buildPaceModel, paceGap, type PaceDay, type PaceModel, type PacePoint } from './pace-model';
 import type { UsageSample } from '../../shared/types';
 
 const SVG_NS: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
@@ -15,14 +15,53 @@ const POINT_RADIUS: number = 3.5;
 // Within this many points of the line counts as on pace, so a tiny lead does not flash red.
 const ON_PACE_MARGIN: number = 2;
 
+// Which week is shown, counted back from the current one; kept across the page's re-renders on every poll.
+let weeksBack: number = 0;
+
 export function renderPaceChart(resetsAt: number, samples: readonly UsageSample[], now: number): HTMLElement {
-  const model: PaceModel = buildPaceModel(resetsAt, samples, now);
   const box: HTMLDivElement = element('div', 'pace');
-  box.append(element('p', `pace-summary ${paceClass(model)}`, summary(model)), renderSvg(model));
+  const draw = (): void => {
+    const windowEnd: number = resetsAt - weeksBack * WEEK_MS;
+    const model: PaceModel = buildPaceModel(windowEnd, samples, now);
+    const hasEarlier: boolean = samples.some((sample: UsageSample) => sample.at < windowEnd - WEEK_MS);
+    box.replaceChildren(
+      renderWeekNav(windowEnd, hasEarlier, (change: number): void => {
+        weeksBack += change;
+        draw();
+      }),
+      element('p', `pace-summary ${paceClass(model)}`, summary(model)),
+      renderSvg(model),
+    );
+  };
+  draw();
   return box;
 }
 
+function renderWeekNav(windowEnd: number, hasEarlier: boolean, step: (change: number) => void): HTMLElement {
+  const nav: HTMLDivElement = element('div', 'pace-nav');
+  const earlier: HTMLButtonElement = element('button', 'pace-step', '‹');
+  const later: HTMLButtonElement = element('button', 'pace-step', '›');
+  earlier.type = 'button';
+  later.type = 'button';
+  earlier.setAttribute('aria-label', 'Previous week');
+  later.setAttribute('aria-label', 'Next week');
+  earlier.disabled = !hasEarlier;
+  later.disabled = weeksBack === 0;
+  earlier.addEventListener('click', (): void => step(1));
+  later.addEventListener('click', (): void => step(-1));
+  nav.append(earlier, element('span', 'pace-week', weekTitle(windowEnd)), later);
+  return nav;
+}
+
+function weekTitle(windowEnd: number): string {
+  if (weeksBack === 0) return 'This week';
+  if (weeksBack === 1) return 'Last week';
+  const format = (at: number): string => new Date(at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return `${format(windowEnd - WEEK_MS)} – ${format(windowEnd)}`;
+}
+
 function paceClass(model: PaceModel): string {
+  if (model.isPast) return '';
   const gap: number | null = paceGap(model);
   if (gap === null || Math.abs(gap) <= ON_PACE_MARGIN) return '';
   return gap > 0 ? 'is-over' : 'is-under';
@@ -30,7 +69,8 @@ function paceClass(model: PaceModel): string {
 
 function summary(model: PaceModel): string {
   const gap: number | null = paceGap(model);
-  if (gap === null || model.actualNow === null) return 'Collecting readings: the line fills in as Orbit reads your usage.';
+  if (gap === null || model.actualNow === null) return model.isPast ? 'No readings were saved for this week.' : 'Collecting readings: the line fills in as Orbit reads your usage.';
+  if (model.isPast) return `The week ended at ${Math.round(model.actualNow)}% used.`;
   const used: string = `${Math.round(model.actualNow)}% used, an even pace is ${Math.round(model.expectedNow)}%`;
   if (Math.abs(gap) <= ON_PACE_MARGIN) return `${used}: on pace.`;
   return `${used}: ${Math.round(Math.abs(gap))} points ${gap > 0 ? 'above the line, slow down' : 'below the line, plenty of room'}.`;

@@ -3,7 +3,7 @@ import { WEEKLY_ALL_LABEL } from '../shared/usage-labels';
 import { nextUsageDelay } from './usage-backoff';
 import { loadCachedUsage, saveCachedUsage } from './usage-cache';
 import { UsageRateLimited, fetchRawUsage } from './usage-client';
-import { withSample } from './usage-history-log';
+import { recentSamples, withSample } from './usage-history-log';
 import { loadUsageHistory, saveUsageHistory } from './usage-history-store';
 import { toUsageSnapshot } from './usage-mapper';
 
@@ -31,7 +31,7 @@ export class UsageService {
   private async restore(): Promise<void> {
     const cached: UsageSnapshot | null = await loadCachedUsage();
     this.history = await loadUsageHistory();
-    if (cached !== null) this.snapshot = { ...cached, weeklyHistory: this.history };
+    if (cached !== null) this.snapshot = { ...cached, weeklyHistory: recentSamples(this.history, Date.now()) };
   }
 
   private async refresh(): Promise<UsageSnapshot> {
@@ -52,9 +52,9 @@ export class UsageService {
 
   private record(snapshot: UsageSnapshot): UsageSample[] {
     const weekly: UsageLimit | undefined = snapshot.limits.find((limit: UsageLimit) => limit.label === WEEKLY_ALL_LABEL);
-    if (weekly === undefined || snapshot.fetchedAt === null) return this.history;
+    if (weekly === undefined || snapshot.fetchedAt === null) return recentSamples(this.history, Date.now());
     this.history = withSample(this.history, { at: snapshot.fetchedAt, percent: weekly.percent });
     void saveUsageHistory(this.history);
-    return this.history;
+    return recentSamples(this.history, Date.now());
   }
 }
