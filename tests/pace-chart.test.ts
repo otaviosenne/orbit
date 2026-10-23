@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { recentSamples, withSample } from '../src/core/usage-history-log';
-import { buildPaceModel, paceGap } from '../src/renderer/usage/pace-model';
+import { buildPaceModel, paceGap, readingAt } from '../src/renderer/usage/pace-model';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src/renderer/usage/work-schedule';
 
 const HOUR: number = 3_600_000;
@@ -46,6 +46,22 @@ describe('pace model', () => {
     const model = buildPaceModel(RESETS_AT, [{ at: WINDOW_START - HOUR, percent: 90 }], at(21, 9));
     expect(paceGap(model)).toBeNull();
     expect(model.actual).toEqual([]);
+  });
+});
+
+describe('hover reading', () => {
+  it('gives the even pace and the interpolated usage at a point of the week', () => {
+    const model = buildPaceModel(RESETS_AT, [{ at: at(20, 9), percent: 0 }, { at: at(21, 9), percent: 20 }], at(21, 9));
+    const reading = readingAt(model, 0.1);
+    expect(reading.expected).toBeCloseTo(10);
+    expect(reading.actual).toBeCloseTo(10);
+    expect(reading.day).toBe(model.days[0].label);
+  });
+
+  it('has no usage before the first reading or after the last', () => {
+    const model = buildPaceModel(RESETS_AT, [{ at: at(21, 9), percent: 20 }], at(21, 9));
+    expect(readingAt(model, 0.05).actual).toBeNull();
+    expect(readingAt(model, 0.9).actual).toBeNull();
   });
 });
 

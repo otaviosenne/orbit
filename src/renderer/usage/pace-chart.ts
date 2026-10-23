@@ -1,16 +1,10 @@
 import { element } from '../dom';
+import { FULL_PERCENT, HEIGHT, PLOT_BOTTOM, PLOT_LEFT, PLOT_RIGHT, PLOT_TOP, SVG_NS, WIDTH, shape, xOf, yOf } from './pace-geometry';
+import { attachPaceHover } from './pace-hover';
 import { WEEK_MS, buildPaceModel, paceGap, type PaceDay, type PaceModel, type PacePoint } from './pace-model';
 import type { UsageSample } from '../../shared/types';
 
-const SVG_NS: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
-const WIDTH: number = 640;
-const HEIGHT: number = 230;
-const PLOT_LEFT: number = 38;
-const PLOT_RIGHT: number = 12;
-const PLOT_TOP: number = 12;
-const PLOT_BOTTOM: number = 30;
 const GRID_PERCENTS: readonly number[] = [0, 25, 50, 75, 100];
-const FULL_PERCENT: number = 100;
 const POINT_RADIUS: number = 3.5;
 // Within this many points of the line counts as on pace, so a tiny lead does not flash red.
 const ON_PACE_MARGIN: number = 2;
@@ -32,6 +26,7 @@ export function renderPaceChart(resetsAt: number, samples: readonly UsageSample[
       element('p', `pace-summary ${paceClass(model)}`, summary(model)),
       renderSvg(model),
     );
+    attachPaceHover(box, model, paceClass(model));
   };
   draw();
   return box;
@@ -119,18 +114,4 @@ function label(text: string, x: number, y: number, anchor: string): SVGElement {
   const node: SVGElement = shape('text', { class: 'pace-label', x, y, 'text-anchor': anchor });
   node.textContent = text;
   return node;
-}
-
-function shape(tag: string, attributes: Record<string, string | number>): SVGElement {
-  const node: SVGElement = document.createElementNS(SVG_NS, tag) as SVGElement;
-  Object.entries(attributes).forEach(([name, value]: [string, string | number]): void => node.setAttribute(name, String(value)));
-  return node;
-}
-
-function xOf(fraction: number): number {
-  return PLOT_LEFT + fraction * (WIDTH - PLOT_LEFT - PLOT_RIGHT);
-}
-
-function yOf(percent: number): number {
-  return PLOT_TOP + (1 - Math.min(percent, FULL_PERCENT) / FULL_PERCENT) * (HEIGHT - PLOT_TOP - PLOT_BOTTOM);
 }

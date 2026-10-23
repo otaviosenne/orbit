@@ -51,3 +51,28 @@ export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[]
 export function paceGap(model: PaceModel): number | null {
   return model.actualNow === null ? null : model.actualNow - model.expectedNow;
 }
+
+export interface PaceReading {
+  readonly expected: number;
+  // Null where no reading was taken: before the first one or after the last.
+  readonly actual: number | null;
+  readonly day: string | null;
+}
+
+// What both lines say at a point of the week: the even pace and the usage the readings draw there.
+export function readingAt(model: PaceModel, fraction: number): PaceReading {
+  return {
+    expected: fraction * FULL_PERCENT,
+    actual: usageAt(model.actual, fraction),
+    day: model.days.find((day: PaceDay) => fraction >= day.start && fraction <= day.end)?.label ?? null,
+  };
+}
+
+function usageAt(points: readonly PacePoint[], fraction: number): number | null {
+  const after: number = points.findIndex((point: PacePoint) => point.x >= fraction);
+  if (after === -1 || (after === 0 && points[0].x > fraction)) return null;
+  const to: PacePoint = points[after];
+  const from: PacePoint = points[Math.max(after - 1, 0)];
+  if (to.x === from.x) return to.percent;
+  return from.percent + ((to.percent - from.percent) * (fraction - from.x)) / (to.x - from.x);
+}
