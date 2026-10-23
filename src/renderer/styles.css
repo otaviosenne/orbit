@@ -1672,3 +1672,19 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
   .list-row-button { gap: 10px; padding: 10px 12px 10px 14px; }
   .list-row + .list-row::before { left: 34px; }
 }
+
+.pace { padding: 4px 4px 0; }
+.pace-summary { margin: 0 0 6px; font-size: 12.5px; color: var(--secondary); }
+.pace-summary.is-over { color: var(--danger); font-weight: 600; }
+.pace-summary.is-under { color: var(--tag-green); font-weight: 600; }
+.pace-svg { width: 100%; height: auto; display: block; }
+.pace-grid { stroke: var(--separator); stroke-width: 0.5; }
+.pace-day { stroke: var(--tertiary); stroke-width: 1; stroke-dasharray: 2 4; }
+.pace-label { fill: var(--secondary); font-size: 10.5px; }
+.pace-expected { fill: none; stroke: var(--tertiary); stroke-width: 2; }
+.pace-actual { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.pace-actual.is-over, .pace-dot.is-over { stroke: var(--danger); fill: none; }
+.pace-actual.is-under { stroke: var(--tag-green); }
+.pace-dot { fill: var(--accent); stroke: none; }
+.pace-dot.is-over { fill: var(--danger); }
+.pace-dot.is-under { fill: var(--tag-green); }

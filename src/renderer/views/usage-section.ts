@@ -1,6 +1,8 @@
 import type { UsageLimit, UsageShare, UsageSnapshot } from '../../shared/types';
 import { element } from '../dom';
 import { formatDuration, formatReset } from '../format';
+import { WEEKLY_ALL_LABEL } from '../../shared/usage-labels';
+import { renderPaceChart } from '../usage/pace-chart';
 
 // Past this share of a limit the meter turns orange, so a near-empty window is noticed early.
 const WARNING_PERCENT: number = 80;
@@ -12,6 +14,8 @@ export function renderUsageSection(usage: UsageSnapshot | null, now: number): HT
   const limits: HTMLDivElement = element('div', 'settings-group');
   limits.append(...usage.limits.map((limit: UsageLimit) => renderLimit(limit, now)));
   section.append(limits);
+  const weekly: UsageLimit | undefined = usage.limits.find((limit: UsageLimit) => limit.label === WEEKLY_ALL_LABEL);
+  if (weekly?.resetsAt != null) section.append(element('h3', 'settings-subheading', 'Weekly pace'), renderPaceChart(weekly.resetsAt, usage.weeklyHistory, now));
   if (usage.breakdown.length > 0) section.append(element('h3', 'settings-subheading', 'Where this week went'), renderBreakdown(usage.breakdown));
   section.append(element('p', 'settings-note', footnote(usage, now)));
   return section;

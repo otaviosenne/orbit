@@ -1,0 +1,50 @@
+import type { UsageSample } from '../../shared/types';
+import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from './work-schedule';
+
+const WEEK_MS: number = 7 * 24 * 60 * 60_000;
+const FULL_PERCENT: number = 100;
+
+export interface PacePoint {
+  // 0 to 1 across the week's working time.
+  readonly x: number;
+  readonly percent: number;
+}
+
+export interface PaceDay {
+  readonly label: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+export interface PaceModel {
+  readonly days: readonly PaceDay[];
+  readonly actual: readonly PacePoint[];
+  // Where the straight line says usage should be right now, and where it really is.
+  readonly expectedNow: number;
+  readonly actualNow: number | null;
+}
+
+// The week's chart: the straight line of an even pace against what was really used, both over working time.
+export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[], now: number): PaceModel {
+  const windowStart: number = resetsAt - WEEK_MS;
+  const segments: readonly WorkSegment[] = workSegments(windowStart, resetsAt);
+  const total: number = totalWorkMs(segments);
+  const position = (at: number): number => (total === 0 ? 0 : workElapsed(segments, at) / total);
+  const inWindow: UsageSample[] = samples.filter((sample: UsageSample) => sample.at >= windowStart && sample.at <= resetsAt);
+  const last: UsageSample | undefined = inWindow[inWindow.length - 1];
+  return {
+    days: segments.map((segment: WorkSegment): PaceDay => ({
+      label: new Date(segment.start).toLocaleDateString([], { weekday: 'short' }),
+      start: total === 0 ? 0 : segment.offset / total,
+      end: total === 0 ? 0 : (segment.offset + segment.end - segment.start) / total,
+    })),
+    actual: inWindow.map((sample: UsageSample): PacePoint => ({ x: position(sample.at), percent: sample.percent })),
+    expectedNow: position(Math.min(now, resetsAt)) * FULL_PERCENT,
+    actualNow: last === undefined ? null : last.percent,
+  };
+}
+
+// Positive when more has been used than an even pace allows.
+export function paceGap(model: PaceModel): number | null {
+  return model.actualNow === null ? null : model.actualNow - model.expectedNow;
+}

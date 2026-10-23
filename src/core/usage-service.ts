@@ -1,10 +1,13 @@
-import type { UsageSnapshot } from '../shared/types';
+import type { UsageLimit, UsageSample, UsageSnapshot } from '../shared/types';
+import { WEEKLY_ALL_LABEL } from '../shared/usage-labels';
 import { nextUsageDelay } from './usage-backoff';
 import { loadCachedUsage, saveCachedUsage } from './usage-cache';
 import { UsageRateLimited, fetchRawUsage } from './usage-client';
+import { withSample } from './usage-history-log';
+import { loadUsageHistory, saveUsageHistory } from './usage-history-store';
 import { toUsageSnapshot } from './usage-mapper';
 
-const EMPTY_USAGE: UsageSnapshot = { limits: [], breakdown: [], fetchedAt: null, error: null };
+const EMPTY_USAGE: UsageSnapshot = { limits: [], breakdown: [], weeklyHistory: [], fetchedAt: null, error: null };
 
 // The numbers move slowly and the endpoint is shared with Claude Code; it is asked at most once a minute, less
 // after failures, and the last good reading (also from before a restart) stays on screen meanwhile.
@@ -12,6 +15,7 @@ export class UsageService {
   private snapshot: UsageSnapshot = EMPTY_USAGE;
   private nextAttemptAt: number = 0;
   private failures: number = 0;
+  private history: UsageSample[] = [];
   private inFlight: Promise<UsageSnapshot> | null = null;
   private readonly restored: Promise<void> = this.restore();
 
@@ -26,12 +30,14 @@ export class UsageService {
 
   private async restore(): Promise<void> {
     const cached: UsageSnapshot | null = await loadCachedUsage();
-    if (cached !== null) this.snapshot = cached;
+    this.history = await loadUsageHistory();
+    if (cached !== null) this.snapshot = { ...cached, weeklyHistory: this.history };
   }
 
   private async refresh(): Promise<UsageSnapshot> {
     try {
-      this.snapshot = toUsageSnapshot(await fetchRawUsage(), Date.now());
+      const fresh: UsageSnapshot = toUsageSnapshot(await fetchRawUsage(), Date.now());
+      this.snapshot = { ...fresh, weeklyHistory: this.record(fresh) };
       this.failures = 0;
       this.nextAttemptAt = Date.now() + nextUsageDelay(0, null);
       void saveCachedUsage(this.snapshot);
@@ -42,5 +48,13 @@ export class UsageService {
       this.snapshot = { ...this.snapshot, error: error instanceof Error ? error.message : String(error) };
     }
     return this.snapshot;
+  }
+
+  private record(snapshot: UsageSnapshot): UsageSample[] {
+    const weekly: UsageLimit | undefined = snapshot.limits.find((limit: UsageLimit) => limit.label === WEEKLY_ALL_LABEL);
+    if (weekly === undefined || snapshot.fetchedAt === null) return this.history;
+    this.history = withSample(this.history, { at: snapshot.fetchedAt, percent: weekly.percent });
+    void saveUsageHistory(this.history);
+    return this.history;
   }
 }

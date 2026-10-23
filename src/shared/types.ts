@@ -226,9 +226,17 @@ export interface UsageShare {
   readonly percent: number;
 }
 
+// The weekly all-models percent as read at one moment; the series draws the pace chart.
+export interface UsageSample {
+  readonly at: number;
+  readonly percent: number;
+}
+
 export interface UsageSnapshot {
   readonly limits: readonly UsageLimit[];
   readonly breakdown: readonly UsageShare[];
+  // Weekly readings Orbit has kept, oldest first; it can only know the ones taken while it was running.
+  readonly weeklyHistory: readonly UsageSample[];
   readonly fetchedAt: number | null;
   readonly error: string | null;
 }

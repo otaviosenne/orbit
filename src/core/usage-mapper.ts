@@ -11,6 +11,7 @@ export function toUsageSnapshot(raw: RawUsage, fetchedAt: number): UsageSnapshot
   return {
     limits: (raw.limits ?? []).map(toLimit),
     breakdown: (raw.seven_day_breakdown?.rows ?? []).map(toShare),
+    weeklyHistory: [],
     fetchedAt,
     error: null,
   };

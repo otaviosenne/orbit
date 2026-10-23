@@ -9,7 +9,7 @@ const CACHE_FILE: string = join(process.env['XDG_CACHE_HOME'] ?? join(homedir(),
 export async function loadCachedUsage(): Promise<UsageSnapshot | null> {
   try {
     const parsed: unknown = JSON.parse(await readFile(CACHE_FILE, 'utf8'));
-    return isSnapshot(parsed) ? { ...parsed, error: null } : null;
+    return isSnapshot(parsed) ? { ...parsed, weeklyHistory: [], error: null } : null;
   } catch {
     return null;
   }
