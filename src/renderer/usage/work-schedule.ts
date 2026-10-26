@@ -2,6 +2,7 @@
 export const WORK_START_HOUR: number = 9;
 export const WORK_END_HOUR: number = 17;
 const WORK_WEEKDAYS: ReadonlySet<number> = new Set([1, 2, 3, 4, 5]);
+export const WORK_DAY_COUNT: number = WORK_WEEKDAYS.size;
 
 // A stretch of working time inside the weekly window; `offset` is the working time that came before it.
 export interface WorkSegment {

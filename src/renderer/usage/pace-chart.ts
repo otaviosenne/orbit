@@ -1,10 +1,12 @@
 import { element } from '../dom';
 import { FULL_PERCENT, HEIGHT, PLOT_BOTTOM, PLOT_LEFT, PLOT_RIGHT, PLOT_TOP, SVG_NS, WIDTH, shape, xOf, yOf } from './pace-geometry';
 import { attachPaceHover } from './pace-hover';
+import { WORK_DAY_COUNT } from './work-schedule';
 import { WEEK_MS, buildPaceModel, paceGap, type PaceDay, type PaceModel, type PacePoint } from './pace-model';
 import type { UsageSample } from '../../shared/types';
 
-const GRID_PERCENTS: readonly number[] = [0, 25, 50, 75, 100];
+// One step per working day, so each band of the chart is the share of the week a day can use at an even pace (20% each).
+export const GRID_PERCENTS: readonly number[] = Array.from({ length: WORK_DAY_COUNT + 1 }, (_: unknown, day: number): number => (day * FULL_PERCENT) / WORK_DAY_COUNT);
 const POINT_RADIUS: number = 3.5;
 // Within this many points of the line counts as on pace, so a tiny lead does not flash red.
 const ON_PACE_MARGIN: number = 2;

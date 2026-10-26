@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { recentSamples, withSample } from '../src/core/usage-history-log';
 import { buildPaceModel, paceGap, readingAt } from '../src/renderer/usage/pace-model';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src/renderer/usage/work-schedule';
+import { GRID_PERCENTS } from '../src/renderer/usage/pace-chart';
 
 const HOUR: number = 3_600_000;
 // A week that resets Monday 26 Oct 2026 at 17:00, so it runs Tuesday to the next Monday in working days.
@@ -87,5 +88,11 @@ describe('usage history log', () => {
     const first = withSample([], { at: 1_000, percent: 10 });
     expect(withSample(first, { at: 2_000, percent: 10 })).toHaveLength(1);
     expect(withSample(first, { at: 2_000, percent: 11 })).toHaveLength(2);
+  });
+});
+
+describe('the chart grid', () => {
+  it('has a line for every working day, 20% apart', () => {
+    expect(GRID_PERCENTS).toEqual([0, 20, 40, 60, 80, 100]);
   });
 });
