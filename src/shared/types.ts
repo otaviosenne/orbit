@@ -232,7 +232,9 @@ export interface UsageSample {
   readonly percent: number;
 }
 
-export type McpStatus = 'connected' | 'needs-auth' | 'failed';
+// `dropped` and `connecting` are this chat's own view: the check connects fine, the chat lost the server or is still
+// reaching it.
+export type McpStatus = 'connected' | 'needs-auth' | 'failed' | 'disabled' | 'needs-approval' | 'dropped' | 'connecting';
 // Where a server is configured, as Claude Code's /mcp groups them.
 export type McpGroup = 'user' | 'local' | 'project' | 'plugin' | 'claude-ai';
 

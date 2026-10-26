@@ -28,7 +28,7 @@ export function demoChatPermissions(): ChatPermissions {
 export function demoMcpServers(): McpServerEntry[] {
   return [
     { name: 'devhub', target: 'pnpm --silent mcp', status: 'connected', group: 'user' },
-    { name: 'posthog', target: 'https://mcp.posthog.com/mcp', status: 'connected', group: 'user' },
+    { name: 'posthog', target: 'https://mcp.posthog.com/mcp', status: 'dropped', group: 'user' },
     { name: 'desktop-mcp', target: 'node desktop-mcp', status: 'failed', group: 'local' },
     { name: 'claude.ai Slack', target: 'https://mcp.slack.com/mcp', status: 'connected', group: 'claude-ai' },
     { name: 'claude.ai Linear', target: 'https://mcp.linear.app/mcp', status: 'needs-auth', group: 'claude-ai' },

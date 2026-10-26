@@ -7,7 +7,9 @@ export interface McpScopes {
   readonly project: ReadonlySet<string>;
 }
 
-const LINE_PATTERN: RegExp = /^(.+?): (.+) - (✔|!|✗|✘|×)\s*(.*)$/u;
+// Any non-word mark counts, so a status glyph Claude Code adds later shows up as not connected instead of vanishing.
+const LINE_PATTERN: RegExp = /^(.+?): (.+) - ([^\w\s]\S*)\s*(.*)$/u;
+const CONNECTED_MARK: string = '✔';
 const CLAUDE_AI_PREFIX: string = 'claude.ai ';
 const PLUGIN_PREFIX: string = 'plugin:';
 
@@ -22,8 +24,11 @@ export function parseMcpList(output: string, scopes: McpScopes): McpServerEntry[
 }
 
 function statusOf(mark: string, words: string): McpStatus {
-  if (mark === '✔') return 'connected';
-  return /authentication/i.test(words) ? 'needs-auth' : 'failed';
+  if (mark === CONNECTED_MARK) return 'connected';
+  if (/authentication/i.test(words)) return 'needs-auth';
+  if (/disabled/i.test(words)) return 'disabled';
+  if (/approval/i.test(words)) return 'needs-approval';
+  return 'failed';
 }
 
 function groupOf(name: string, scopes: McpScopes): McpGroup {

@@ -1741,7 +1741,9 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 .chat-settings-mcp { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 8px; }
 .chat-settings-mcp-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green); }
 .chat-settings-mcp.is-needs-auth .chat-settings-mcp-dot { background: var(--tag-yellow); }
-.chat-settings-mcp.is-failed .chat-settings-mcp-dot { background: var(--danger); }
+.chat-settings-mcp.is-failed .chat-settings-mcp-dot, .chat-settings-mcp.is-dropped .chat-settings-mcp-dot { background: var(--danger); }
+.chat-settings-mcp.is-needs-approval .chat-settings-mcp-dot, .chat-settings-mcp.is-connecting .chat-settings-mcp-dot { background: var(--tag-yellow); }
+.chat-settings-mcp.is-disabled .chat-settings-mcp-dot { background: var(--secondary); }
 .chat-settings-mcp-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .chat-settings-mcp-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text); }
 .chat-settings-mcp-status { font-size: 11px; color: var(--secondary); }
