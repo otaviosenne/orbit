@@ -1,6 +1,7 @@
 interface Waiting {
   readonly value: string;
   readonly timer: ReturnType<typeof setTimeout>;
+  readonly dueAt: number;
 }
 
 const waiting: WeakMap<HTMLTextAreaElement, Waiting> = new WeakMap();
@@ -15,7 +16,7 @@ export function actAfterPause(input: HTMLTextAreaElement, afterMs: number, act: 
     waiting.delete(input);
     if (input.value === value) act();
   }, afterMs);
-  waiting.set(input, { value, timer });
+  waiting.set(input, { value, timer, dueAt: Date.now() + afterMs });
 }
 
 export function cancelPause(input: HTMLTextAreaElement): void {
@@ -23,4 +24,13 @@ export function cancelPause(input: HTMLTextAreaElement): void {
   if (pending === undefined) return;
   clearTimeout(pending.timer);
   waiting.delete(input);
+}
+
+// The field is being left (its chat closed, another one opened, its tile removed) and its text goes with it: the wait
+// carries on without the field, and `act` takes over at the same moment to send what was kept.
+export function carryPause(input: HTMLTextAreaElement, act: () => void): void {
+  const pending: Waiting | undefined = waiting.get(input);
+  if (pending === undefined) return;
+  cancelPause(input);
+  setTimeout(act, Math.max(0, pending.dueAt - Date.now()));
 }

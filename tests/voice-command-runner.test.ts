@@ -4,6 +4,8 @@ import type { SpanBinding } from '../src/renderer/sheet/hands-free/span-writer';
 import { SpanWriter } from '../src/renderer/sheet/hands-free/span-writer';
 import type { VoiceCommandContext } from '../src/renderer/sheet/voice/commands/command-context';
 import { installVoiceCommandContext } from '../src/renderer/sheet/voice/commands/command-context';
+import { pausedSendText } from '../src/renderer/sheet/voice/commands/command-parser';
+import { carryPause } from '../src/renderer/sheet/voice/pause-send';
 import { runVoiceCommand } from '../src/renderer/sheet/voice/voice-command-runner';
 import type { DraftField } from '../src/renderer/sheet/voice/voice-field';
 
@@ -217,6 +219,36 @@ describe('send words that wait for a pause', () => {
     input.value = 'fix the other bug pode mandar';
     vi.advanceTimersByTime(PAUSE_MS * 2);
     expect(input.submits).toBe(0);
+  });
+
+  it('goes on counting after the field is left, and acts when the pause ends', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug pode enviar';
+    runVoiceCommand(asField(input), true);
+    vi.advanceTimersByTime(1000);
+    const acted: string[] = [];
+    carryPause(asField(input), (): void => void acted.push('sent'));
+    input.value = '';
+    vi.advanceTimersByTime(1999);
+    expect(acted).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(acted).toEqual(['sent']);
+    expect(input.submits).toBe(0);
+  });
+
+  it('carries nothing when no send was waiting', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug';
+    const acted: string[] = [];
+    carryPause(asField(input), (): void => void acted.push('sent'));
+    vi.advanceTimersByTime(PAUSE_MS * 2);
+    expect(acted).toEqual([]);
+  });
+
+  it('reads the kept draft without its send words, and nothing from one that no longer ends with them', () => {
+    expect(pausedSendText('Fix the bug. Pode enviar.')).toBe('Fix the bug');
+    expect(pausedSendText('fix the bug, now also the tests')).toBeNull();
+    expect(pausedSendText('fix the bug chinelo')).toBeNull();
   });
 
   it('still sends right away on the words that need no pause', () => {

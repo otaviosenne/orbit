@@ -1,7 +1,7 @@
 import type { VoiceCommandContext } from './commands/command-context';
 import { voiceCommandContext } from './commands/command-context';
 import { executeNavigation } from './commands/command-executor';
-import { parseVoiceCommand } from './commands/command-parser';
+import { parseVoiceCommand, pausedSendText } from './commands/command-parser';
 import type { SpokenCommand } from './commands/voice-command';
 import { actAfterPause, cancelPause } from './pause-send';
 
@@ -28,8 +28,8 @@ export function runVoiceCommand(input: HTMLTextAreaElement, isFinal: boolean): b
 // Nothing happens now. After the pause the draft is read again, so the words taken off are the ones it ends with then.
 function waitThenSend(input: HTMLTextAreaElement, afterMs: number): boolean {
   actAfterPause(input, afterMs, (): void => {
-    const spoken: SpokenCommand | null = parseVoiceCommand(input.value, { isSelectorOpen: false, isFinal: true });
-    if (spoken?.command.action === 'send') sendDraft(input, spoken.remainder);
+    const text: string | null = pausedSendText(input.value);
+    if (text !== null) sendDraft(input, text);
   });
   return false;
 }

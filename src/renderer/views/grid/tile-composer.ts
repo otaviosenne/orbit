@@ -7,8 +7,10 @@ import { wireAttachmentInput } from '../../sheet/attachment-input';
 import { AttachmentTray } from '../../sheet/attachment-tray';
 import type { SendingDraft } from '../../sheet/sending-draft';
 import { sendingDraft } from '../../sheet/sending-draft';
+import { pausedSendText } from '../../sheet/voice/commands/command-parser';
 import type { DictationPlace } from '../../sheet/voice/dictation-place';
 import type { FieldVoice } from '../../sheet/voice/field-voice';
+import { carryPause } from '../../sheet/voice/pause-send';
 import type { VoiceHub } from '../../sheet/voice/voice-hub';
 import { setText } from './in-place';
 import { FOCUS_SETTLE_MS } from './tile-focus';
@@ -105,9 +107,16 @@ export class TileComposer {
     return this.field.place(sessionId);
   }
 
-  // The tile was taken out of the Panel.
+  // The tile was taken out of the Panel. A voice send still counting its pause goes out on time from the field it left.
   dispose(): void {
     this.hub.detach(this.voice);
+    carryPause(this.input, (): void => void this.sendLeftBehind());
+  }
+
+  private async sendLeftBehind(): Promise<void> {
+    const text: string | null = pausedSendText(this.input.value);
+    if (text === null || text.trim().length === 0 || this.tray.count > 0) return;
+    await this.onSend(text, []);
   }
 
   // The draft's markers are painted as chips by a layer behind the (transparent) textarea, as in the side panel.

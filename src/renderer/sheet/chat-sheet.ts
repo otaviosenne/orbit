@@ -13,7 +13,7 @@ import { AgentView } from './agent-view';
 import type { AgentTitle } from './agent-view';
 import { ColorPicker } from './color-picker';
 import type { ComposerDraft } from './draft-store';
-import { DraftStore } from './draft-store';
+import { DraftStore, EMPTY_DRAFT } from './draft-store';
 import { Composer } from './composer';
 import type { DictationTarget } from './hands-free/dictation-target';
 import { PanelResizer } from './panel-resizer';
@@ -26,6 +26,7 @@ import { DeviceLinks } from './device-links';
 import { ChatSettingsPopover } from './settings/chat-settings-popover';
 import { RenameForm } from './rename-form';
 import { listenForSpaceToTalk } from './space-to-talk';
+import { pausedSendText } from './voice/commands/command-parser';
 import { usesSpaceGestures } from './voice/space-gestures';
 import type { ChatPatch } from '../pending-edits';
 import { TranscriptList } from './transcript-list';
@@ -336,7 +337,21 @@ export class ChatSheet {
 
   // Whatever was typed for the chat being left waits for it to be opened again.
   private keepDraft(): void {
-    if (this.chat !== null) this.drafts.set(this.chat.sessionId, this.composer.draft());
+    const chat: ChatSnapshot | null = this.chat;
+    if (chat === null) return;
+    this.drafts.set(chat.sessionId, this.composer.draft());
+    this.composer.carryPausedSend((): void => void this.sendKept(chat));
+  }
+
+  // The voice said "pode enviar" and the chat was left before the pause ended: the kept draft goes out on time anyway.
+  // A chat that is back on screen shows its draft again, so the person is looking at it and decides.
+  private async sendKept(chat: ChatSnapshot): Promise<void> {
+    if (this.chat?.sessionId === chat.sessionId) return;
+    const kept: ComposerDraft = this.drafts.get(chat.sessionId);
+    const text: string | null = pausedSendText(kept.text);
+    if (text === null || text.trim().length === 0 || kept.files.length > 0) return;
+    const result: ActionResult = await window.radar.sendMessage(chat.pid, text, []);
+    if (result.ok && this.drafts.get(chat.sessionId).text === kept.text) this.drafts.set(chat.sessionId, EMPTY_DRAFT);
   }
 
   private resetForNewChat(): void {

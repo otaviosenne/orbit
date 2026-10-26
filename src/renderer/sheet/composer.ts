@@ -17,6 +17,7 @@ import type { DictationPlace } from './voice/dictation-place';
 import type { FieldVoice } from './voice/field-voice';
 import type { KeptDrafts } from './voice/kept-draft';
 import { keptDraftOf } from './voice/kept-draft';
+import { carryPause } from './voice/pause-send';
 import { sharedVoiceHub } from './voice/shared-voice-hub';
 import type { VoiceField } from './voice/voice-field';
 import type { VoiceHub } from './voice/voice-hub';
@@ -109,6 +110,11 @@ export class Composer {
   // The unsent text and images, to keep while another chat is open.
   draft(): ComposerDraft {
     return { text: this.input.value, files: this.tray.files() };
+  }
+
+  // A voice send still counting its pause goes on after the draft is put away: `act` runs when the pause ends.
+  carryPausedSend(act: () => void): void {
+    carryPause(this.input, act);
   }
 
   // Puts a kept draft back; its markers already sit where its images belong.
