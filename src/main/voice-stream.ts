@@ -1,6 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 import WebSocket from 'ws';
 import { TranscriptAccumulator } from './transcript-accumulator';
+import { explainVoiceFailure } from './voice-failure';
 
 // The speech-to-text stream Claude Code's own voice mode uses, so dictation behaves the same here.
 const VOICE_STREAM_URL: string = 'wss://api.anthropic.com/api/ws/speech_to_text/voice_stream';
@@ -58,11 +59,11 @@ export class VoiceStream {
     this.socket.on('open', (): void => this.handleOpen());
     this.socket.on('message', (raw: WebSocket.RawData): void => this.handleMessage(raw.toString()));
     this.socket.on('unexpected-response', (_request: unknown, response: IncomingMessage): void => {
-      this.failure = `Voice service refused the connection (HTTP ${response.statusCode ?? 0})`;
+      this.failure = explainVoiceFailure(`Voice service refused the connection (HTTP ${response.statusCode ?? 0})`);
       response.resume();
     });
     this.socket.on('error', (error: Error): void => {
-      this.failure ??= error.message;
+      this.failure ??= explainVoiceFailure(error.message);
     });
     this.socket.on('close', (): void => this.handleClose());
   }
@@ -120,7 +121,7 @@ export class VoiceStream {
       this.transcript.endUtterance();
       if (this.isClosing) this.finishWaiter?.();
     } else if (message.type === 'TranscriptError' || message.type === 'error') {
-      this.failure = message.description ?? message.error_code ?? message.message ?? 'Transcription error';
+      this.failure = explainVoiceFailure(message.description ?? message.error_code ?? message.message ?? 'Transcription error');
     }
   }
 
