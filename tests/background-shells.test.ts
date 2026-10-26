@@ -57,6 +57,7 @@ describe('extractShells', () => {
         endedAt: null,
         exitCode: null,
         outputFile: OUTPUT,
+        expiresAt: null,
       },
     ]);
   });
@@ -115,5 +116,43 @@ describe('listedShells', () => {
 
   it('drops shells started before the chat process', () => {
     expect(listedShells([ended], endedAt, endedAt)).toEqual([]);
+  });
+});
+
+
+describe('monitors', () => {
+  const MONITOR_CALL: TranscriptRecord = {
+    type: 'assistant',
+    timestamp: CALLED_AT,
+    message: { content: [{ type: 'tool_use', id: 'toolu_mon', name: 'Monitor', input: { command: 'tail -F deploy.log', description: 'Deploy progress', timeout_ms: 600000 } }] },
+  };
+
+  function monitorResult(persistent: boolean): TranscriptRecord {
+    return {
+      type: 'user',
+      timestamp: CALLED_AT,
+      toolUseResult: { taskId: 'bmon1', timeoutMs: 600000, persistent },
+      message: { content: [{ type: 'tool_result', tool_use_id: 'toolu_mon', content: 'Monitor started (task bmon1, expires in 10m unless the source ends first).' }] },
+    };
+  }
+
+  it('lists a monitor like a background shell, from its taskId', () => {
+    const [monitor] = extractShells([MONITOR_CALL, monitorResult(false)]);
+    expect(monitor?.id).toBe('bmon1');
+    expect(monitor?.description).toBe('Deploy progress');
+    expect(monitor?.status).toBe('running');
+  });
+
+  it('ends a monitor when its timeout has passed, though the transcript says nothing', () => {
+    const shells: ShellRecord[] = extractShells([MONITOR_CALL, monitorResult(false)]);
+    const started: number = shells[0]?.startedAt ?? 0;
+    expect(listedShells(shells, 0, started + 599_000)[0]?.status).toBe('running');
+    expect(listedShells(shells, 0, started + 601_000)[0]?.status).toBe('completed');
+  });
+
+  it('keeps a persistent monitor running past any timeout', () => {
+    const shells: ShellRecord[] = extractShells([MONITOR_CALL, monitorResult(true)]);
+    const started: number = shells[0]?.startedAt ?? 0;
+    expect(listedShells(shells, 0, started + 3_600_000)[0]?.status).toBe('running');
   });
 });

@@ -10,7 +10,7 @@ import { extractShells } from './background-shells';
 export const SHELL_LINGER_MS: number = 5 * 60 * 1000;
 
 // Only lines that can start or end a background shell get parsed; the rest of a long transcript is skipped cheaply.
-const SHELL_MARKERS: readonly string[] = ['"name":"Bash"', 'backgroundTaskId', '"name":"TaskStop"', '"task_id"', 'task-notification'];
+const SHELL_MARKERS: readonly string[] = ['"name":"Bash"', '"name":"Monitor"', 'Monitor started', 'backgroundTaskId', '"name":"TaskStop"', '"task_id"', 'task-notification'];
 const QUEUE_LINE: string = '"type":"queue-operation"';
 
 const isShellLine: LineFilter = (line: string): boolean =>
@@ -33,5 +33,11 @@ export class ShellReader {
 
 // A chat process that restarted took its shells with it, so only those started since count.
 export function listedShells(shells: readonly ShellRecord[], processStartedAt: number, now: number): ShellRecord[] {
-  return shells.filter((shell: ShellRecord) => shell.startedAt >= processStartedAt && (shell.endedAt === null || now - shell.endedAt < SHELL_LINGER_MS));
+  return shells.map((shell: ShellRecord) => withExpiry(shell, now)).filter((shell: ShellRecord) => shell.startedAt >= processStartedAt && (shell.endedAt === null || now - shell.endedAt < SHELL_LINGER_MS));
+}
+
+// A monitor past its timeout has ended even though nothing in the transcript says so.
+function withExpiry(shell: ShellRecord, now: number): ShellRecord {
+  if (shell.status !== 'running' || shell.expiresAt === null || shell.expiresAt > now) return shell;
+  return { ...shell, status: 'completed', endedAt: shell.expiresAt };
 }

@@ -36,7 +36,7 @@ export class ChatShells {
   }
 
   private toSnapshot(shell: ShellRecord): ShellSnapshot {
-    const { outputFile: _outputFile, ...snapshot } = shell;
+    const { outputFile: _outputFile, expiresAt: _expiresAt, ...snapshot } = shell;
     const wasInterrupted: boolean = shell.status !== 'running' && this.interrupted.includes(shell.id);
     return wasInterrupted ? { ...snapshot, status: 'killed' } : snapshot;
   }

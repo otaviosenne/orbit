@@ -7,9 +7,12 @@ import { parseTaskEnds } from './task-notifications';
 // A shell as the main process knows it: what the panel shows, plus where Claude Code writes its output.
 export interface ShellRecord extends ShellSnapshot {
   readonly outputFile: string | null;
+  // A monitor that runs out its timeout leaves no mark in the transcript, so its end is worked out from this.
+  readonly expiresAt: number | null;
 }
 
 interface BashCall {
+  readonly isMonitor: boolean;
   readonly command: string;
   readonly description: string | null;
   readonly calledAt: number | null;
@@ -27,6 +30,8 @@ interface ExtractState {
 }
 
 const BASH_TOOL: string = 'Bash';
+// The Monitor tool watches a command in the background and reports each line it prints; it is a shell for this purpose.
+const MONITOR_TOOL: string = 'Monitor';
 const STOP_TOOL: string = 'TaskStop';
 const OUTPUT_FILE: RegExp = /Output is being written to: (\S+?\.output)\b/;
 
@@ -49,32 +54,42 @@ function rememberCall(record: TranscriptRecord, block: ContentBlock, state: Extr
   if (block.id === undefined) return;
   if (block.name === STOP_TOOL) state.stopCalls.add(block.id);
   const command: unknown = block.input?.['command'];
-  if (block.name !== BASH_TOOL || typeof command !== 'string') return;
+  if ((block.name !== BASH_TOOL && block.name !== MONITOR_TOOL) || typeof command !== 'string') return;
   const description: unknown = block.input?.['description'];
-  state.bashCalls.set(block.id, { command, description: typeof description === 'string' ? description : null, calledAt: recordTime(record) });
+  state.bashCalls.set(block.id, { isMonitor: block.name === MONITOR_TOOL, command, description: typeof description === 'string' ? description : null, calledAt: recordTime(record) });
 }
 
 function applyResult(record: TranscriptRecord, block: ContentBlock, state: ExtractState): void {
   const toolUseId: string | undefined = block.tool_use_id;
   if (toolUseId === undefined || block.is_error === true) return;
   const call: BashCall | undefined = state.bashCalls.get(toolUseId);
-  const backgroundId: string | null = stringField(record.toolUseResult, 'backgroundTaskId');
+  // A monitor's result names its task as taskId; a plain background command's as backgroundTaskId.
+  const backgroundId: string | null = stringField(record.toolUseResult, call?.isMonitor === true ? 'taskId' : 'backgroundTaskId');
   if (call !== undefined && backgroundId !== null) state.shells.set(backgroundId, startedShell(backgroundId, call, record, block));
   const stoppedId: string | null = stringField(record.toolUseResult, 'task_id');
   if (state.stopCalls.has(toolUseId) && stoppedId !== null) applyEnd(record, { taskId: stoppedId, status: 'killed', exitCode: null, outputFile: null }, state);
 }
 
 function startedShell(id: string, call: BashCall, record: TranscriptRecord, block: ContentBlock): ShellRecord {
+  const startedAt: number = call.calledAt ?? recordTime(record) ?? 0;
   return {
     id,
     command: call.command,
     description: call.description,
-    startedAt: call.calledAt ?? recordTime(record) ?? 0,
+    startedAt,
     status: 'running',
     endedAt: null,
     exitCode: null,
     outputFile: OUTPUT_FILE.exec(blockText(block))?.[1] ?? null,
+    expiresAt: call.isMonitor ? monitorExpiry(startedAt, record.toolUseResult) : null,
   };
+}
+
+// A monitor lasts its timeout unless it is persistent, which only a TaskStop or the chat ending stops.
+function monitorExpiry(startedAt: number, result: unknown): number | null {
+  if (typeof result !== 'object' || result === null) return null;
+  const { timeoutMs, persistent } = result as { readonly timeoutMs?: unknown; readonly persistent?: unknown };
+  return persistent === true || typeof timeoutMs !== 'number' ? null : startedAt + timeoutMs;
 }
 
 // The queued copy of a notification comes before the one the chat takes in; the first one marks the end.
