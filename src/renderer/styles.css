@@ -33,8 +33,8 @@
   --tag-cyan: #32ade6; --tag-blue: #007aff; --tag-purple: #af52de; --tag-pink: #ff2d55; --tag-none: #aeaeb2;
   --radius-card: 12px;
   --radius-control: 7px;
-  --font: 'Inter Variable', 'Adwaita Sans', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+  --font: 'Inter Variable', 'Adwaita Sans', system-ui, 'Symbols Nerd Font', 'JetBrainsMono Nerd Font', sans-serif;
+  --mono: 'JetBrains Mono', 'JetBrainsMono Nerd Font', 'Symbols Nerd Font Mono', monospace;
   color-scheme: light;
 }
 
