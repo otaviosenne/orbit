@@ -16,6 +16,8 @@ export interface SpokenCommand {
   readonly command: VoiceCommand;
   // The draft with the spoken phrase taken off its end.
   readonly remainder: string;
+  // Set when the command acts only after this long with no change to the draft.
+  readonly afterPauseMs?: number;
 }
 
 export interface ParseOptions {

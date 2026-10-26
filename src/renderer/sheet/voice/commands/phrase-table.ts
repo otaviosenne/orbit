@@ -7,7 +7,13 @@ export interface PhraseRule {
   readonly phrases: readonly Phrase[];
   // Matched with the spaces left out, for words dictation splits or glues unpredictably.
   readonly gluedPhrases?: readonly string[];
+  // The rule acts only once nothing changes for this long. For words people say in ordinary sentences, so a pause
+  // after them is what shows they ended the message.
+  readonly afterPauseMs?: number;
 }
+
+// Silence after "pode enviar" and the like before the message goes out.
+export const SEND_PAUSE_MS: number = 3000;
 
 // Words no prompt ends with by accident. This table is the one place to change them; longer forms come first so all
 // of their words are removed. Rules are tried in order. Words are bare: lowercase, no accents or punctuation.
@@ -30,6 +36,24 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
     // Known mis-transcriptions of "Orbit enviar" ("Orbit VR", "Orbit In VR", "Orbit em VR", "Orbiting VR", "OrbitInVR", "RBTVR", "Arbitinho VR", "Arbitrinho VR", however spaced): add any
     // new variant here.
     gluedPhrases: ['orbitinvr', 'orbitingvr', 'orbitemvr', 'orbitvr', 'rbtvr', 'arbitinhovr', 'arbitrinhovr'],
+  },
+  {
+    command: { action: 'send' },
+    afterPauseMs: SEND_PAUSE_MS,
+    phrases: [
+      ['pode', 'enviar', 'mensagem'],
+      ['pode', 'mandar', 'mensagem'],
+      ['pode', 'enviar'],
+      ['pode', 'mandar'],
+      ['enviar', 'mensagem'],
+      ['mandar', 'mensagem'],
+      ['enviar'],
+      ['mandar'],
+      ['envia'],
+      ['manda'],
+      ['send', 'message'],
+      ['send', 'it'],
+    ],
   },
   { command: { action: 'view', view: 'board' }, phrases: [['orbit', 'board']] },
   { command: { action: 'view', view: 'grid' }, phrases: [['orbit', 'panel'], ['orbit', 'painel'], ['orbit', 'grid']] },

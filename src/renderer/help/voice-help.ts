@@ -1,6 +1,9 @@
 import { element } from '../dom';
+import { SEND_PAUSE_MS } from '../sheet/voice/commands/phrase-table';
 import { highlighted } from './highlight';
 import { matchesAllTerms } from './text-search';
+
+const MS_PER_SECOND: number = 1000;
 
 export type VoiceHelpGroup = 'Chats' | 'Views' | 'Lists' | 'Write and send' | 'Devices';
 
@@ -26,7 +29,12 @@ export const VOICE_HELP: readonly VoiceHelpEntry[] = [
   { group: 'Lists', says: ['orbit resume', 'orbit retomar'], does: 'Open the Resume list, with a number beside each past chat' },
   { group: 'Lists', says: ['3', 'chat 3'], does: 'With a list open: pick option 3' },
   { group: 'Lists', says: ['orbit cancelar', 'orbit fechar', 'orbit voltar'], does: 'Close the open list, or else the side panel' },
-  { group: 'Write and send', says: ['chinelo', 'orbit enviar', 'flip', 'flipper'], does: 'Send the message' },
+  { group: 'Write and send', says: ['chinelo', 'orbit enviar', 'flip', 'flipper'], does: 'Send the message right away' },
+  {
+    group: 'Write and send',
+    says: ['pode enviar', 'pode mandar', 'enviar', 'mandar', 'enviar mensagem', 'mandar mensagem', 'pode enviar mensagem'],
+    does: `Send the message after a ${SEND_PAUSE_MS / MS_PER_SECOND} second pause: say it, then stop talking`,
+  },
   { group: 'Write and send', says: ['orbit limpar', 'orbit clear'], does: 'Clear the message box' },
   { group: 'Devices', says: ['orbit emulador'], does: "Go to the open chat's emulator (nothing if it has none)" },
   { group: 'Devices', says: ['orbit navegador'], does: "Go to the open chat's browser tab (nothing if it has none)" },

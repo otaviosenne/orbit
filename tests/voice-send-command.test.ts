@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseVoiceCommand } from '../src/renderer/sheet/voice/commands/command-parser';
+import { SEND_PAUSE_MS } from '../src/renderer/sheet/voice/commands/phrase-table';
 import type { ParseOptions, SpokenCommand, VoiceCommand } from '../src/renderer/sheet/voice/commands/voice-command';
 
 const FINAL: ParseOptions = { isSelectorOpen: false, isFinal: true };
@@ -8,10 +9,10 @@ function commandOf(text: string, options: ParseOptions = FINAL): VoiceCommand | 
   return parseVoiceCommand(text, options)?.command ?? null;
 }
 
-// What is left of the draft when it is sent, or null when it does not end with the send command.
+// What is left of the draft when it is sent right away, or null when it does not end with such a send command.
 function sentText(text: string): string | null {
   const spoken: SpokenCommand | null = parseVoiceCommand(text, FINAL);
-  return spoken?.command.action === 'send' ? spoken.remainder : null;
+  return spoken?.command.action === 'send' && spoken.afterPauseMs === undefined ? spoken.remainder : null;
 }
 
 describe('the send command', () => {
@@ -65,7 +66,7 @@ describe('the send command', () => {
     expect(sentText('corrige o bug orbit in')).toBeNull();
   });
 
-  it('does not send on "enviar" alone, nor on "Orbit" in the middle', () => {
+  it('does not send right away on "enviar" alone, nor on "Orbit" in the middle', () => {
     expect(sentText('corrige o bug, enviar')).toBeNull();
     expect(sentText('o Orbit enviar é um comando')).toBeNull();
     expect(sentText('o orbit in vr headset é caro')).toBeNull();
@@ -90,5 +91,30 @@ describe('the clear command', () => {
 
   it('ignores "clear" in the middle of a sentence', () => {
     expect(commandOf('clear the cache and chat clear it later')).toBeNull();
+  });
+});
+
+describe('the send words that wait for a pause', () => {
+  const waitedRemainder = (text: string): string | null => {
+    const spoken: SpokenCommand | null = parseVoiceCommand(text, FINAL);
+    return spoken?.command.action === 'send' && spoken.afterPauseMs === SEND_PAUSE_MS ? spoken.remainder : null;
+  };
+
+  it('asks for the pause on "pode enviar", "pode mandar", "enviar" and "mandar mensagem"', () => {
+    expect(waitedRemainder('corrige o bug pode enviar')).toBe('corrige o bug');
+    expect(waitedRemainder('Corrige o bug. Pode mandar.')).toBe('Corrige o bug');
+    expect(waitedRemainder('corrige o bug, enviar')).toBe('corrige o bug');
+    expect(waitedRemainder('corrige o bug mandar mensagem')).toBe('corrige o bug');
+    expect(waitedRemainder('corrige o bug pode enviar mensagem')).toBe('corrige o bug');
+    expect(waitedRemainder('fix the bug, send it')).toBe('fix the bug');
+  });
+
+  it('acts only when the words end the draft', () => {
+    expect(waitedRemainder('quero enviar um email para o cliente')).toBeNull();
+  });
+
+  it('keeps the words that send right away without a pause', () => {
+    expect(parseVoiceCommand('corrige o bug chinelo', FINAL)?.afterPauseMs).toBeUndefined();
+    expect(parseVoiceCommand('corrige o bug, Orbit enviar', FINAL)?.afterPauseMs).toBeUndefined();
   });
 });

@@ -18,7 +18,9 @@ export function parseVoiceCommand(text: string, options: ParseOptions): SpokenCo
 function phraseCommand(text: string, words: readonly SpokenWord[]): SpokenCommand | null {
   for (const rule of PHRASE_RULES) {
     const start: number | null = startOfRule(words, rule);
-    if (start !== null) return { command: rule.command, remainder: draftBefore(text, start) };
+    if (start === null) continue;
+    const remainder: string = draftBefore(text, start);
+    return rule.afterPauseMs === undefined ? { command: rule.command, remainder } : { command: rule.command, remainder, afterPauseMs: rule.afterPauseMs };
   }
   return null;
 }

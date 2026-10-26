@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DictatedSpan } from '../src/renderer/sheet/hands-free/dictated-span';
 import type { SpanBinding } from '../src/renderer/sheet/hands-free/span-writer';
 import { SpanWriter } from '../src/renderer/sheet/hands-free/span-writer';
@@ -12,7 +12,7 @@ class FakeInput extends EventTarget {
   value: string = '';
   selectionStart: number = 0;
   selectionEnd: number = 0;
-  form: null = null;
+  form: { requestSubmit: () => void } | null = null;
 
   setSelectionRange(start: number, end: number): void {
     this.selectionStart = start;
@@ -159,5 +159,70 @@ describe('clear', () => {
     expect(input.value).toBe('');
     say('some text I do not want orbit limpar', false);
     expect(input.value).toBe('');
+  });
+});
+
+describe('send words that wait for a pause', () => {
+  const PAUSE_MS: number = 3000;
+
+  // A composer whose form counts how often it is submitted.
+  class SendableInput extends FakeInput {
+    submits: number = 0;
+    override form: { requestSubmit: () => void } = { requestSubmit: (): void => void this.submits++ };
+  }
+
+  const asField = (input: SendableInput): HTMLTextAreaElement => input as unknown as HTMLTextAreaElement;
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('sends only after the pause, taking the words off the draft', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug, pode enviar';
+    runVoiceCommand(asField(input), true);
+    vi.advanceTimersByTime(PAUSE_MS - 1);
+    expect(input.submits).toBe(0);
+    expect(input.value).toBe('fix the bug, pode enviar');
+    vi.advanceTimersByTime(1);
+    expect(input.submits).toBe(1);
+    expect(input.value).toBe('fix the bug');
+  });
+
+  it('keeps counting while the same live words repeat', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug enviar';
+    runVoiceCommand(asField(input), false);
+    vi.advanceTimersByTime(2000);
+    runVoiceCommand(asField(input), false);
+    vi.advanceTimersByTime(1000);
+    expect(input.submits).toBe(1);
+  });
+
+  it('does not send when more is said after the words', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'quero enviar';
+    runVoiceCommand(asField(input), false);
+    vi.advanceTimersByTime(2000);
+    input.value = 'quero enviar um email para o cliente';
+    runVoiceCommand(asField(input), false);
+    vi.advanceTimersByTime(PAUSE_MS * 2);
+    expect(input.submits).toBe(0);
+    expect(input.value).toBe('quero enviar um email para o cliente');
+  });
+
+  it('does not send when the user edits the draft during the pause', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug pode mandar';
+    runVoiceCommand(asField(input), true);
+    input.value = 'fix the other bug pode mandar';
+    vi.advanceTimersByTime(PAUSE_MS * 2);
+    expect(input.submits).toBe(0);
+  });
+
+  it('still sends right away on the words that need no pause', () => {
+    const input: SendableInput = new SendableInput();
+    input.value = 'fix the bug chinelo';
+    runVoiceCommand(asField(input), true);
+    expect(input.submits).toBe(1);
   });
 });
