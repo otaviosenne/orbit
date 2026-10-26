@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orbit — one window for every Claude Code chat</title>
+  <meta name="description" content="Orbit watches and steers every Claude Code chat open on your Linux desktop. Built for Linux with Hyprland and kitty." />
+  <link rel="icon" href="../assets/orbit-icon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f5f5f7; --surface: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --line: rgb(0 0 0 / 0.1);
+      --accent: #d97757; --accent-text: #ffffff; --link: #0066cc; --glass: rgb(245 245 247 / 0.78);
+      --shadow: 0 30px 80px rgb(0 0 0 / 0.18), 0 8px 24px rgb(0 0 0 / 0.08);
+      --code: #f0f0f3; --warn-bg: rgb(217 119 87 / 0.12);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000; --surface: #1c1c1e; --text: #f5f5f7; --muted: #a1a1a6; --line: rgb(255 255 255 / 0.12);
+        --link: #2997ff; --glass: rgb(0 0 0 / 0.7);
+        --shadow: 0 30px 90px rgb(0 0 0 / 0.7), 0 0 0 0.5px rgb(255 255 255 / 0.1);
+        --code: #2c2c2e; --warn-bg: rgb(217 119 87 / 0.16);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased; line-height: 1.5;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+
+    nav {
+      position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+      background: var(--glass); border-bottom: 1px solid var(--line);
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 52px; }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 650; font-size: 17px; letter-spacing: -0.2px; }
+    .brand img { width: 26px; height: 26px; }
+    .links { display: flex; align-items: center; gap: 22px; font-size: 13.5px; }
+    .links a { color: var(--muted); }
+    .links a:hover { color: var(--text); text-decoration: none; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 980px; background: var(--text); color: var(--bg) !important;
+      font-weight: 600; font-size: 13px;
+    }
+    .pill:hover { opacity: 0.85; text-decoration: none !important; }
+
+    .hero { text-align: center; padding: 72px 0 24px; }
+    .platform {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 980px; background: var(--warn-bg);
+      font-size: 13px; font-weight: 600; color: var(--accent);
+    }
+    h1 { margin: 22px auto 0; max-width: 14ch; font-size: clamp(42px, 8vw, 84px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700; }
+    .lead { margin: 22px auto 0; max-width: 40ch; font-size: clamp(18px, 2.4vw, 23px); color: var(--muted); letter-spacing: -0.01em; }
+    .cta { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; }
+    .install {
+      display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 18px; border-radius: 14px; background: var(--surface);
+      box-shadow: 0 0 0 1px var(--line); font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; font-size: 13.5px; max-width: 100%;
+    }
+    .install code { overflow-x: auto; white-space: nowrap; }
+    button.copy {
+      flex: none; border: 0; border-radius: 10px; padding: 9px 16px; background: var(--accent); color: var(--accent-text); font: inherit;
+      font-family: -apple-system, system-ui, sans-serif; font-size: 13px; font-weight: 650; cursor: pointer;
+    }
+    button.copy:active { transform: scale(0.97); }
+    .secondary { padding: 11px 20px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 0 0 1px var(--line); color: var(--text); background: var(--surface); }
+    .secondary:hover { text-decoration: none; opacity: 0.85; }
+    .fine { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    .window { margin: 52px auto 0; border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+    .window .bar { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; background: var(--code); border-bottom: 1px solid var(--line); }
+    .window .bar i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+    .window .bar i:nth-child(1) { background: #ff5f57; } .window .bar i:nth-child(2) { background: #febc2e; } .window .bar i:nth-child(3) { background: #28c840; }
+    .window .bar span { margin: 0 auto; transform: translateX(-24px); font-size: 12.5px; color: var(--muted); font-weight: 500; }
+    .window img { display: block; width: 100%; height: auto; }
+
+    .requirements { margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .req { padding: 18px 20px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+    .req b { display: block; font-size: 15px; letter-spacing: -0.01em; }
+    .req span { font-size: 13.5px; color: var(--muted); }
+
+    section { padding: 96px 0 0; }
+    h2 { margin: 0; font-size: clamp(30px, 5vw, 52px); line-height: 1.07; letter-spacing: -0.03em; font-weight: 700; text-align: center; }
+    .sub { margin: 16px auto 0; max-width: 46ch; text-align: center; color: var(--muted); font-size: clamp(16px, 2vw, 20px); }
+
+    .feature { margin-top: 56px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 48px; align-items: center; }
+    .feature.flip { grid-template-columns: 1.25fr 1fr; }
+    .feature.flip .text { order: 2; }
+    .feature h3 { margin: 0; font-size: clamp(24px, 3.4vw, 36px); letter-spacing: -0.025em; line-height: 1.12; }
+    .feature p { margin: 14px 0 0; color: var(--muted); font-size: 17px; }
+    .feature .window { margin: 0; }
+    .eyebrow { display: block; margin-bottom: 10px; color: var(--accent); font-weight: 650; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .grid { margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card { padding: 24px; border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+    .card h4 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.015em; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .steps { margin: 48px auto 0; max-width: 720px; display: grid; gap: 14px; }
+    .step { padding: 22px 24px; border-radius: 18px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+    .step b { display: block; margin-bottom: 8px; font-size: 16px; }
+    pre {
+      margin: 8px 0 0; padding: 14px 16px; border-radius: 10px; background: var(--code); overflow-x: auto; font-size: 13px; line-height: 1.55;
+      font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    }
+    .note { margin: 40px auto 0; max-width: 720px; padding: 18px 22px; border-radius: 16px; background: var(--warn-bg); font-size: 15px; }
+    .note b { color: var(--accent); }
+
+    footer { margin-top: 110px; padding: 36px 0 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; }
+
+    @media (max-width: 820px) {
+      .feature, .feature.flip { grid-template-columns: 1fr; gap: 28px; }
+      .feature.flip .text { order: 0; }
+      .links a:not(.pill) { display: none; }
+      .hero { padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="../assets/orbit-icon.svg" alt="" />Orbit</a>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#requirements">Requirements</a>
+        <a href="#install">Install</a>
+        <a class="pill" href="https://github.com/otaviosenne/orbit">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero wrap">
+      <span class="platform">Built for Linux · Hyprland · kitty</span>
+      <h1>Every Claude Code chat. One window.</h1>
+      <p class="lead">Orbit watches and steers all the Claude Code chats open on your desktop, so you always know which one needs you.</p>
+      <div class="cta">
+        <div class="install">
+          <code id="command">git clone https://github.com/otaviosenne/orbit.git &amp;&amp; cd orbit &amp;&amp; npm install &amp;&amp; npm start</code>
+          <button class="copy" id="copy" type="button">Copy</button>
+        </div>
+        <a class="secondary" href="https://github.com/otaviosenne/orbit">View on GitHub</a>
+      </div>
+      <p class="fine">Orbit runs on <b>Linux with the Hyprland compositor and the kitty terminal</b>. macOS and Windows are not supported.</p>
+
+      <div class="window">
+        <div class="bar"><i></i><i></i><i></i><span>Orbit</span></div>
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="screenshots/hero-dark.png" />
+          <img src="screenshots/hero-light.png" alt="Orbit's board with the chat panel open on a working chat" />
+        </picture>
+      </div>
+    </header>
+
+    <div class="wrap" id="requirements">
+      <div class="requirements">
+        <div class="req"><b>Linux + Hyprland</b><span>Window lookup and focus go through hyprctl.</span></div>
+        <div class="req"><b>kitty terminal</b><span>With remote control on a socket, so Orbit types without stealing focus.</span></div>
+        <div class="req"><b>Claude Code, logged in</b><span>Orbit reads the files it already writes under ~/.claude.</span></div>
+        <div class="req"><b>Node.js 22+</b><span>To build and run. Electron and TypeScript.</span></div>
+      </div>
+    </div>
+
+    <section id="features" class="wrap">
+      <h2>See everything. Reply from anywhere.</h2>
+      <p class="sub">Five chats in five terminals means hunting for the one that finished. Orbit puts them on one board.</p>
+
+      <div class="feature">
+        <div class="text">
+          <span class="eyebrow">Board</span>
+          <h3>Who needs you, who is working.</h3>
+          <p>Chats sort themselves into Needs you, Working, Active and Idle. Each card shows its color, repository, time in status and every running agent. Pin the ones you care about, suspend the rest.</p>
+        </div>
+        <div class="window"><div class="bar"><i></i><i></i><i></i><span>Board</span></div>
+          <picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/board-dark.png" /><img src="screenshots/board-light.png" alt="Board view with four columns of chat cards" loading="lazy" /></picture>
+        </div>
+      </div>
+
+      <div class="feature flip">
+        <div class="text">
+          <span class="eyebrow">Panel</span>
+          <h3>Read and reply without switching windows.</h3>
+          <p>Click a card and the chat opens beside the board with rendered markdown, folded tool calls and a composer that types straight into its terminal. Or tile several chats side by side, each with its own composer. Paste images and files, or hold Space to dictate.</p>
+        </div>
+        <div class="window"><div class="bar"><i></i><i></i><i></i><span>Panel</span></div>
+          <picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/panel-dark.png" /><img src="screenshots/panel-light.png" alt="Panel view with four chats tiled in a grid" loading="lazy" /></picture>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="text">
+          <span class="eyebrow">Agents</span>
+          <h3>Know what every agent is doing.</h3>
+          <p>Live agents sit under the panel header. Click one to read its own transcript, and spot the ones that went quiet before they cost you an hour.</p>
+        </div>
+        <div class="window"><div class="bar"><i></i><i></i><i></i><span>Agents</span></div>
+          <picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/agents-dark.png" /><img src="screenshots/agents-light.png" alt="Agent strip under the chat panel header" loading="lazy" /></picture>
+        </div>
+      </div>
+
+      <div class="feature flip">
+        <div class="text">
+          <span class="eyebrow">Questions</span>
+          <h3>Answer Claude's questions as a form.</h3>
+          <p>When Claude asks a multiple-choice question, Orbit shows it at the end of the thread. Pick an answer there instead of hunting for the terminal.</p>
+        </div>
+        <div class="window"><div class="bar"><i></i><i></i><i></i><span>Question</span></div>
+          <picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/question-dark.png" /><img src="screenshots/question-light.png" alt="A pending question rendered as a form" loading="lazy" /></picture>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="text">
+          <span class="eyebrow">Timeline</span>
+          <h3>What happened over the last hours.</h3>
+          <p>One lane per chat, one bar per agent, and a line for how long each chat has been working or waiting. Switch to All to see chats closed during the window too.</p>
+        </div>
+        <div class="window"><div class="bar"><i></i><i></i><i></i><span>Timeline</span></div>
+          <picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/timeline-dark.png" /><img src="screenshots/timeline-light.png" alt="Timeline view with open and closed chats" loading="lazy" /></picture>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card"><h4>Voice, hands-free</h4><p>Dictate into any chat, and say a phrase to send. Voice commands switch views and open chats by number.</p></div>
+        <div class="card"><h4>Resume anything</h4><p>Search every past chat by date and repository and reopen it in its folder, conversation intact.</p></div>
+        <div class="card"><h4>Weekly pace</h4><p>See your Claude plan's weekly usage against an even pace over your working hours, week by week.</p></div>
+        <div class="card"><h4>Orbit Web</h4><p>Optional remote access, so you can check on your chats from your phone. Off until you turn it on.</p></div>
+        <div class="card"><h4>Read-only by design</h4><p>Orbit only reads what Claude Code writes to disk. Everything happens on your machine.</p></div>
+        <div class="card"><h4>Light and dark</h4><p>Glass surfaces, rounded corners and a theme that follows your system.</p></div>
+      </div>
+    </section>
+
+    <section id="install" class="wrap">
+      <h2>Install in a minute.</h2>
+      <p class="sub">There is no installer yet: you build Orbit from source.</p>
+      <div class="steps">
+        <div class="step"><b>1. Let kitty be controlled</b>Add two lines to <code>~/.config/kitty/kitty.conf</code>, then open new kitty windows.
+<pre>allow_remote_control socket-only
+listen_on unix:${XDG_RUNTIME_DIR}/kitty-{kitty_pid}</pre></div>
+        <div class="step"><b>2. Clone, install, run</b>
+<pre>git clone https://github.com/otaviosenne/orbit.git
+cd orbit
+npm install
+npm start</pre></div>
+      </div>
+      <div class="note"><b>Linux only.</b> Orbit needs Hyprland and kitty, so it will not start on macOS, Windows or other Linux desktops. Orbit is source-available under the PolyForm Noncommercial 1.0.0 license: you can read, run and modify it, but not sell it.</div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Orbit. Screenshots are from demo mode: the chats are made up.</span>
+      <span><a href="https://github.com/otaviosenne/orbit">GitHub</a> · <a href="../LICENSE.md">License</a> · <a href="features.md">Feature guide</a></span>
+    </div>
+  </footer>
+
+  <script>
+    const copyButton = document.getElementById('copy');
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById('command').textContent);
+        copyButton.textContent = 'Copied';
+      } catch {
+        copyButton.textContent = 'Press Ctrl+C';
+      }
+      setTimeout(() => { copyButton.textContent = 'Copy'; }, 1800);
+    });
+  </script>
+</body>
+</html>
