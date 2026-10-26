@@ -30,6 +30,8 @@ export const REMOTE_ACCESS = {
   ListPastChats: 'read',
   GetTimelineHistory: 'read',
   ResumeChat: 'action',
+  // Opens a window on the desktop's screen for a browser sign-in.
+  OpenSignIn: 'desktop',
   // Moves the desktop's focus, which helps nobody away from it.
   FocusChat: 'desktop',
   RenameChat: 'chat',

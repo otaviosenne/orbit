@@ -232,11 +232,15 @@ export interface UsageSample {
   readonly percent: number;
 }
 
+export type LoginState = 'signed-in' | 'signed-out';
+
 export interface UsageSnapshot {
   readonly limits: readonly UsageLimit[];
   readonly breakdown: readonly UsageShare[];
   // Weekly readings Orbit has kept, oldest first; it can only know the ones taken while it was running.
   readonly weeklyHistory: readonly UsageSample[];
+  // Whether Claude Code has a login on this machine; read from its credentials file, never refreshed.
+  readonly login: LoginState;
   readonly fetchedAt: number | null;
   readonly error: string | null;
 }
@@ -397,6 +401,8 @@ export interface RadarApi {
   getTimelineHistory(sinceMs: number): Promise<ClosedChatActivity[]>;
   // Reopens a listed past chat in a new terminal in the folder it was started in.
   resumeChat(sessionId: string): Promise<ActionResult>;
+  // Opens a terminal running Claude Code's sign-in, for the user to finish in the browser.
+  openSignIn(): Promise<ActionResult>;
   prepareDictation(): void;
   startDictation(): Promise<DictationStart>;
   feedDictation(session: number, pcm: Uint8Array): void;

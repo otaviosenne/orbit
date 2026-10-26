@@ -1,5 +1,6 @@
-import type { UsageLimit, UsageSample, UsageSnapshot } from '../shared/types';
+import type { LoginState, UsageLimit, UsageSample, UsageSnapshot } from '../shared/types';
 import { WEEKLY_ALL_LABEL } from '../shared/usage-labels';
+import { readLoginState } from './login-status';
 import { nextUsageDelay } from './usage-backoff';
 import { loadCachedUsage, saveCachedUsage } from './usage-cache';
 import { UsageRateLimited, fetchRawUsage } from './usage-client';
@@ -7,7 +8,7 @@ import { recentSamples, withSample } from './usage-history-log';
 import { loadUsageHistory, saveUsageHistory } from './usage-history-store';
 import { toUsageSnapshot } from './usage-mapper';
 
-const EMPTY_USAGE: UsageSnapshot = { limits: [], breakdown: [], weeklyHistory: [], fetchedAt: null, error: null };
+const EMPTY_USAGE: UsageSnapshot = { limits: [], breakdown: [], weeklyHistory: [], login: 'signed-in', fetchedAt: null, error: null };
 
 // The numbers move slowly and the endpoint is shared with Claude Code; it is asked at most once a minute, less
 // after failures, and the last good reading (also from before a restart) stays on screen meanwhile.
@@ -21,11 +22,12 @@ export class UsageService {
 
   async current(): Promise<UsageSnapshot> {
     await this.restored;
-    if (Date.now() < this.nextAttemptAt) return this.snapshot;
+    const login: LoginState = await readLoginState(Date.now());
+    if (Date.now() < this.nextAttemptAt) return { ...this.snapshot, login };
     this.inFlight ??= this.refresh().finally((): void => {
       this.inFlight = null;
     });
-    return this.inFlight;
+    return { ...(await this.inFlight), login };
   }
 
   private async restore(): Promise<void> {

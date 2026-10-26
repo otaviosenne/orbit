@@ -1727,3 +1727,10 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 /* ---------- Reordering: where the dragged card would land ---------- */
 .reorder-marker { position: fixed; z-index: 90; border-radius: 2px; background: var(--accent); pointer-events: none; }
 .reorder-marker[hidden] { display: none; }
+.sign-in-badge {
+  margin-right: 4px; padding: 3px 8px; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650;
+  background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger);
+}
+.sign-in-badge[hidden] { display: none; }
+.sign-in-badge:hover { background: color-mix(in srgb, var(--danger) 26%, transparent); }
+.sign-in-row { align-items: center; justify-content: space-between; gap: 12px; }

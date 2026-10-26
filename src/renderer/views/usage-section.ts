@@ -2,15 +2,17 @@ import type { UsageLimit, UsageShare, UsageSnapshot } from '../../shared/types';
 import { element } from '../dom';
 import { formatDuration, formatReset } from '../format';
 import { WEEKLY_ALL_LABEL } from '../../shared/usage-labels';
+import { isSignedOut, renderSignInRow } from '../usage/sign-in-button';
 import { renderPaceChart } from '../usage/pace-chart';
 
 // Past this share of a limit the meter turns orange, so a near-empty window is noticed early.
 const WARNING_PERCENT: number = 80;
 
-export function renderUsageSection(usage: UsageSnapshot | null, now: number): HTMLElement {
+export function renderUsageSection(usage: UsageSnapshot | null, now: number, onSignIn: () => void): HTMLElement {
   const section: HTMLElement = element('section', 'settings-section');
   section.append(element('h2', 'settings-heading', 'Usage'));
   if (usage === null) return withChild(section, element('p', 'settings-note', 'Loading usage...'));
+  if (isSignedOut(usage)) section.append(signedOutGroup(onSignIn));
   const limits: HTMLDivElement = element('div', 'settings-group');
   limits.append(...usage.limits.map((limit: UsageLimit) => renderLimit(limit, now)));
   section.append(limits);
@@ -52,4 +54,10 @@ function footnote(usage: UsageSnapshot, now: number): string {
 function withChild(parent: HTMLElement, child: HTMLElement): HTMLElement {
   parent.append(child);
   return parent;
+}
+
+function signedOutGroup(onSignIn: () => void): HTMLElement {
+  const group: HTMLDivElement = element('div', 'settings-group');
+  group.append(renderSignInRow(onSignIn));
+  return group;
 }

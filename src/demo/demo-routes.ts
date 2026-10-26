@@ -58,6 +58,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   ListPastChats: (): PastChat[] => demoPastChats(),
   GetTimelineHistory: (sinceMs: unknown): ClosedChatActivity[] => demoTimelineHistory(sinceMs),
   ResumeChat: (): ActionResult => DONE,
+  OpenSignIn: (): ActionResult => DONE,
   FocusChat: (): void => undefined,
   RenameChat: (): ActionResult => DONE,
   RecolorChat: (): ActionResult => DONE,

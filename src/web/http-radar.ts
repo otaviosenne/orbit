@@ -57,6 +57,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     chooseFolder: (): Promise<string | null> => Promise.resolve(null),
     listPastChats: (): Promise<PastChat[]> => call('ListPastChats', []),
     getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => call('GetTimelineHistory', [sinceMs]),
+    openSignIn: (): Promise<ActionResult> => Promise.resolve({ ok: false, method: null, error: 'Sign in from the computer running Orbit' }),
     resumeChat: (sessionId: string): Promise<ActionResult> => call('ResumeChat', [sessionId]),
     prepareDictation: (): void => voice.prepare(),
     startDictation: (): Promise<DictationStart> => voice.start(),

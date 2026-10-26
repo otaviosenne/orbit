@@ -12,6 +12,7 @@ export function toUsageSnapshot(raw: RawUsage, fetchedAt: number): UsageSnapshot
     limits: (raw.limits ?? []).map(toLimit),
     breakdown: (raw.seven_day_breakdown?.rows ?? []).map(toShare),
     weeklyHistory: [],
+    login: 'signed-in',
     fetchedAt,
     error: null,
   };

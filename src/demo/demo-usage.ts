@@ -17,6 +17,7 @@ export function demoUsage(now: number): UsageSnapshot {
       { label: 'Haiku', percent: 5 },
     ],
     weeklyHistory: demoHistory(now),
+    login: 'signed-in',
     fetchedAt: now,
     error: null,
   };

@@ -64,6 +64,7 @@ import { DEFAULT_SETTINGS_PAGE, availablePages } from './views/settings-pages';
 import { renderAppearanceSection } from './views/appearance-section';
 import { renderUsageSection } from './views/usage-section';
 import { WeeklyUsageBadge } from './usage/weekly-usage-badge';
+import { SignInBadge, openSignIn } from './usage/sign-in-button';
 import type { TimelineChats } from './views/timeline-view';
 import { mountTimeline, renderTimeline } from './views/timeline-view';
 import { GridView } from './views/grid/grid-view';
@@ -285,6 +286,7 @@ function showChats(): void {
 async function refreshUsage(): Promise<void> {
   usage = await window.radar.getUsage();
   weeklyUsage.show(usage);
+  signInBadge.show(usage);
   if (view === 'settings') renderView();
 }
 
@@ -320,7 +322,7 @@ function showSettings(now: number): void {
 
 // Orbit Web and Resources keep their own state between renders, so their elements are reused, not rebuilt.
 function settingsContent(now: number): HTMLElement {
-  if (settingsPage === 'usage') return renderUsageSection(usage, now);
+  if (settingsPage === 'usage') return renderUsageSection(usage, now, signIn);
   if (settingsPage === 'resources') return resourcesSection.root;
   if (settingsPage === 'web' && remoteSection !== null) return remoteSection.root;
   return renderAppearanceSection(theme);
@@ -680,8 +682,17 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
 });
+// The failure is kept on the badge's tooltip, where the user is already looking.
+function signIn(): void {
+  openSignIn((problem: string): void => {
+    console.error(`Sign-in: ${problem}`);
+    signInBadge.root.title = problem;
+  });
+}
+const signInBadge: SignInBadge = new SignInBadge(signIn);
 const weeklyUsage: WeeklyUsageBadge = new WeeklyUsageBadge(showUsageSettings);
 requireElement('#resume-chat').before(weeklyUsage.root);
+requireElement('#resume-chat').before(signInBadge.root);
 const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(

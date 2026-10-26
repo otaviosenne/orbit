@@ -17,6 +17,7 @@ export const IpcChannel = {
   ListPastChats: 'radar:list-past-chats',
   GetTimelineHistory: 'radar:get-timeline-history',
   ResumeChat: 'radar:resume-chat',
+  OpenSignIn: 'radar:open-sign-in',
   FocusChat: 'radar:focus-chat',
   RenameChat: 'radar:rename-chat',
   RecolorChat: 'radar:recolor-chat',

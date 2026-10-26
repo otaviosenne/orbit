@@ -5,6 +5,7 @@ import { interruptShell } from '../shell-stop/shell-interrupter';
 import { recolorChat, renameChat, sendMessage } from '../chat-actions';
 import { interruptChat } from '../chat-interrupt';
 import { resumeChat } from '../chat-resumer';
+import { openSignIn } from '../open-sign-in';
 import { openLauncher } from '../launcher';
 import { answerQuestion, submitAnswers } from '../questions/question-answerer';
 import { answerQuestionSet } from '../questions/set-answerer';
@@ -16,6 +17,7 @@ import type { RouteServices } from './route-services';
 type ActionChannel =
   | 'OpenLauncher'
   | 'ResumeChat'
+  | 'OpenSignIn'
   | 'RenameChat'
   | 'RecolorChat'
   | 'SendMessage'
@@ -33,6 +35,7 @@ const NOT_IMAGES: ActionResult = failure('Attachments must be images');
 export function actionRoutes({ radar, pastChats }: RouteServices): Readonly<Record<ActionChannel, Route>> {
   return {
     OpenLauncher: (name: unknown): Promise<ActionResult> => openLauncher(textArg(name)),
+    OpenSignIn: (): Promise<ActionResult> => openSignIn(),
     ResumeChat: (sessionId: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId),
     RenameChat: (pid: unknown, name: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => renameChat(chat, textArg(name))),
     RecolorChat: (pid: unknown, color: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => recolorChat(chat, textArg(color))),

@@ -48,6 +48,7 @@ const api: RadarApi = {
   chooseFolder: (): Promise<string | null> => ipcRenderer.invoke(IpcChannel.ChooseFolder),
   listPastChats: (): Promise<PastChat[]> => ipcRenderer.invoke(IpcChannel.ListPastChats),
   getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => ipcRenderer.invoke(IpcChannel.GetTimelineHistory, sinceMs),
+  openSignIn: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.OpenSignIn),
   resumeChat: (sessionId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ResumeChat, sessionId),
   prepareDictation: (): void => ipcRenderer.send(IpcChannel.DictationPrepare),
   startDictation: (): Promise<DictationStart> => ipcRenderer.invoke(IpcChannel.DictationStart),
