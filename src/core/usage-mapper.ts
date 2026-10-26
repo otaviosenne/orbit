@@ -1,9 +1,9 @@
 import type { UsageLimit, UsageShare, UsageSnapshot } from '../shared/types';
-import { WEEKLY_ALL_LABEL } from '../shared/usage-labels';
+import { SESSION_LABEL, WEEKLY_ALL_LABEL } from '../shared/usage-labels';
 import type { RawLimit, RawShare, RawUsage } from './usage-client';
 
 const LIMIT_LABELS: Readonly<Record<string, string>> = {
-  session: 'Current session',
+  session: SESSION_LABEL,
   weekly_all: WEEKLY_ALL_LABEL,
 };
 
