@@ -1,4 +1,4 @@
-import { renderUnseenDot } from '../../unseen-dot';
+import { renderUnseenDot, showsDot } from '../../unseen-dot';
 import { statusAge } from '../../../shared/chat-time';
 import type { AgentSnapshot, ChatSnapshot } from '../../../shared/types';
 import { element } from '../../dom';
@@ -61,7 +61,7 @@ function renderMain(state: RowState): HTMLElement {
   const title: HTMLSpanElement = element('span', 'list-row-title');
   title.append(element('span', 'list-row-name', state.chat.name));
   if (state.isPinned) title.append(renderPinMark());
-  if (state.hasUnreadReply) title.append(renderUnseenDot(state.chat.status === 'waiting'));
+  if (showsDot(state.chat.status, state.hasUnreadReply)) title.append(renderUnseenDot(state.chat.status === 'waiting'));
   const detail: HTMLSpanElement = element('span', 'list-row-detail');
   const number: HTMLSpanElement | null = renderChatNumber(state.chat.sessionId);
   if (number !== null) detail.append(number);

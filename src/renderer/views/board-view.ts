@@ -1,4 +1,4 @@
-import { renderUnseenDot } from '../unseen-dot';
+import { renderUnseenDot, showsDot } from '../unseen-dot';
 import { statusAge } from '../../shared/chat-time';
 import type { ChatDevices, ChatSnapshot } from '../../shared/types';
 import { renderCardDevices } from '../board/card-devices';
@@ -131,7 +131,7 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   card.style.setProperty('--on-chat', textOnChatColor(chat.color));
   const top: HTMLDivElement = element('div', 'card-top');
   const time: HTMLSpanElement = element('span', 'card-time', formatDuration(statusAge(chat, now)));
-  if (hasUnread) time.prepend(renderUnseenDot(chat.status === 'waiting'));
+  if (showsDot(chat.status, hasUnread)) time.prepend(renderUnseenDot(chat.status === 'waiting'));
   const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(chat));
   if (spinner !== null) time.prepend(spinner);
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());

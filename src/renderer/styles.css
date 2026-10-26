@@ -416,13 +416,18 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green);
   animation: unseen-pulse 1.8s ease-out infinite;
 }
-/* Waiting on an answer: a darker green, its halo pulsing in the same shade */
-.unseen-dot.is-waiting { --unseen-color: color-mix(in srgb, var(--tag-green) 55%, #000000); background: var(--unseen-color); animation-name: unseen-pulse-waiting; }
+/* Waiting on an answer: blue, bigger than the green one, and pulsing faster with a wider double halo, so it reads as
+   more urgent (the cycle length is WAITING_PULSE_CYCLE_MS in unseen-dot.ts) */
+.unseen-dot.is-waiting {
+  --unseen-color: var(--tag-blue);
+  width: 10px; height: 10px; background: var(--unseen-color);
+  animation: unseen-pulse-waiting 1s ease-out infinite;
+}
 @keyframes unseen-pulse-waiting {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 85%, transparent); transform: scale(1); }
-  30% { transform: scale(1.18); }
-  70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--unseen-color) 0%, transparent); transform: scale(1); }
-  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 0%, transparent); transform: scale(1); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 90%, transparent), 0 0 0 0 color-mix(in srgb, var(--unseen-color) 60%, transparent); transform: scale(1); }
+  25% { transform: scale(1.3); }
+  60% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--unseen-color) 0%, transparent), 0 0 0 0 color-mix(in srgb, var(--unseen-color) 40%, transparent); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 0%, transparent), 0 0 0 13px color-mix(in srgb, var(--unseen-color) 0%, transparent); transform: scale(1); }
 }
 @keyframes unseen-pulse {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tag-green) 80%, transparent); transform: scale(1); }
@@ -432,6 +437,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .unseen-dot { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-green) 22%, transparent); }
+  .unseen-dot.is-waiting { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-blue) 35%, transparent); }
 }
 .card.is-unseen .card-name { font-weight: 700; }
 .card-pin { display: grid; place-items: center; width: 14px; height: 14px; color: var(--chat); }
