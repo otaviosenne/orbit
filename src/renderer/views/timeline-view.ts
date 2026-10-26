@@ -2,7 +2,8 @@ import type { ChatSnapshot, ClosedChatActivity } from '../../shared/types';
 import { element } from '../dom';
 import { formatDuration } from '../format';
 import { chatColor } from '../palette';
-import { renderSpinner } from '../spinner';
+import { renderWorkSpinner } from '../spinner';
+import { workStateOf } from '../work-state';
 import { chatStatusLabel } from '../status-label';
 import { SESSION_ATTRIBUTE } from './board-view';
 import { renderClosedDivider, renderClosedLane } from './timeline-closed-lane';
@@ -60,7 +61,8 @@ function renderOpenLane(chat: ChatSnapshot, window: TimeWindow, ticks: readonly 
 
 export function renderLaneStatus(chat: ChatSnapshot, now: number): HTMLElement {
   const status: HTMLSpanElement = element('span', `lane-status status-${chat.status}`, `${chat.repository.name} · ${chatStatusLabel(chat.status)} ${formatDuration(now - chat.statusSince)}`);
-  if (chat.status === 'busy') status.prepend(renderSpinner());
+  const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(chat));
+  if (spinner !== null) status.prepend(spinner);
   return status;
 }
 

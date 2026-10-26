@@ -7,7 +7,8 @@ import { formatDuration } from '../format';
 import { CLOSE_ICON, OPEN_OUTSIDE_ICON, PENCIL_ICON, TERMINAL_ICON } from '../icons';
 import { Lightbox } from '../lightbox';
 import { chatColor, textOnChatColor } from '../palette';
-import { renderSpinner } from '../spinner';
+import { renderWorkSpinner } from '../spinner';
+import { workStateOf } from '../work-state';
 import { chatStatusLabel } from '../status-label';
 import { AgentView } from './agent-view';
 import type { AgentTitle } from './agent-view';
@@ -277,7 +278,8 @@ export class ChatSheet {
     if (agent !== null) return void this.meta.replaceChildren(document.createTextNode(agent.meta));
     if (this.isShowingClosed) return void this.meta.replaceChildren(document.createTextNode(`${chat.repository.name} · ${this.closedLabel}`));
     const status: string = `${chat.repository.name} · ${chatStatusLabel(chat.status)} for ${formatDuration(statusAge(chat, now))}`;
-    this.meta.replaceChildren(...(chat.status === 'busy' ? [renderSpinner()] : []), document.createTextNode(status));
+    const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(chat));
+    this.meta.replaceChildren(...(spinner === null ? [] : [spinner]), document.createTextNode(status));
   }
 
   // Claude Code's "✻ Verb… (time · tokens)" line while the chat works; hidden once it stops.

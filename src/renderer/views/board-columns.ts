@@ -1,5 +1,6 @@
 import { restingSince } from '../../shared/chat-time';
 import type { ChatSnapshot } from '../../shared/types';
+import { isWorking } from '../work-state';
 
 export type ColumnKey = 'needs' | 'busy' | 'active' | 'idle';
 
@@ -34,7 +35,7 @@ function needsUser(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {
 }
 
 function isResting(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {
-  return chat.status !== 'busy' && !needsUser(chat, isUnseen);
+  return !isWorking(chat) && !needsUser(chat, isUnseen);
 }
 
 function restingColumn(chat: ChatSnapshot, now: number, pin: RestingPin): RestingColumn {
@@ -43,7 +44,7 @@ function restingColumn(chat: ChatSnapshot, now: number, pin: RestingPin): Restin
 
 const COLUMN_RULES: readonly ColumnRule[] = [
   { key: 'needs', title: 'Needs you', info: null, accepts: (chat, isUnseen): boolean => needsUser(chat, isUnseen) },
-  { key: 'busy', title: 'Working', info: null, accepts: (chat): boolean => chat.status === 'busy' },
+  { key: 'busy', title: 'Working', info: null, accepts: (chat, isUnseen): boolean => isWorking(chat) && !needsUser(chat, isUnseen) },
   {
     key: 'active',
     title: 'Active',

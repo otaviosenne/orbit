@@ -5,6 +5,7 @@ import { formatDuration } from '../../format';
 import { CLOSE_ICON } from '../../icons';
 import { VOICE_NUMBER_CLASS, showChatNumber } from '../../voice-nav/voice-number';
 import { chatStatusLabel } from '../../status-label';
+import { workStateOf } from '../../work-state';
 import { setText, showSpinner } from './in-place';
 import type { DeviceOpen } from './tile-devices';
 import { TileDevices } from './tile-devices';
@@ -39,7 +40,7 @@ export class TileHeader {
     setText(this.name, chat.name);
     this.devices.show(devices);
     this.root.title = chat.repository.name;
-    showSpinner(this.spinner, chat.status === 'busy');
+    showSpinner(this.spinner, workStateOf(chat));
     setText(this.statusLabel, chatStatusLabel(chat.status));
     setText(this.statusTime, formatDuration(statusAge(chat, now)));
     this.status.title = chatStatusLabel(chat.status);

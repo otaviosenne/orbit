@@ -5,7 +5,8 @@ import { element } from '../../dom';
 import { formatClock, formatDuration } from '../../format';
 import { PIN_FILLED_ICON } from '../../icons';
 import { chatColor } from '../../palette';
-import { renderSpinner } from '../../spinner';
+import { renderWorkSpinner } from '../../spinner';
+import { workStateOf } from '../../work-state';
 import { renderChatNumber } from '../../voice-nav/voice-number';
 import { GRIP_ICON } from './list-icons';
 import type { ListStatus } from './list-status';
@@ -75,7 +76,8 @@ function renderMain(state: RowState): HTMLElement {
 function renderSide(state: RowState, now: number): HTMLElement {
   const time: HTMLSpanElement = element('span', 'list-row-time', formatDuration(statusAge(state.chat, now)));
   time.title = `Since ${formatClock(now - statusAge(state.chat, now))}`;
-  if (state.chat.status === 'busy') time.prepend(renderSpinner());
+  const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(state.chat));
+  if (spinner !== null) time.prepend(spinner);
   const side: HTMLSpanElement = element('span', 'list-row-side');
   side.append(element('span', `list-status list-status-${state.status.key}`, state.status.label), time);
   return side;

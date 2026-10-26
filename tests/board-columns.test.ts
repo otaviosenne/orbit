@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ACTIVE_WINDOW_MS, toBoardColumns } from '../src/renderer/views/board-columns';
-import type { ChatSnapshot, ChatStatus } from '../src/shared/types';
+import type { AgentSnapshot, ChatSnapshot, ChatStatus } from '../src/shared/types';
+import { workStateOf } from '../src/renderer/work-state';
 
 const NOW: number = 100 * ACTIVE_WINDOW_MS;
 
@@ -50,5 +51,26 @@ describe('toBoardColumns', () => {
   it('lists unseen chats first inside a column', () => {
     const unseen = (item: ChatSnapshot): boolean => item.name === 'b';
     expect(toBoardColumns([chat('a', 'waiting'), chat('b', 'idle')], unseen, NOW)[0]?.chats.map((item) => item.name)).toEqual(['b', 'a']);
+  });
+});
+
+describe('a chat with only a background shell running', () => {
+  const never = (): boolean => false;
+  const runningAgent = { state: 'running' } as AgentSnapshot;
+
+  it('sits in Working, whatever its age, and not in Active or Idle', () => {
+    const chats: ChatSnapshot[] = [chat('building', 'shell', ACTIVE_WINDOW_MS + 1), chat('watching', 'shell')];
+    expect(names(toBoardColumns(chats, never, NOW))).toEqual([[], ['building', 'watching'], [], []]);
+  });
+
+  it('still goes to Needs you when its reply is unseen', () => {
+    expect(names(toBoardColumns([chat('building', 'shell')], () => true, NOW))).toEqual([['building'], [], [], []]);
+  });
+
+  it('shows a grey spinner for the shell alone, and the usual one once an agent also runs', () => {
+    expect(workStateOf(chat('a', 'shell'))).toBe('shell-only');
+    expect(workStateOf({ ...chat('a', 'shell'), agents: [runningAgent] })).toBe('working');
+    expect(workStateOf(chat('a', 'busy'))).toBe('working');
+    expect(workStateOf(chat('a', 'idle'))).toBe('resting');
   });
 });

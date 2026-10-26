@@ -1091,6 +1091,7 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 
 /* Claude Code's working asterisk, cycling · ✢ ✳ ✶ ✻ ✽ and back, in Claude's clay color */
 .claude-spinner { display: inline-block; width: 1em; margin-right: 3px; text-align: center; color: #d97757; font-weight: 700; }
+.claude-spinner.is-shell { color: var(--secondary); }
 .claude-spinner::before { content: '·'; animation: claude-spin 1.2s steps(1, end) infinite; animation-delay: inherit; }
 @keyframes claude-spin {
   0% { content: '·'; } 10% { content: '✢'; } 20% { content: '✳'; } 30% { content: '✶'; } 40% { content: '✻'; }

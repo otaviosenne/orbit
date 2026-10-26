@@ -2,6 +2,7 @@ import type { ChatSnapshot } from '../../../shared/types';
 import { element } from '../../dom';
 import { CHECK_ICON, PLUS_ICON } from '../../icons';
 import { chatColor } from '../../palette';
+import { workStateOf } from '../../work-state';
 import { setText, showSpinner } from './in-place';
 
 // One live chat in the grid's sidebar; the whole row adds it to the grid or takes it out.
@@ -27,7 +28,7 @@ export class SidebarRow {
     this.root.style.setProperty('--chat', chatColor(chat.color));
     setText(this.name, chat.name);
     setText(this.repo, chat.repository.name);
-    showSpinner(this.spinner, chat.status === 'busy');
+    showSpinner(this.spinner, workStateOf(chat));
     this.showAdded(isAdded);
   }
 
