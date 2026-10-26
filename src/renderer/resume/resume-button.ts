@@ -93,11 +93,10 @@ export class ResumeButton implements VoiceSelector {
     }, FEEDBACK_MS);
   }
 
-  // The eye: the panel shows the chat read-only, and the list gives way to it.
+  // The eye: the side panel shows the chat read-only while the list stays open, to look at the next one.
   private peekAt(sessionId: string): void {
     const chat: PastChat | undefined = this.chats.find((candidate: PastChat) => candidate.sessionId === sessionId);
     if (chat === undefined) return;
-    this.popover.close();
     this.peek(chat);
   }
 
