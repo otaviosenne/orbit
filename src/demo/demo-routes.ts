@@ -10,6 +10,7 @@ import type {
   LauncherEntry,
   PastChat,
   QuestionPicker,
+  McpServerEntry,
   SkillEntry,
   TranscriptionResult,
   TranscriptItem,
@@ -18,7 +19,7 @@ import type {
 } from '../shared/types';
 import type { ResourceSnapshot } from '../shared/chat-resources';
 import type { InvokeChannel, Route } from '../shared/ipc-routing';
-import { demoChatPermissions, demoChatSettings, demoSkills } from './demo-chat-settings';
+import { demoChatPermissions, demoChatSettings, demoMcpServers, demoSkills } from './demo-chat-settings';
 import { demoChatSnapshot, demoChatSnapshots, findDemoChat } from './demo-chats';
 import { demoChatDevices } from './demo-devices';
 import { demoLaunchers } from './demo-launchers';
@@ -76,6 +77,8 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetShellOutput: (): null => null,
   InterruptShell: (): ActionResult => DONE,
   GetChatSettings: (): ChatSettings => demoChatSettings(),
+  ListMcpServers: (): McpServerEntry[] => demoMcpServers(),
+  OpenChatMcp: (): ActionResult => DONE,
   ListSkills: (): SkillEntry[] => demoSkills(),
   SetChatModel: (): ActionResult => DONE,
   SetChatEffort: (): ActionResult => DONE,

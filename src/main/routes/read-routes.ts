@@ -13,7 +13,7 @@ import { textArg } from './route-args';
 
 type ReadChannel = { [K in RemoteChannel]: (typeof REMOTE_ACCESS)[K] extends 'read' ? K : never }[RemoteChannel];
 // The chat settings popover's reads live with its actions in chat-settings-routes.ts.
-type SettingsRead = 'GetChatSettings' | 'ListSkills' | 'GetChatPermissions';
+type SettingsRead = 'GetChatSettings' | 'ListSkills' | 'ListMcpServers' | 'GetChatPermissions';
 
 // Session ids are searched for as file names, so anything but a real one gets an empty answer.
 export function readRoutes({ radar, usage, pastChats, timelineHistory, resources }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {

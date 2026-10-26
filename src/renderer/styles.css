@@ -1734,3 +1734,18 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
 .sign-in-badge[hidden] { display: none; }
 .sign-in-badge:hover { background: color-mix(in srgb, var(--danger) 26%, transparent); }
 .sign-in-row { align-items: center; justify-content: space-between; gap: 12px; }
+
+/* ---------- MCP servers in the chat settings popover ---------- */
+.chat-settings-mcp-list { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.chat-settings-mcp-group { margin: 8px 4px 2px; color: var(--secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.chat-settings-mcp { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 8px; }
+.chat-settings-mcp-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--tag-green); }
+.chat-settings-mcp.is-needs-auth .chat-settings-mcp-dot { background: var(--tag-yellow); }
+.chat-settings-mcp.is-failed .chat-settings-mcp-dot { background: var(--danger); }
+.chat-settings-mcp-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.chat-settings-mcp-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text); }
+.chat-settings-mcp-status { font-size: 11px; color: var(--secondary); }
+.chat-settings-mcp-connect {
+  flex: none; padding: 3px 10px; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+  background: var(--accent); color: var(--on-accent);
+}

@@ -35,6 +35,8 @@ export const IpcChannel = {
   InterruptShell: 'radar:interrupt-shell',
   GetChatSettings: 'radar:get-chat-settings',
   ListSkills: 'radar:list-skills',
+  ListMcpServers: 'radar:list-mcp-servers',
+  OpenChatMcp: 'radar:open-chat-mcp',
   SetChatModel: 'radar:set-chat-model',
   SetChatEffort: 'radar:set-chat-effort',
   GetChatPermissions: 'radar:get-chat-permissions',

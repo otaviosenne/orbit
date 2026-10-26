@@ -1,4 +1,4 @@
-import type { ChatPermissions, ChatSettings, SkillEntry } from '../shared/types';
+import type { ChatPermissions, ChatSettings, McpServerEntry, SkillEntry } from '../shared/types';
 
 // Every demo chat runs on the same model; the settings popover only needs something believable to show.
 const DEMO_SETTINGS: ChatSettings = { model: 'claude-opus-5-5', effort: 'high' };
@@ -23,4 +23,15 @@ export function demoSkills(): SkillEntry[] {
 
 export function demoChatPermissions(): ChatPermissions {
   return DEMO_PERMISSIONS;
+}
+
+export function demoMcpServers(): McpServerEntry[] {
+  return [
+    { name: 'devhub', target: 'pnpm --silent mcp', status: 'connected', group: 'user' },
+    { name: 'posthog', target: 'https://mcp.posthog.com/mcp', status: 'connected', group: 'user' },
+    { name: 'desktop-mcp', target: 'node desktop-mcp', status: 'failed', group: 'local' },
+    { name: 'claude.ai Slack', target: 'https://mcp.slack.com/mcp', status: 'connected', group: 'claude-ai' },
+    { name: 'claude.ai Linear', target: 'https://mcp.linear.app/mcp', status: 'needs-auth', group: 'claude-ai' },
+    { name: 'plugin:context7:context7', target: 'https://mcp.context7.com/mcp', status: 'needs-auth', group: 'plugin' },
+  ];
 }

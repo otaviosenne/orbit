@@ -52,6 +52,8 @@ export const REMOTE_ACCESS = {
   InterruptShell: 'action',
   GetChatSettings: 'read',
   ListSkills: 'read',
+  ListMcpServers: 'read',
+  OpenChatMcp: 'chat',
   SetChatModel: 'chat',
   SetChatEffort: 'chat',
   GetChatPermissions: 'read',

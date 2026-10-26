@@ -21,6 +21,7 @@ export class ModelSummary {
     private readonly popover: HTMLElement,
     private readonly picks: ModelSummaryPicks,
     onOpen: () => void,
+    private readonly onClose: () => void,
   ) {
     button.hidden = true;
     popover.hidden = true;
@@ -38,8 +39,10 @@ export class ModelSummary {
   }
 
   close(): void {
+    const wasOpen: boolean = this.isOpen;
     this.popover.hidden = true;
     this.button.classList.remove('is-active');
+    if (wasOpen) this.onClose();
   }
 
   // No chat to speak for (closed, or still starting): nothing to show or change.

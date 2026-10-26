@@ -19,6 +19,11 @@ export function setChatModel(pid: number, model: unknown): Promise<ActionResult>
   return submitIfValid(pid, modelCommand(model), 'command', `Unknown model: ${String(model)}`);
 }
 
+// Opens Claude Code's own /mcp menu in the chat; connecting and reconnecting happen there, where the OAuth flow lives.
+export function openChatMcp(pid: number): Promise<ActionResult> {
+  return submitToChat(pid, '/mcp', 'command');
+}
+
 export function setChatEffort(pid: number, effort: unknown): Promise<ActionResult> {
   return submitIfValid(pid, effortCommand(effort), 'command', `Unknown effort: ${String(effort)}`);
 }

@@ -232,6 +232,17 @@ export interface UsageSample {
   readonly percent: number;
 }
 
+export type McpStatus = 'connected' | 'needs-auth' | 'failed';
+// Where a server is configured, as Claude Code's /mcp groups them.
+export type McpGroup = 'user' | 'local' | 'project' | 'plugin' | 'claude-ai';
+
+export interface McpServerEntry {
+  readonly name: string;
+  readonly target: string;
+  readonly status: McpStatus;
+  readonly group: McpGroup;
+}
+
 export type LoginState = 'signed-in' | 'signed-out';
 
 export interface UsageSnapshot {
@@ -445,6 +456,10 @@ export interface RadarApi {
   getChatSettings(sessionId: string): Promise<ChatSettings>;
   // The skills /skills lists for the chat: its project's, the user's and enabled plugins'.
   listSkills(sessionId: string): Promise<SkillEntry[]>;
+  // The MCP servers the chat can see and whether each is connected; empty when they cannot be listed.
+  listMcpServers(sessionId: string): Promise<McpServerEntry[]>;
+  // Types /mcp into the chat, which opens Claude Code's own menu to connect or reconnect a server.
+  openChatMcp(pid: number): Promise<ActionResult>;
   setChatModel(pid: number, model: ModelChoice): Promise<ActionResult>;
   setChatEffort(pid: number, effort: EffortLevel): Promise<ActionResult>;
   getChatPermissions(sessionId: string): Promise<ChatPermissions>;
