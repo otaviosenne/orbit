@@ -5,6 +5,7 @@ import { SpanWriter } from '../src/renderer/sheet/hands-free/span-writer';
 import type { VoiceCommandContext } from '../src/renderer/sheet/voice/commands/command-context';
 import { installVoiceCommandContext } from '../src/renderer/sheet/voice/commands/command-context';
 import { pausedSendText } from '../src/renderer/sheet/voice/commands/command-parser';
+import { SEND_PAUSE_MS } from '../src/renderer/sheet/voice/commands/phrase-table';
 import { carryPause } from '../src/renderer/sheet/voice/pause-send';
 import { runVoiceCommand } from '../src/renderer/sheet/voice/voice-command-runner';
 import type { DraftField } from '../src/renderer/sheet/voice/voice-field';
@@ -165,7 +166,7 @@ describe('clear', () => {
 });
 
 describe('send words that wait for a pause', () => {
-  const PAUSE_MS: number = 3000;
+  const PAUSE_MS: number = SEND_PAUSE_MS;
 
   // A composer whose form counts how often it is submitted.
   class SendableInput extends FakeInput {
@@ -194,9 +195,10 @@ describe('send words that wait for a pause', () => {
     const input: SendableInput = new SendableInput();
     input.value = 'fix the bug enviar';
     runVoiceCommand(asField(input), false);
-    vi.advanceTimersByTime(2000);
+    const elapsed: number = Math.floor(PAUSE_MS * 2 / 3);
+    vi.advanceTimersByTime(elapsed);
     runVoiceCommand(asField(input), false);
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(PAUSE_MS - elapsed);
     expect(input.submits).toBe(1);
   });
 
@@ -204,7 +206,7 @@ describe('send words that wait for a pause', () => {
     const input: SendableInput = new SendableInput();
     input.value = 'quero enviar';
     runVoiceCommand(asField(input), false);
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(PAUSE_MS / 2);
     input.value = 'quero enviar um email para o cliente';
     runVoiceCommand(asField(input), false);
     vi.advanceTimersByTime(PAUSE_MS * 2);
@@ -225,11 +227,11 @@ describe('send words that wait for a pause', () => {
     const input: SendableInput = new SendableInput();
     input.value = 'fix the bug pode enviar';
     runVoiceCommand(asField(input), true);
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(PAUSE_MS / 2);
     const acted: string[] = [];
     carryPause(asField(input), (): void => void acted.push('sent'));
     input.value = '';
-    vi.advanceTimersByTime(1999);
+    vi.advanceTimersByTime(PAUSE_MS / 2 - 1);
     expect(acted).toEqual([]);
     vi.advanceTimersByTime(1);
     expect(acted).toEqual(['sent']);

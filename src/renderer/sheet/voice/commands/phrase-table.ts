@@ -13,7 +13,7 @@ export interface PhraseRule {
 }
 
 // Silence after "pode enviar" and the like before the message goes out.
-export const SEND_PAUSE_MS: number = 3000;
+export const SEND_PAUSE_MS: number = 1000;
 
 // Words no prompt ends with by accident. This table is the one place to change them; longer forms come first so all
 // of their words are removed. Rules are tried in order. Words are bare: lowercase, no accents or punctuation.
