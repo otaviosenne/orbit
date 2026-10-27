@@ -1,6 +1,6 @@
-// Pace is measured in working time: Monday to Friday, eight hours a day. Weekends and nights take no room on the chart.
+// Pace is measured in working time: Monday to Friday, 09:00 to 18:00. Weekends and nights take no room on the chart.
 export const WORK_START_HOUR: number = 9;
-export const WORK_END_HOUR: number = 17;
+export const WORK_END_HOUR: number = 18;
 const WORK_WEEKDAYS: ReadonlySet<number> = new Set([1, 2, 3, 4, 5]);
 export const WORK_DAY_COUNT: number = WORK_WEEKDAYS.size;
 

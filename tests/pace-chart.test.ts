@@ -5,39 +5,49 @@ import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src
 import { GRID_PERCENTS } from '../src/renderer/usage/pace-chart';
 
 const HOUR: number = 3_600_000;
-// A week that resets Monday 26 Oct 2026 at 17:00, so it runs Tuesday to the next Monday in working days.
-const RESETS_AT: number = new Date(2026, 9, 26, 17).getTime();
+// A week that resets Monday 26 Oct 2026 at 20:00, after the working day ends at 18:00; it runs Tuesday to the next
+// Monday in working days.
+const RESETS_AT: number = new Date(2026, 9, 26, 20).getTime();
+const WORK_DAY_HOURS: number = 9;
 const WINDOW_START: number = RESETS_AT - 7 * 24 * HOUR;
-const at = (day: number, hour: number): number => new Date(2026, 9, day, hour).getTime();
+// Hours may be fractional (13.5 is half past one).
+const at = (day: number, hour: number): number => new Date(2026, 9, day, 0, hour * 60).getTime();
 
 describe('work schedule', () => {
   const segments: WorkSegment[] = workSegments(WINDOW_START, RESETS_AT);
 
-  it('has five working days of eight hours and skips the weekend', () => {
+  it('has five working days of nine hours and skips the weekend', () => {
     expect(segments).toHaveLength(5);
-    expect(totalWorkMs(segments)).toBe(40 * HOUR);
+    expect(totalWorkMs(segments)).toBe(5 * WORK_DAY_HOURS * HOUR);
   });
 
   it('counts working time inside a day', () => {
     expect(workElapsed(segments, at(20, 13))).toBe(4 * HOUR);
-    expect(workElapsed(segments, at(21, 9))).toBe(8 * HOUR);
+    expect(workElapsed(segments, at(21, 9))).toBe(WORK_DAY_HOURS * HOUR);
   });
 
   it('counts a Sunday prompt at the start of Monday and a Saturday one at the end of Friday', () => {
-    expect(workElapsed(segments, at(25, 15))).toBe(32 * HOUR);
-    expect(workElapsed(segments, at(24, 12))).toBe(32 * HOUR);
+    expect(workElapsed(segments, at(25, 15))).toBe(4 * WORK_DAY_HOURS * HOUR);
+    expect(workElapsed(segments, at(24, 12))).toBe(4 * WORK_DAY_HOURS * HOUR);
   });
 
   it('puts a late evening on the end of that day and an early morning on the start of the next', () => {
-    expect(workElapsed(segments, at(20, 21))).toBe(8 * HOUR);
-    expect(workElapsed(segments, at(21, 6))).toBe(8 * HOUR);
-    expect(workElapsed(segments, at(20, 18))).toBe(8 * HOUR);
+    expect(workElapsed(segments, at(20, 21))).toBe(WORK_DAY_HOURS * HOUR);
+    expect(workElapsed(segments, at(21, 6))).toBe(WORK_DAY_HOURS * HOUR);
+    expect(workElapsed(segments, at(20, 18))).toBe(WORK_DAY_HOURS * HOUR);
+  });
+
+  it('ends the last day at 18:00 although the week resets at 20:00', () => {
+    const last: WorkSegment = segments[segments.length - 1];
+    expect(last.end).toBe(at(26, 18));
+    expect(workElapsed(segments, at(26, 17))).toBeLessThan(totalWorkMs(segments));
+    expect(workElapsed(segments, at(26, 19))).toBe(totalWorkMs(segments));
   });
 });
 
 describe('pace model', () => {
   it('reads halfway through the week as 50% of an even pace', () => {
-    const model = buildPaceModel(RESETS_AT, [{ at: at(22, 13), percent: 70 }], at(22, 13));
+    const model = buildPaceModel(RESETS_AT, [{ at: at(22, 13.5), percent: 70 }], at(22, 13.5));
     expect(model.expectedNow).toBe(50);
     expect(paceGap(model)).toBe(20);
     expect(model.days).toHaveLength(5);
