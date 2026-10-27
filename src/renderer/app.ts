@@ -276,6 +276,7 @@ async function refreshChats(): Promise<void> {
   suspension.settle(polledChats, Date.now());
   showChats();
   openChats.observe(chats, columnOfChat, Date.now());
+  chatPause.settle(chats, Date.now());
   chatPause.prune(knownSessionIds());
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
