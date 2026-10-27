@@ -5,6 +5,8 @@ import type { RemoteSettings } from '../shared/remote-settings';
 import type { ResourceSnapshot } from '../shared/chat-resources';
 import type {
   ActionResult,
+  PauseReport,
+  PauseTarget,
   AttachmentBlob,
   AttachmentUpload,
   ChatDevices,
@@ -59,7 +61,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     listPastChats: (): Promise<PastChat[]> => call('ListPastChats', []),
     getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => call('GetTimelineHistory', [sinceMs]),
     openSignIn: (): Promise<ActionResult> => Promise.resolve({ ok: false, method: null, error: 'Sign in from the computer running Orbit' }),
-    resumeChat: (sessionId: string): Promise<ActionResult> => call('ResumeChat', [sessionId]),
+    resumeChat: (sessionId: string, afterCut?: boolean): Promise<ActionResult> => call('ResumeChat', [sessionId, afterCut === true]),
     prepareDictation: (): void => voice.prepare(),
     startDictation: (): Promise<DictationStart> => voice.start(),
     feedDictation: (session: number, pcm: Uint8Array): void => voice.feed(session, pcm),
@@ -79,6 +81,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
       call('SendMessage', [pid, text, attachments]),
     closeChat: (): Promise<ActionResult> => Promise.resolve(DESKTOP_ONLY_RESULT),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
+    pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
+    continueChats: (pids: readonly number[]): Promise<PauseReport> => call('ContinueChats', [pids]),
     openChatWindow: (): Promise<void> => Promise.resolve(),
     getQuestionPicker: (sessionId: string): Promise<QuestionPicker | null> => call('GetQuestionPicker', [sessionId]),
     answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>

@@ -73,3 +73,19 @@ describe('OpenChatsMemory columns', () => {
     expect(new OpenChatsMemory().closed([])[0].column).toBe('idle');
   });
 });
+
+describe('OpenChatsMemory cut mid-work', () => {
+  it('remembers that a chat was cut off midway, across a restart', () => {
+    new OpenChatsMemory().observe([{ ...chat('a'), status: 'busy' }, chat('b')], columnOf, NOW);
+    const restarted: OpenChatsMemory = new OpenChatsMemory();
+    expect(restarted.wasCutMidWork('a')).toBe(true);
+    expect(restarted.wasCutMidWork('b')).toBe(false);
+  });
+
+  it('does not call a chat cut off when it had finished by the last look', () => {
+    const memory: OpenChatsMemory = new OpenChatsMemory();
+    memory.observe([{ ...chat('a'), status: 'busy' }], columnOf, NOW);
+    memory.observe([chat('a')], columnOf, NOW + 1);
+    expect(memory.wasCutMidWork('a')).toBe(false);
+  });
+});

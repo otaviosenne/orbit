@@ -40,6 +40,8 @@ export const REMOTE_ACCESS = {
   // Ends a Claude Code process; too destructive for a lost phone.
   CloseChat: 'desktop',
   InterruptChat: 'chat',
+  PauseChats: 'chat',
+  ContinueChats: 'chat',
   OpenChatWindow: 'desktop',
   GetQuestionPicker: 'read',
   AnswerQuestion: 'action',

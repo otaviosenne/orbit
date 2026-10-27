@@ -32,6 +32,7 @@ import type { LeftOpenChat } from './suspend/closed-chats';
 import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
+import { ChatPause } from './pause/chat-pause';
 import type { RemoteSettings } from '../shared/remote-settings';
 import { PAIRING_HASH_KEY } from '../shared/remote-settings';
 import { GEAR_ICON } from './icons';
@@ -133,6 +134,7 @@ const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
+const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar);
 const cardOrder: CardOrder = new CardOrder();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());
@@ -254,6 +256,11 @@ function columnOfChat(chat: ChatSnapshot): ColumnKey {
   return columns.find((column: BoardColumn) => column.chats.length > 0)?.key ?? 'idle';
 }
 
+// Chats that are open or that Orbit remembers as left open: the ones a pause can still reach.
+function knownSessionIds(): Set<string> {
+  return new Set([...chats, ...openChats.closed(chats)].map((chat: { readonly sessionId: string }) => chat.sessionId));
+}
+
 function leftOpenChats(): LeftOpenChat[] {
   return openChats.closed(chats).map((entry: RememberedChat): LeftOpenChat => ({ chat: closedChatSnapshot(entry.sessionId, entry.info), column: entry.column }));
 }
@@ -264,6 +271,7 @@ async function refreshChats(): Promise<void> {
   suspension.settle(polledChats, Date.now());
   showChats();
   openChats.observe(chats, columnOfChat, Date.now());
+  chatPause.prune(knownSessionIds());
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
   launches.settle(Date.now());
@@ -471,13 +479,13 @@ async function reopenClosed(sessionId: string): Promise<void> {
   if (chat === undefined) return;
   const launchedAt: number = Date.now();
   launches.expect(resumedChatTarget(sessionId, chat.name), launchedAt);
-  void resumeLaunched(sessionId, launchedAt);
+  void resumeLaunched(sessionId, launchedAt, openChats.wasCutMidWork(sessionId));
 }
 
-async function resumeLaunched(sessionId: string, launchedAt: number): Promise<void> {
+async function resumeLaunched(sessionId: string, launchedAt: number, afterCut: boolean): Promise<void> {
   // The main process only resumes chats from its own latest list of past chats.
   await window.radar.listPastChats();
-  const result: ActionResult = await window.radar.resumeChat(sessionId);
+  const result: ActionResult = await window.radar.resumeChat(sessionId, afterCut);
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
 }
 
@@ -681,6 +689,10 @@ window.radar.onOpenChatRequest(openFromNotification);
 attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), remoteSection === null ? null : {
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
+}, {
+  pauseAll: (): void => void chatPause.pauseAll(),
+  continueAll: (): void => void chatPause.continueAll(),
+  pausedCount: (): number => chatPause.pausedCount,
 });
 // The failure is kept on the badge's tooltip, where the user is already looking.
 function signIn(): void {
@@ -693,7 +705,7 @@ const signInBadge: SignInBadge = new SignInBadge(signIn);
 const usageBadge: UsageBadge = new UsageBadge(showUsageSettings);
 requireElement('#resume-chat').before(usageBadge.root);
 requireElement('#resume-chat').before(signInBadge.root);
-const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat);
+const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat, (sessionId: string): boolean => openChats.wasCutMidWork(sessionId));
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(
   appShortcutBindings({

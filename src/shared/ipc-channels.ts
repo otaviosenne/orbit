@@ -24,6 +24,8 @@ export const IpcChannel = {
   SendMessage: 'radar:send-message',
   CloseChat: 'radar:close-chat',
   InterruptChat: 'radar:interrupt-chat',
+  PauseChats: 'radar:pause-chats',
+  ContinueChats: 'radar:continue-chats',
   OpenChatWindow: 'radar:open-chat-window',
   GetQuestionPicker: 'radar:get-question-picker',
   AnswerQuestion: 'radar:answer-question',

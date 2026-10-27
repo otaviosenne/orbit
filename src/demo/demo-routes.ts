@@ -1,5 +1,6 @@
 import type {
   ActionResult,
+  PauseReport,
   ChatDevices,
   ChatPermissions,
   ChatSettings,
@@ -66,6 +67,9 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   SendMessage: (): ActionResult => DONE,
   CloseChat: (): ActionResult => DONE,
   InterruptChat: (): ActionResult => DONE,
+  // Nothing is typed into a terminal in the demo.
+  PauseChats: (): PauseReport => ({ reached: [], skipped: [] }),
+  ContinueChats: (): PauseReport => ({ reached: [], skipped: [] }),
   // A popped-out window would land on the user's visible workspace, so the demo never opens one.
   OpenChatWindow: (): void => undefined,
   GetQuestionPicker: (sessionId: unknown): QuestionPicker | null => demoQuestionPicker(sessionId),

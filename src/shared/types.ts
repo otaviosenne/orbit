@@ -4,6 +4,18 @@ import type { CycledPermissionMode, PermissionMode } from './permission-modes';
 import type { RemoteSettings } from './remote-settings';
 import type { ResourceSnapshot } from './chat-resources';
 
+// A chat to pause: busy ones are interrupted first, others (agents or shells running behind an idle prompt) only get the message.
+export interface PauseTarget {
+  readonly pid: number;
+  readonly interrupt: boolean;
+}
+
+// Chats without remote control are skipped, not typed into: typing would steal the focus and mix keystrokes between windows.
+export interface PauseReport {
+  readonly reached: readonly number[];
+  readonly skipped: readonly number[];
+}
+
 export type ChatStatus = 'busy' | 'waiting' | 'idle' | 'shell' | 'unknown';
 
 export type AgentState = 'running' | 'quiet' | 'done';
@@ -413,7 +425,8 @@ export interface RadarApi {
   // Closed chats that were active since that time, for the timeline's "All" mode.
   getTimelineHistory(sinceMs: number): Promise<ClosedChatActivity[]>;
   // Reopens a listed past chat in a new terminal in the folder it was started in.
-  resumeChat(sessionId: string): Promise<ActionResult>;
+  // afterCut: the chat was working when the machine went down, so it is told to carry on once it is back.
+  resumeChat(sessionId: string, afterCut?: boolean): Promise<ActionResult>;
   // Opens a terminal running Claude Code's sign-in, for the user to finish in the browser.
   openSignIn(): Promise<ActionResult>;
   prepareDictation(): void;
@@ -436,6 +449,10 @@ export interface RadarApi {
   sendMessage(pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult>;
   closeChat(pid: number): Promise<ActionResult>;
   interruptChat(pid: number): Promise<ActionResult>;
+  // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.
+  pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;
+  // Tells the paused chats to carry on.
+  continueChats(pids: readonly number[]): Promise<PauseReport>;
   // Pops the chat out into its own window, or brings back the one it already has.
   openChatWindow(sessionId: string): Promise<void>;
   // The question picker on the chat's terminal right now; null when none is showing.

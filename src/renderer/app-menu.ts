@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { BROWSER_ICON, BUG_ICON, GITHUB_ICON, PHONE_ICON, QUESTION_ICON } from './icons';
+import { BROWSER_ICON, BUG_ICON, CONTINUE_ICON, GITHUB_ICON, PAUSE_ICON, PHONE_ICON, QUESTION_ICON } from './icons';
 import { actionShortcut } from './shortcuts/shortcut-catalog';
 import { shortcutKeysText } from './shortcuts/shortcut-hint';
 
@@ -12,6 +12,14 @@ const CLOSE_KEY: string = 'Escape';
 export interface AppMenuWeb {
   readonly openInBrowser: () => void;
   readonly pairPhone: () => void;
+}
+
+// Quiet the machine: every working chat is told to stop, and told to carry on later.
+export interface AppMenuPause {
+  readonly pauseAll: () => void;
+  readonly continueAll: () => void;
+  // The paused chats that are open, which Continue can reach; the item is shown only while there are some.
+  readonly pausedCount: () => number;
 }
 
 interface AppMenuLink {
@@ -27,12 +35,16 @@ const LINKS: readonly AppMenuLink[] = [
 
 // Clicking the wordmark drops down Help and links about Orbit itself; the links open in the browser (the
 // window sends every link outside).
-export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null): void {
+export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null, pause: AppMenuPause): void {
   const menu: HTMLDivElement = element('div', 'card-menu app-menu');
-  menu.append(renderHelpItem(openHelp), ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
+  const continueItem: HTMLButtonElement = renderAction(CONTINUE_ICON, 'Continue paused chats', pause.continueAll);
+  menu.append(renderHelpItem(openHelp), renderAction(PAUSE_ICON, 'Pause all chats', pause.pauseAll), continueItem, ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
   document.body.append(menu);
   trigger.classList.add('has-menu');
-  trigger.addEventListener('click', (): void => toggle(menu, trigger));
+  trigger.addEventListener('click', (): void => {
+    showPaused(continueItem, pause.pausedCount());
+    toggle(menu, trigger);
+  });
   document.addEventListener('pointerdown', (event: PointerEvent): void => {
     if (!menu.contains(event.target as Node) && !trigger.contains(event.target as Node)) menu.classList.remove(OPEN_CLASS);
   }, true);
@@ -40,6 +52,13 @@ export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: A
     if (event.key === CLOSE_KEY) menu.classList.remove(OPEN_CLASS);
   });
   menu.addEventListener('click', (): void => menu.classList.remove(OPEN_CLASS));
+}
+
+// The count rides on the label, so the user sees how many chats a Continue would reach.
+function showPaused(item: HTMLButtonElement, count: number): void {
+  item.hidden = count === 0;
+  const label: HTMLElement | null = item.querySelector('span');
+  if (label !== null) label.textContent = `Continue paused chats (${count})`;
 }
 
 function toggle(menu: HTMLElement, trigger: HTMLElement): void {

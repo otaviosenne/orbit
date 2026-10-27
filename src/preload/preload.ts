@@ -8,6 +8,8 @@ import { IpcChannel } from '../shared/ipc-channels';
 import type { IpcRendererEvent } from 'electron';
 import type {
   ActionResult,
+  PauseReport,
+  PauseTarget,
   AttachmentBlob,
   AttachmentUpload,
   ChatPermissions,
@@ -50,7 +52,7 @@ const api: RadarApi = {
   listPastChats: (): Promise<PastChat[]> => ipcRenderer.invoke(IpcChannel.ListPastChats),
   getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => ipcRenderer.invoke(IpcChannel.GetTimelineHistory, sinceMs),
   openSignIn: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.OpenSignIn),
-  resumeChat: (sessionId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ResumeChat, sessionId),
+  resumeChat: (sessionId: string, afterCut?: boolean): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ResumeChat, sessionId, afterCut === true),
   prepareDictation: (): void => ipcRenderer.send(IpcChannel.DictationPrepare),
   startDictation: (): Promise<DictationStart> => ipcRenderer.invoke(IpcChannel.DictationStart),
   feedDictation: (session: number, pcm: Uint8Array): void => ipcRenderer.send(IpcChannel.DictationAudio, session, pcm),
@@ -74,6 +76,8 @@ const api: RadarApi = {
     ipcRenderer.invoke(IpcChannel.SendMessage, pid, text, attachments),
   closeChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CloseChat, pid),
   interruptChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptChat, pid),
+  pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.PauseChats, targets),
+  continueChats: (pids: readonly number[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, pids),
   openChatWindow: (sessionId: string): Promise<void> => ipcRenderer.invoke(IpcChannel.OpenChatWindow, sessionId),
   getQuestionPicker: (sessionId: string): Promise<QuestionPicker | null> => ipcRenderer.invoke(IpcChannel.GetQuestionPicker, sessionId),
   answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>

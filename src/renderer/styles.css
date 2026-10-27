@@ -457,6 +457,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 9px; border: 0; border-radius: 6px;
   background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left;
 }
+.card-menu-item[hidden] { display: none; }
 .card-menu-item svg { width: 14px; height: 14px; fill: currentColor; }
 .card-menu-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-menu-item.is-destructive { color: var(--danger); }

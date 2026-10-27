@@ -1,5 +1,6 @@
 import type { ChatSnapshot } from '../../shared/types';
 import { toClosedChatInfo, type ClosedChatInfo } from '../board/closed-chat-info';
+import { isMidWork } from '../pause/pause-targets';
 import type { ColumnKey } from '../views/board-columns';
 
 const STORAGE_KEY: string = 'orbit.open-chats';
@@ -12,6 +13,9 @@ export interface RememberedChat {
   readonly info: ClosedChatInfo;
   // Where its card was on the board, so a chat left open by a shutdown keeps its place while closed.
   readonly column: ColumnKey;
+  // Its turn or an agent was running when Orbit last saw it: a shutdown cut it off midway. Kept apart from the column,
+  // which also holds chats that only finished a reply or run a shell.
+  readonly cutMidWork?: boolean;
 }
 
 export type ColumnOf = (chat: ChatSnapshot) => ColumnKey;
@@ -32,6 +36,11 @@ export class OpenChatsMemory {
     if (JSON.stringify(this.chats) !== before) save(this.chats);
   }
 
+  // Read when the chat is reopened, before the first poll of the live chat overwrites it.
+  wasCutMidWork(sessionId: string): boolean {
+    return this.chats.some((chat: RememberedChat) => chat.sessionId === sessionId && chat.cutMidWork === true);
+  }
+
   forget(sessionId: string): void {
     this.chats = this.chats.filter((chat: RememberedChat) => chat.sessionId !== sessionId);
     this.missingSince.delete(sessionId);
@@ -46,7 +55,7 @@ export class OpenChatsMemory {
   private see(chat: ChatSnapshot, column: ColumnKey): void {
     this.seenLive.add(chat.sessionId);
     this.missingSince.delete(chat.sessionId);
-    const entry: RememberedChat = { sessionId: chat.sessionId, info: toClosedChatInfo(chat), column };
+    const entry: RememberedChat = { sessionId: chat.sessionId, info: toClosedChatInfo(chat), column, cutMidWork: isMidWork(chat) };
     const isKnown: boolean = this.chats.some((remembered: RememberedChat) => remembered.sessionId === chat.sessionId);
     this.chats = isKnown ? this.chats.map((remembered: RememberedChat) => (remembered.sessionId === chat.sessionId ? entry : remembered)) : [...this.chats, entry];
   }
