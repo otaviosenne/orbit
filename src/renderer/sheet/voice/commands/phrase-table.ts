@@ -65,6 +65,10 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
   { command: { action: 'device', device: 'browser' }, phrases: [['orbit', 'navegador'], ['orbit', 'browser']] },
   { command: { action: 'new-chat' }, phrases: [['orbit', 'new', 'chat'], ['orbit', 'novo', 'chat'], ['orbit', 'nova', 'conversa']] },
   { command: { action: 'resume' }, phrases: [['orbit', 'resume'], ['orbit', 'retomar']] },
+  // The chat being talked to: the open panel's or the Panel tile with the cursor.
+  { command: { action: 'suspend' }, phrases: [['orbit', 'suspend'], ['orbit', 'suspende'], ['orbit', 'suspender'], ['orbit', 'suspenda']] },
+  { command: { action: 'pin' }, phrases: [['orbit', 'pin'], ['orbit', 'pinar'], ['orbit', 'fixar'], ['orbit', 'fixa']] },
+  { command: { action: 'unpin' }, phrases: [['orbit', 'unpin'], ['orbit', 'desafixar'], ['orbit', 'desafixa'], ['orbit', 'desfixar']] },
   {
     command: { action: 'cancel' },
     phrases: [['orbit', 'cancelar'], ['orbit', 'cancel'], ['orbit', 'fechar'], ['orbit', 'close'], ['orbit', 'voltar'], ['orbit', 'back']],

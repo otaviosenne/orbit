@@ -31,6 +31,8 @@ interface Calls {
   closes: number;
   newChats: number;
   devices: string[];
+  suspends: number;
+  pins: boolean[];
 }
 
 let calls: Calls;
@@ -46,6 +48,8 @@ function install(): void {
     openDevice: (device: string): number => calls.devices.push(device),
     openNewChat: (): number => calls.newChats++,
     openResume: (): void => undefined,
+    suspendChat: (): number => calls.suspends++,
+    pinChat: (pinned: boolean): number => calls.pins.push(pinned),
     pick: (number: number): boolean => {
       calls.picks.push(number);
       return number <= 3;
@@ -74,7 +78,7 @@ function handsFreeSegment(): { input: FakeInput; say: (text: string, isFinal: bo
 }
 
 beforeEach(() => {
-  calls = { views: [], chats: [], picks: [], reports: [], closes: 0, newChats: 0, devices: [] };
+  calls = { views: [], chats: [], picks: [], reports: [], closes: 0, newChats: 0, devices: [], suspends: 0, pins: [] };
   isSelectorOpen = false;
   install();
 });
@@ -258,5 +262,26 @@ describe('send words that wait for a pause', () => {
     input.value = 'fix the bug chinelo';
     runVoiceCommand(asField(input), true);
     expect(input.submits).toBe(1);
+  });
+});
+
+describe('suspend and pin by voice', () => {
+  const asField = (input: FakeInput): HTMLTextAreaElement => input as unknown as HTMLTextAreaElement;
+
+  it('suspends the chat and takes the phrase off the draft', () => {
+    const input: FakeInput = new FakeInput();
+    input.value = 'later arbit suspende';
+    runVoiceCommand(asField(input), true);
+    expect(calls.suspends).toBe(1);
+    expect(input.value).toBe('later');
+  });
+
+  it('pins and unpins', () => {
+    const input: FakeInput = new FakeInput();
+    input.value = 'orbit pin';
+    runVoiceCommand(asField(input), true);
+    input.value = 'orbit desafixar';
+    runVoiceCommand(asField(input), true);
+    expect(calls.pins).toEqual([true, false]);
   });
 });

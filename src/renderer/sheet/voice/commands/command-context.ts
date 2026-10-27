@@ -13,6 +13,9 @@ export interface VoiceCommandContext {
   pick(number: number): boolean;
   // Closes the open selector, or else the side panel.
   close(): void;
+  // The chat being talked to: the open panel's, or the Panel tile that has the cursor. Suspending asks first when it is working.
+  suspendChat(): void;
+  pinChat(pinned: boolean): void;
   isSelectorOpen(): boolean;
   report(message: string): void;
 }

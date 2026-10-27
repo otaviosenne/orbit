@@ -20,6 +20,9 @@ export interface VoiceHelpEntry {
 // (sheet/voice/commands/phrase-table.ts); keep the two in step when one changes.
 export const VOICE_HELP: readonly VoiceHelpEntry[] = [
   { group: 'Chats', says: ['chat 3', 'orbit 3', 'orbit chat 3'], does: 'Open the chat numbered #3 in the panel (the numbers show while the mic is on)' },
+  { group: 'Chats', says: ['orbit suspend', 'orbit suspende'], does: 'Suspend the open chat (it asks first when the chat is working)' },
+  { group: 'Chats', says: ['orbit pin', 'orbit fixar'], does: 'Pin the open chat to the row above the board' },
+  { group: 'Chats', says: ['orbit unpin', 'orbit desafixar'], does: 'Unpin the open chat' },
   { group: 'Views', says: ['orbit board'], does: 'Board' },
   { group: 'Views', says: ['orbit panel', 'orbit painel'], does: 'Panel' },
   { group: 'Views', says: ['orbit timeline'], does: 'Timeline' },

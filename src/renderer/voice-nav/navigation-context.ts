@@ -15,6 +15,8 @@ export interface NavigationDeps {
   // The open chat's Emulator or Browser pill; nothing when the chat has none.
   readonly openDevice: (device: 'emulator' | 'browser') => void;
   readonly openNewChat: () => void;
+  readonly suspendChat: () => void;
+  readonly pinChat: (pinned: boolean) => void;
   readonly openResume: () => void;
 }
 
@@ -29,6 +31,8 @@ export function createNavigationContext(deps: NavigationDeps): VoiceCommandConte
     },
     openDevice: deps.openDevice,
     openNewChat: deps.openNewChat,
+    suspendChat: deps.suspendChat,
+    pinChat: deps.pinChat,
     openResume: deps.openResume,
     pick: (number: number): boolean => openSelector()?.pick(number) ?? false,
     close: (): void => {

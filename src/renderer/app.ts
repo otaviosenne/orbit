@@ -99,6 +99,8 @@ import { installShortcutTooltips } from './shortcuts/shortcut-tooltips';
 import { installVoiceCommandContext } from './sheet/voice/commands/command-context';
 import { chatNumbers } from './voice-nav/chat-numbers';
 import { createNavigationContext } from './voice-nav/navigation-context';
+import { showVoiceNotice } from './voice-nav/voice-notice';
+import { TILE_SESSION_ATTRIBUTE, TILE_SESSION_SELECTOR } from './views/grid/grid-tile';
 import type { VoiceSelector } from './voice-nav/voice-selector';
 
 const CHATS_POLL_MS: number = 2000;
@@ -533,6 +535,35 @@ function openChatByVoice(sessionId: string): boolean {
   return sheet.sessionId === sessionId;
 }
 
+// The chat a spoken "orbit pin" or "orbit suspend" is about, and where to point the confirmation: the Panel tile that has
+// the cursor, or else the open side panel.
+interface SpokenTarget {
+  readonly sessionId: string;
+  readonly anchor: HTMLElement;
+}
+
+function spokenTarget(): SpokenTarget | null {
+  const tile: HTMLElement | null = document.activeElement?.closest<HTMLElement>(TILE_SESSION_SELECTOR) ?? null;
+  const tileSession: string | undefined = tile?.dataset[TILE_SESSION_ATTRIBUTE];
+  if (view === 'grid') return tile !== null && tileSession !== undefined ? { sessionId: tileSession, anchor: tile } : null;
+  return sheet.sessionId === null ? null : { sessionId: sheet.sessionId, anchor: requireElement('#sheet-name') };
+}
+
+function suspendByVoice(): void {
+  const target: SpokenTarget | null = spokenTarget();
+  const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === target?.sessionId);
+  if (target === null || chat === undefined) return showVoiceNotice('No open chat to suspend');
+  suspension.request(chat, target.anchor);
+}
+
+function pinByVoice(pinned: boolean): void {
+  const target: SpokenTarget | null = spokenTarget();
+  if (target === null) return showVoiceNotice(pinned ? 'No open chat to pin' : 'No open chat to unpin');
+  if (pinned) pins.pin(target.sessionId);
+  else pins.unpin(target.sessionId);
+  renderView();
+}
+
 function closeSheet(): void {
   sheet.close();
   trackViewing(Date.now());
@@ -761,6 +792,8 @@ installVoiceCommandContext(createNavigationContext({
     newChatButton.close();
     resumeButton.open();
   },
+  suspendChat: suspendByVoice,
+  pinChat: pinByVoice,
 }));
 applyTheme(theme);
 void refreshChats();

@@ -1,3 +1,5 @@
+import { withWakeWords } from './wake-word';
+
 // Dictation varies case, accents and punctuation, so spoken words are compared bare.
 const WORD_PATTERN: RegExp = /[\p{L}\p{N}]+/gu;
 // What dictation leaves between the last real word and the command: spaces, commas, full stops and the like.
@@ -10,7 +12,8 @@ export interface SpokenWord {
 }
 
 export function spokenWordsOf(text: string): SpokenWord[] {
-  return [...text.matchAll(WORD_PATTERN)].map((match: RegExpMatchArray): SpokenWord => ({ bare: bareWord(match[0]), start: match.index ?? 0 }));
+  const words: SpokenWord[] = [...text.matchAll(WORD_PATTERN)].map((match: RegExpMatchArray): SpokenWord => ({ bare: bareWord(match[0]), start: match.index ?? 0 }));
+  return withWakeWords(words);
 }
 
 export function bareWord(word: string): string {

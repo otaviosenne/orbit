@@ -10,7 +10,10 @@ export type VoiceCommand =
   | { readonly action: 'device'; readonly device: 'emulator' | 'browser' }
   | { readonly action: 'new-chat' }
   | { readonly action: 'resume' }
-  | { readonly action: 'cancel' };
+  | { readonly action: 'cancel' }
+  | { readonly action: 'suspend' }
+  | { readonly action: 'pin' }
+  | { readonly action: 'unpin' };
 
 export interface SpokenCommand {
   readonly command: VoiceCommand;

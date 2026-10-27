@@ -16,6 +16,12 @@ export function executeNavigation(command: VoiceCommand, context: VoiceCommandCo
       return context.openResume();
     case 'cancel':
       return context.close();
+    case 'suspend':
+      return context.suspendChat();
+    case 'pin':
+      return context.pinChat(true);
+    case 'unpin':
+      return context.pinChat(false);
     default:
       return;
   }

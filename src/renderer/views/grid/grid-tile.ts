@@ -15,6 +15,7 @@ import { TileHeader } from './tile-header';
 
 // Not "session": the board's click and context-menu handlers on the view act on any [data-session].
 export const TILE_SESSION_ATTRIBUTE: string = 'gridSession';
+export const TILE_SESSION_SELECTOR: string = '[data-grid-session]';
 
 
 export interface GridTileHandlers {
