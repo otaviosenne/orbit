@@ -35,7 +35,7 @@ export const VOICE_HELP: readonly VoiceHelpEntry[] = [
   { group: 'Write and send', says: ['chinelo', 'orbit enviar', 'flip', 'flipper'], does: 'Send the message right away' },
   {
     group: 'Write and send',
-    says: ['pode enviar', 'pode mandar', 'enviar', 'mandar', 'enviar mensagem', 'mandar mensagem', 'pode enviar mensagem'],
+    says: ['pode enviar', 'pode mandar', 'enviar', 'enviasse', 'mandar', 'enviar mensagem', 'mandar mensagem', 'pode enviar mensagem'],
     does: `Send the message after a ${SEND_PAUSE_MS / MS_PER_SECOND} second pause: say it, then stop talking`,
   },
   { group: 'Write and send', says: ['orbit limpar', 'orbit clear'], does: 'Clear the message box' },

@@ -109,6 +109,11 @@ describe('the send words that wait for a pause', () => {
     expect(waitedRemainder('fix the bug, send it')).toBe('fix the bug');
   });
 
+  it('asks for the pause on "enviasse", a common transcription of "enviar"', () => {
+    expect(waitedRemainder('corrige o bug, enviasse')).toBe('corrige o bug');
+    expect(waitedRemainder('Corrige o bug. Enviasse.')).toBe('Corrige o bug');
+  });
+
   it('acts only when the words end the draft', () => {
     expect(waitedRemainder('quero enviar um email para o cliente')).toBeNull();
   });

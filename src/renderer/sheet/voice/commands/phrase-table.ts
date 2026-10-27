@@ -49,6 +49,8 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
       ['mandar', 'mensagem'],
       ['enviar'],
       ['mandar'],
+      // How "enviar" is often transcribed when it ends a sentence.
+      ['enviasse'],
       ['envia'],
       ['manda'],
       ['send', 'message'],
