@@ -45,6 +45,8 @@ export const IpcChannel = {
   SetPermissionMode: 'radar:set-permission-mode',
   GetChatDevices: 'radar:get-chat-devices',
   FocusChatEmulator: 'radar:focus-chat-emulator',
+  ListOpenEmulators: 'radar:list-open-emulators',
+  CloseAllEmulators: 'radar:close-all-emulators',
   FocusChatBrowser: 'radar:focus-chat-browser',
   GetRemoteSettings: 'radar:get-remote-settings',
   SetRemoteEnabled: 'radar:set-remote-enabled',

@@ -63,6 +63,9 @@ export const REMOTE_ACCESS = {
   // The emulator and browser buttons focus desktop windows, so the web hides them and needs none of the three.
   GetChatDevices: 'desktop',
   FocusChatEmulator: 'desktop',
+  ListOpenEmulators: 'desktop',
+  // Ends processes on the desktop; too destructive for a lost phone.
+  CloseAllEmulators: 'desktop',
   FocusChatBrowser: 'desktop',
   // Never a call: Orbit Web dictates over its own WebSocket (/api/dictation), one voice engine per browser.
   DictationStart: 'desktop',

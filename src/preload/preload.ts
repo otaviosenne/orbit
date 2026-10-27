@@ -100,6 +100,8 @@ const api: RadarApi = {
     ipcRenderer.invoke(IpcChannel.SetPermissionMode, sessionId, mode),
   getChatDevices: (sessionId: string): Promise<ChatDevices> => ipcRenderer.invoke(IpcChannel.GetChatDevices, sessionId),
   focusChatEmulator: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatEmulator, sessionId),
+  listOpenEmulators: (): Promise<string[]> => ipcRenderer.invoke(IpcChannel.ListOpenEmulators),
+  closeAllEmulators: (): Promise<number> => ipcRenderer.invoke(IpcChannel.CloseAllEmulators),
   focusChatBrowser: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatBrowser, sessionId),
   getChatResources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IpcChannel.GetChatResources),
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),

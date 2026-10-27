@@ -488,6 +488,10 @@ export interface RadarApi {
   getChatDevices(sessionId: string): Promise<ChatDevices>;
   // Focuses the chat's emulator window, switching to its workspace.
   focusChatEmulator(sessionId: string): Promise<DeviceFocus>;
+  // The Android emulators open on this desktop, named "<avd>:<port>"; always empty in Orbit Web.
+  listOpenEmulators(): Promise<string[]>;
+  // Shuts every open emulator down; resolves with how many it reached.
+  closeAllEmulators(): Promise<number>;
   // Brings the chat's Chrome tab to front when Chrome allows it, otherwise the Chrome window most likely to hold it.
   focusChatBrowser(sessionId: string): Promise<DeviceFocus>;
   // CPU and memory of every open chat's process tree, measured since the previous call.

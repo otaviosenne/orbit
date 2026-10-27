@@ -1527,6 +1527,17 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 /* A soft halo apart from the open chat's tight ring, so focus and the open chat can be told apart */
 .card.is-keyboard-focus { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
 /* Above the panel and menus, under the shared tooltip */
+.dialog-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 0.5); }
+.dialog-overlay[hidden] { display: none; }
+.dialog { width: min(360px, 100%); padding: 18px 18px 14px; border-radius: 12px; background: var(--panel); color: var(--text); backdrop-filter: blur(30px) saturate(1.4);
+  box-shadow: 0 0 0 0.5px var(--control-border), 0 24px 70px rgb(0 0 0 / 0.35); }
+.dialog-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.dialog-note { margin: 0 0 14px; color: var(--secondary); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.dialog-actions { display: flex; flex-direction: column; gap: 6px; }
+.dialog-button { padding: 8px 12px; border: 0; border-radius: 8px; background: rgb(127 127 127 / 0.14); color: var(--text); font: inherit; font-size: 13px; }
+.dialog-button:hover { background: var(--accent); color: #ffffff; }
+.dialog-button.is-destructive { color: var(--danger); }
+.dialog-button.is-destructive:hover { background: var(--danger); color: #ffffff; }
 .help-overlay { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; padding: 32px 24px; background: rgb(0 0 0 / 0.7); }
 .help-overlay[hidden] { display: none; }
 .help-panel {

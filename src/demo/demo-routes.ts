@@ -91,6 +91,9 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetChatDevices: (sessionId: unknown): ChatDevices => demoChatDevices(sessionId),
   // Focusing would move the user's own screen to a window the demo only pretends exists.
   FocusChatEmulator: (): DeviceFocus => 'exact',
+  // Closing real emulators from a demo would be a surprise; the list is made up and closing reaches all of it.
+  ListOpenEmulators: (): string[] => ['Pixel_8:5554', 'Pixel_6a:5556'],
+  CloseAllEmulators: (): number => 2,
   FocusChatBrowser: (): DeviceFocus => 'exact',
   DictationStart: (): DictationStart => ({ session: ++dictationSession, error: null }),
   DictationFinish: (): TranscriptionResult => EMPTY_TRANSCRIPTION,

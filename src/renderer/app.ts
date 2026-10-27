@@ -33,6 +33,8 @@ import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
 import { ChatPause } from './pause/chat-pause';
+import { EmulatorPrompt } from './pause/emulator-prompt';
+import { pauseEverything } from './pause/pause-flow';
 import type { RemoteSettings } from '../shared/remote-settings';
 import { PAIRING_HASH_KEY } from '../shared/remote-settings';
 import { GEAR_ICON } from './icons';
@@ -137,6 +139,7 @@ const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
 const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar);
+const emulatorPrompt: EmulatorPrompt = new EmulatorPrompt();
 const cardOrder: CardOrder = new CardOrder();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());
@@ -721,7 +724,7 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
 }, {
-  pauseAll: (): void => void chatPause.pauseAll(),
+  pauseAll: (): void => void pauseEverything(chatPause, window.radar, (labels: readonly string[]) => emulatorPrompt.ask(labels)),
   continueAll: (): void => void chatPause.continueAll(),
   pausedCount: (): number => chatPause.pausedCount,
 });

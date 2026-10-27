@@ -105,6 +105,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     // No device buttons on the web: they focus windows on the desktop.
     getChatDevices: (): Promise<ChatDevices> => Promise.resolve(NO_DEVICES),
     focusChatEmulator: (): Promise<DeviceFocus> => Promise.resolve('missing'),
+    listOpenEmulators: (): Promise<string[]> => Promise.resolve([]),
+    closeAllEmulators: (): Promise<number> => Promise.resolve(0),
     focusChatBrowser: (): Promise<DeviceFocus> => Promise.resolve('missing'),
     getChatResources: (): Promise<ResourceSnapshot> => call('GetChatResources', []),
     getRemoteSettings: (): Promise<RemoteSettings> => desktopOnly(),
