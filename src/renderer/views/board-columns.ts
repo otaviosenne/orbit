@@ -1,4 +1,4 @@
-import { restingSince } from '../../shared/chat-time';
+import { restingSince, statusAge } from '../../shared/chat-time';
 import type { ChatSnapshot } from '../../shared/types';
 import { isWorking } from '../work-state';
 
@@ -59,14 +59,16 @@ const COLUMN_RULES: readonly ColumnRule[] = [
   },
 ];
 
-// Inside each column, chats you have not looked at since they finished come first.
+// Inside each column, chats you have not looked at since they finished come first. In Needs you the newest come
+// first of all, so what just finished is on top.
 export function toBoardColumns(chats: readonly ChatSnapshot[], isUnseen: UnseenCheck, now: number, pin: RestingPin = NO_PIN): BoardColumn[] {
   const order = (a: ChatSnapshot, b: ChatSnapshot): number => Number(isUnseen(b)) - Number(isUnseen(a)) || byName(a, b);
+  const newestFirst = (a: ChatSnapshot, b: ChatSnapshot): number => statusAge(a, now) - statusAge(b, now) || order(a, b);
   return COLUMN_RULES.map((rule: ColumnRule) => ({
     key: rule.key,
     title: rule.title,
     info: rule.info,
-    chats: chats.filter((chat: ChatSnapshot) => rule.accepts(chat, isUnseen, now, pin)).sort(order),
+    chats: chats.filter((chat: ChatSnapshot) => rule.accepts(chat, isUnseen, now, pin)).sort(rule.key === 'needs' ? newestFirst : order),
   }));
 }
 

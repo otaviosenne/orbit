@@ -54,6 +54,14 @@ describe('toBoardColumns', () => {
   });
 });
 
+describe('Needs you order', () => {
+  it('puts the chat that finished most recently on top', () => {
+    const unseen = (item: ChatSnapshot): boolean => item.status === 'idle';
+    const chats: ChatSnapshot[] = [chat('old', 'idle', 600_000), chat('asking', 'waiting', 120_000), chat('new', 'idle', 5_000)];
+    expect(names(toBoardColumns(chats, unseen, NOW))[0]).toEqual(['new', 'asking', 'old']);
+  });
+});
+
 describe('a chat with only a background shell running', () => {
   const never = (): boolean => false;
   const runningAgent = { state: 'running' } as AgentSnapshot;
