@@ -24,8 +24,9 @@ function parseLine(line: string): TranscriptRecord | null {
 export const isConversationLine: LineFilter = (line: string): boolean =>
   line.includes('"type":"user"') || line.includes('"type":"assistant"');
 
-// Conversation records plus the system record that marks how long each turn took.
+// Conversation records, the system record that marks how long each turn took, and the queued prompts: a message sent
+// while the chat works is logged only as one of those, so without them it never shows up in the thread.
 export const isTranscriptLine: LineFilter = (line: string): boolean =>
-  isConversationLine(line) || line.includes('"subtype":"turn_duration"');
+  isConversationLine(line) || line.includes('"subtype":"turn_duration"') || line.includes('"type":"queued_command"');
 
 export const isColorLine: LineFilter = (line: string): boolean => line.includes('"agent-color"');

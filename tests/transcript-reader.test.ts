@@ -34,6 +34,17 @@ describe('TranscriptReader', () => {
     expect(ids(await new TranscriptReader().read(path, loadNames, 'chat', 3))).toEqual(['u27', 'u28', 'u29']);
   });
 
+  it('shows a message sent while the chat was busy, which Claude Code logs only as a queued prompt', async () => {
+    const queued: string = JSON.stringify({
+      type: 'attachment',
+      uuid: 'a1',
+      attachment: { type: 'queued_command', prompt: 'sent while busy', commandMode: 'prompt', delivery_id: 'd1' },
+    });
+    await appendFile(path, `${queued}\n${line(MESSAGES)}`);
+    const items: TranscriptItem[] = await new TranscriptReader().read(path, loadNames, 'chat', 3);
+    expect(items.map((item: TranscriptItem) => item.kind === 'message' ? item.text : '')).toEqual(['message 29', 'sent while busy', `message ${MESSAGES}`]);
+  });
+
   it('answers with fewer items than asked once the start of the file is reached', async () => {
     expect(await new TranscriptReader().read(path, loadNames, 'chat', MESSAGES * 2)).toHaveLength(MESSAGES);
   });
