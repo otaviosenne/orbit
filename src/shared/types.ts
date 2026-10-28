@@ -280,6 +280,19 @@ export interface ActionResult {
   readonly error: string | null;
 }
 
+// Claude Code's own "Switch model?" or "Change effort level?" dialog, which waits for an answer in the chat.
+export interface SwitchConfirmation {
+  readonly title: string;
+  readonly detail: string;
+  // The dialog's first option, such as "Yes, switch to Sonnet 5.5".
+  readonly confirmLabel: string;
+}
+
+// A /model or /effort change: null confirm means it went through; otherwise the chat asks first.
+export interface SettingResult extends ActionResult {
+  readonly confirm: SwitchConfirmation | null;
+}
+
 export interface TranscriptionResult {
   readonly ok: boolean;
   readonly text: string;
@@ -479,8 +492,10 @@ export interface RadarApi {
   listMcpServers(sessionId: string): Promise<McpServerEntry[]>;
   // Types /mcp into the chat, which opens Claude Code's own menu to connect or reconnect a server.
   openChatMcp(pid: number): Promise<ActionResult>;
-  setChatModel(pid: number, model: ModelChoice): Promise<ActionResult>;
-  setChatEffort(pid: number, effort: EffortLevel): Promise<ActionResult>;
+  setChatModel(pid: number, model: ModelChoice): Promise<SettingResult>;
+  setChatEffort(pid: number, effort: EffortLevel): Promise<SettingResult>;
+  // Picks Yes or No in the chat's model or effort confirmation.
+  answerSettingSwitch(pid: number, accept: boolean): Promise<ActionResult>;
   getChatPermissions(sessionId: string): Promise<ChatPermissions>;
   // Resolves once the chat's footer shows the mode, or fails when the chat does not offer it.
   setPermissionMode(sessionId: string, mode: CycledPermissionMode): Promise<ActionResult>;

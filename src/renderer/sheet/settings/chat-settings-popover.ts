@@ -1,7 +1,7 @@
 import type { EffortLevel, ModelChoice } from '../../../shared/chat-settings';
 import type { CycledPermissionMode } from '../../../shared/permission-modes';
 import { PERMISSION_MODE_TITLES } from '../../../shared/permission-modes';
-import type { ActionResult, ChatPermissions, ChatSettings, ChatSnapshot } from '../../../shared/types';
+import type { ActionResult, ChatPermissions, ChatSettings, ChatSnapshot, SettingResult } from '../../../shared/types';
 import { element } from '../../dom';
 import { SLIDERS_ICON } from '../../icons';
 import { CloseChatAction } from './close-chat-action';
@@ -15,6 +15,7 @@ import { PermissionsSection } from './permissions-section';
 import { ModelSummary } from './model-summary';
 import { SettingsValues } from './settings-values';
 import { SkillsSection } from './skills-section';
+import { SwitchPrompt } from './switch-prompt';
 
 // What the popover needs from the panel around it.
 export interface SettingsPopoverHost {
@@ -46,6 +47,7 @@ const CONFIRM_SELECTOR: string = '.confirm-popover';
 // The header's sliders button and its popover: collapsed Model, Effort, Permissions, MCPs and Skills rows (one open at a time, all closed
 // on every open), and Suspend beside Close chat at the bottom. Model and effort live in the summary under the composer.
 export class ChatSettingsPopover {
+  private readonly switchPrompt: SwitchPrompt = new SwitchPrompt();
   // The Model and Effort rows here repeat the summary under the header's buttons, so either place changes them.
   private readonly values: SettingsValues = new SettingsValues(
     {
@@ -249,11 +251,24 @@ export class ChatSettingsPopover {
   }
 
   private setModel(model: ModelChoice): Promise<void> {
-    return this.change('model', model, this.polled.model, (chat: ChatSnapshot) => window.radar.setChatModel(chat.pid, model), `Model set to ${choiceLabel(model)}`);
+    const send: SettingSender = (chat: ChatSnapshot) => this.answered(chat, window.radar.setChatModel(chat.pid, model), 'Kept the current model');
+    return this.change('model', model, this.polled.model, send, `Model set to ${choiceLabel(model)}`);
   }
 
   private setEffort(effort: EffortLevel): Promise<void> {
-    return this.change('effort', effort, this.polled.effort, (chat: ChatSnapshot) => window.radar.setChatEffort(chat.pid, effort), `Effort set to ${effortLabel(effort)}`);
+    const send: SettingSender = (chat: ChatSnapshot) => this.answered(chat, window.radar.setChatEffort(chat.pid, effort), 'Kept the current effort');
+    return this.change('effort', effort, this.polled.effort, send, `Effort set to ${effortLabel(effort)}`);
+  }
+
+  // The chat asks before a switch that makes it re-read a cached conversation; until answered nothing changed, so
+  // Orbit asks the same and passes the answer on. Declining counts as not sent, so the pick is taken back.
+  private async answered(chat: ChatSnapshot, sent: Promise<SettingResult>, keptText: string): Promise<ActionResult> {
+    const result: SettingResult = await sent;
+    if (!result.ok || result.confirm === null) return result;
+    const accept: boolean = await this.switchPrompt.ask(result.confirm);
+    const answer: ActionResult = await window.radar.answerSettingSwitch(chat.pid, accept);
+    if (!answer.ok || accept) return answer;
+    return { ok: false, method: answer.method, error: keptText };
   }
 
   private setPermissionMode(mode: CycledPermissionMode): Promise<void> {

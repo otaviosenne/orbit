@@ -41,6 +41,7 @@ export const IpcChannel = {
   OpenChatMcp: 'radar:open-chat-mcp',
   SetChatModel: 'radar:set-chat-model',
   SetChatEffort: 'radar:set-chat-effort',
+  AnswerSettingSwitch: 'radar:answer-setting-switch',
   GetChatPermissions: 'radar:get-chat-permissions',
   SetPermissionMode: 'radar:set-permission-mode',
   GetChatDevices: 'radar:get-chat-devices',

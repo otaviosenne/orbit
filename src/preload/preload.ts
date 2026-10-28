@@ -8,6 +8,7 @@ import { IpcChannel } from '../shared/ipc-channels';
 import type { IpcRendererEvent } from 'electron';
 import type {
   ActionResult,
+  SettingResult,
   PauseReport,
   PauseTarget,
   AttachmentBlob,
@@ -93,8 +94,9 @@ const api: RadarApi = {
   listMcpServers: (sessionId: string): Promise<McpServerEntry[]> => ipcRenderer.invoke(IpcChannel.ListMcpServers, sessionId),
   openChatMcp: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.OpenChatMcp, pid),
   listSkills: (sessionId: string): Promise<SkillEntry[]> => ipcRenderer.invoke(IpcChannel.ListSkills, sessionId),
-  setChatModel: (pid: number, model: ModelChoice): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetChatModel, pid, model),
-  setChatEffort: (pid: number, effort: EffortLevel): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetChatEffort, pid, effort),
+  setChatModel: (pid: number, model: ModelChoice): Promise<SettingResult> => ipcRenderer.invoke(IpcChannel.SetChatModel, pid, model),
+  setChatEffort: (pid: number, effort: EffortLevel): Promise<SettingResult> => ipcRenderer.invoke(IpcChannel.SetChatEffort, pid, effort),
+  answerSettingSwitch: (pid: number, accept: boolean): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerSettingSwitch, pid, accept),
   getChatPermissions: (sessionId: string): Promise<ChatPermissions> => ipcRenderer.invoke(IpcChannel.GetChatPermissions, sessionId),
   setPermissionMode: (sessionId: string, mode: CycledPermissionMode): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.SetPermissionMode, sessionId, mode),

@@ -52,6 +52,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.openChatMcp(PID), 'OpenChatMcp', [PID]],
   [(radar) => radar.setChatModel(PID, 'opus'), 'SetChatModel', [PID, 'opus']],
   [(radar) => radar.setChatEffort(PID, 'high'), 'SetChatEffort', [PID, 'high']],
+  [(radar) => radar.answerSettingSwitch(PID, true), 'AnswerSettingSwitch', [PID, true]],
   [(radar) => radar.getChatPermissions(SESSION), 'GetChatPermissions', [SESSION]],
   [(radar) => radar.setPermissionMode(SESSION, 'plan'), 'SetPermissionMode', [SESSION, 'plan']],
   [(radar) => radar.getChatResources(), 'GetChatResources', []],

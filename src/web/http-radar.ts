@@ -5,6 +5,7 @@ import type { RemoteSettings } from '../shared/remote-settings';
 import type { ResourceSnapshot } from '../shared/chat-resources';
 import type {
   ActionResult,
+  SettingResult,
   PauseReport,
   PauseTarget,
   AttachmentBlob,
@@ -98,8 +99,9 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     listMcpServers: (sessionId: string): Promise<McpServerEntry[]> => call('ListMcpServers', [sessionId]),
     openChatMcp: (pid: number): Promise<ActionResult> => call('OpenChatMcp', [pid]),
     listSkills: (sessionId: string): Promise<SkillEntry[]> => call('ListSkills', [sessionId]),
-    setChatModel: (pid: number, model: ModelChoice): Promise<ActionResult> => call('SetChatModel', [pid, model]),
-    setChatEffort: (pid: number, effort: EffortLevel): Promise<ActionResult> => call('SetChatEffort', [pid, effort]),
+    setChatModel: (pid: number, model: ModelChoice): Promise<SettingResult> => call('SetChatModel', [pid, model]),
+    setChatEffort: (pid: number, effort: EffortLevel): Promise<SettingResult> => call('SetChatEffort', [pid, effort]),
+    answerSettingSwitch: (pid: number, accept: boolean): Promise<ActionResult> => call('AnswerSettingSwitch', [pid, accept]),
     getChatPermissions: (sessionId: string): Promise<ChatPermissions> => call('GetChatPermissions', [sessionId]),
     setPermissionMode: (sessionId: string, mode: CycledPermissionMode): Promise<ActionResult> => call('SetPermissionMode', [sessionId, mode]),
     // No device buttons on the web: they focus windows on the desktop.

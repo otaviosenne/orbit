@@ -58,6 +58,7 @@ export const REMOTE_ACCESS = {
   OpenChatMcp: 'chat',
   SetChatModel: 'chat',
   SetChatEffort: 'chat',
+  AnswerSettingSwitch: 'chat',
   GetChatPermissions: 'read',
   SetPermissionMode: 'action',
   // The emulator and browser buttons focus desktop windows, so the web hides them and needs none of the three.
