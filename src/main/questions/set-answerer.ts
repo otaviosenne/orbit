@@ -8,11 +8,12 @@ import type { PickerTerminal } from './picker-terminal';
 import type { QuestionSource } from './question-lookup';
 import { isInTranscript, pendingQuestion, settledQuestionIds, waitForNewlySettled } from './question-lookup';
 import { stripAnsi } from './screen/ansi-line';
-import { contradictsSet, showsPicker, showsReviewSubmit, squeeze, visibleReviewLines } from './screen/picker-evidence';
+import { contradictsSet, showsPicker, squeeze, visibleReviewLines } from './screen/picker-evidence';
 import { parsePicker } from './screen/picker-parser';
 import { SetDriver } from './set-driver';
 import { pickerHasReview } from './set-keys';
 import { reviewProblem } from './set-review';
+import { waitForReview } from './review-wait';
 
 // Answers every question of a waiting AskUserQuestion from its transcript copy, then submits the picker.
 export function answerQuestionSet(source: QuestionSource, sessionId: unknown, questionId: unknown, rawAnswers: unknown): Promise<ActionResult> {
@@ -42,8 +43,8 @@ async function drive(terminal: PickerTerminal, questions: readonly Question[], a
   const problem: string | null = await new SetDriver(terminal).answer(questions, answers);
   if (problem !== null || !pickerHasReview(questions)) return problem;
   // Left unconfirmed on a mismatch, so the user can fix it in the terminal instead of sending the wrong answer.
-  const screen: string = await terminal.plainScreen();
-  if (!showsReviewSubmit(screen)) return 'The picker did not reach its review step; check the chat window';
+  const screen: string | null = await waitForReview(terminal);
+  if (screen === null) return 'The picker did not reach its review step; check the chat window';
   const mismatch: string | null = reviewProblem(visibleReviewLines(screen), questions, answers);
   if (mismatch !== null) return `${mismatch}; finish this question in the chat window`;
   await terminal.run([submitReview()]);
