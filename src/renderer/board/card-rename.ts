@@ -1,4 +1,5 @@
 import { element } from '../dom';
+import { isWindowBlur } from './window-blur';
 
 export type RenameSubmitted = (sessionId: string, name: string) => void;
 
@@ -30,7 +31,9 @@ export class CardRename {
     input.maxLength = MAX_NAME_LENGTH;
     input.spellcheck = false;
     input.addEventListener('keydown', (event: KeyboardEvent): void => this.handleKey(event, input, currentName));
-    input.addEventListener('blur', (): void => this.finish(input.value, currentName));
+    input.addEventListener('blur', (): void => {
+      if (!isWindowBlur(input, document.activeElement, document.hasFocus())) this.finish(input.value, currentName);
+    });
     title.replaceWith(input);
     input.focus();
     input.select();
