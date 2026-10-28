@@ -19,6 +19,7 @@ import { usesSpaceGestures } from './space-gestures';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
 import type { VoiceField } from './voice-field';
+import { VoiceWindow } from './voice-window';
 
 const TALK_KEY: string = ' ';
 
@@ -32,6 +33,7 @@ export class VoiceHub {
   private readonly indicator: HandsFreeIndicator;
   private readonly router: DictationRouter;
   private readonly voices: Set<FieldVoice> = new Set();
+  private readonly voiceWindow: VoiceWindow = new VoiceWindow((): void => this.handsFree.setMicrophoneOwner(this.voiceWindow.owns));
   // The field whose push-to-talk dictation last took the microphone.
   private talking: FieldVoice | null = null;
   // The last hands-free target: a segment can still fail after its field stopped being the target.
@@ -61,6 +63,8 @@ export class VoiceHub {
     // The desktop window picks the mode up where the last run left it. A browser never does: it opens the microphone
     // only on a tap, and an unexpected open mic on a phone is the worse mistake.
     for (const type of ['pagehide', 'beforeunload'] as const) window.addEventListener(type, (): void => void (this.isUnloading = true));
+    this.voiceWindow.start();
+    this.handsFree.setMicrophoneOwner(this.voiceWindow.owns);
     if (!isWebHost() && wasHandsFreeOn()) this.handsFree.turnOn(Promise.resolve());
     if (isWebHost()) onPageHidden((): void => this.stopListening());
   }

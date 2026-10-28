@@ -46,6 +46,8 @@ export class HandsFree {
   private isRetargetQueued: boolean = false;
   private isEnabled: boolean = false;
   private isCapturing: boolean = false;
+  // Another Orbit window was focused later and listens instead; this one stays on and resumes once focused again.
+  private ownsMicrophone: boolean = true;
   private isStopping: boolean = false;
   // Starting and stopping the microphone take time; they run one after another, never interleaved.
   private capture: Promise<void> = Promise.resolve();
@@ -91,6 +93,13 @@ export class HandsFree {
   turnOff(): void {
     if (!this.isEnabled) return;
     this.isEnabled = false;
+    this.syncCapture();
+    this.report();
+  }
+
+  setMicrophoneOwner(owns: boolean): void {
+    if (owns === this.ownsMicrophone) return;
+    this.ownsMicrophone = owns;
     this.syncCapture();
     this.report();
   }
@@ -164,7 +173,7 @@ export class HandsFree {
   }
 
   private async applyCapture(): Promise<void> {
-    const wanted: boolean = this.isEnabled && this.place !== null;
+    const wanted: boolean = this.isEnabled && this.place !== null && this.ownsMicrophone;
     if (wanted && !this.isCapturing) await this.startCapture();
     else if (!wanted && this.isCapturing) await this.stopCapture();
   }
@@ -243,7 +252,7 @@ export class HandsFree {
   }
 
   private currentState(): HandsFreeState {
-    if (this.isEnabled) return this.place === null ? 'paused' : 'live';
+    if (this.isEnabled) return this.place === null || !this.ownsMicrophone ? 'paused' : 'live';
     return this.isStopping ? 'finishing' : 'off';
   }
 }
