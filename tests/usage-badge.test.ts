@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { UsageLimit, UsageSnapshot } from '../src/shared/types';
 import { SESSION_LABEL, WEEKLY_ALL_LABEL } from '../src/shared/usage-labels';
-import { elapsedPercent, worseLimit } from '../src/renderer/usage/usage-badge';
+import { badgeTooltip, elapsedPercent, worseLimit } from '../src/renderer/usage/usage-badge';
 
 const HOUR_MS: number = 60 * 60 * 1000;
 // A Wednesday at 13:00, local time: well inside the working week.
@@ -58,5 +58,12 @@ describe('the even pace of the 5-hour session', () => {
   it('stays between 0 and 100 when the reset time is off', () => {
     expect(elapsedPercent(NOW + 9 * HOUR_MS, NOW)).toBe(0);
     expect(elapsedPercent(NOW - HOUR_MS, NOW)).toBe(100);
+  });
+});
+
+describe('the tooltip of the percentage in the top bar', () => {
+  it('names the window first', () => {
+    expect(badgeTooltip(weekly(63), 63, '').split('\n')[0]).toBe('Weekly limit');
+    expect(badgeTooltip(session(80), 80, '').split('\n')[0]).toBe('5-hour window');
   });
 });

@@ -6,6 +6,8 @@ import { paceScore, weeklyLevel } from './weekly-level';
 
 const FULL_PERCENT: number = 100;
 const SESSION_WINDOW_MS: number = 5 * 60 * 60 * 1000;
+const WEEKLY_NAME: string = 'Weekly limit';
+const SESSION_NAME: string = '5-hour window';
 
 // Whichever of the week's all-models usage and the 5-hour session is further over its even pace, beside Resume, as a
 // bare percentage colored by how it compares with an even pace over its own window (green far below, neutral near it, then yellow,
@@ -29,8 +31,14 @@ export class UsageBadge {
     const expected: number | null = evenPaceNow(shown, now);
     this.root.dataset['level'] = expected === null ? 'ok' : weeklyLevel(shown.percent, expected);
     const pace: string = expected === null ? '' : `, an even pace is ${Math.round(expected)}%`;
-    this.root.title = `${shown.label}: ${percent}% used${pace} (whichever of the week and the 5-hour session is further over its pace). Click for details`;
+    this.root.title = badgeTooltip(shown, percent, pace);
   }
+}
+
+// Which window the number belongs to comes first, since the bare percentage does not say.
+export function badgeTooltip(limit: UsageLimit, percent: number, pace: string): string {
+  const name: string = limit.label === SESSION_LABEL ? SESSION_NAME : WEEKLY_NAME;
+  return `${name}\n${percent}% used${pace}\nThe one of the two further over its pace. Click for details`;
 }
 
 // The limit that is worse off against its own even pace, not the one with the higher number: 60% of the week by
