@@ -124,9 +124,7 @@ new CardPreview(viewRoot);
 const boardMotion: BoardMotion = new BoardMotion();
 const needsYouWatch: NeedsYouWatch = new NeedsYouWatch();
 const help: HelpModal = new HelpModal({ shortcuts: availableShortcuts(isWebHost()), voice: VOICE_HELP, questions: availableQuestions(isWebHost()) });
-const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] =>
-  toBoardColumns(list, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat)),
-);
+const grid: GridView = new GridView(new Lightbox(), (list: readonly ChatSnapshot[], now: number): readonly BoardColumn[] => boardColumnsOf(list, now));
 // Rows open on release, so a press-and-hold can become a drag that reorders the list.
 const listView: ListView = new ListView({ open: (sessionId: string): void => toggleSheet(sessionId), changed: (): void => renderView() });
 const pendingEdits: PendingEdits = new PendingEdits();
@@ -255,9 +253,19 @@ const timelineHistory: TimelineHistoryFeed = new TimelineHistoryFeed((): void =>
   if (view === 'timeline') renderView();
 });
 
+function boardColumnsOf(list: readonly ChatSnapshot[], now: number): BoardColumn[] {
+  return toBoardColumns(
+    list,
+    (chat: ChatSnapshot): boolean => seen.isUnseen(chat),
+    now,
+    (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
+    (chat: ChatSnapshot, at: number): number | null => seen.lastReadAt(chat.sessionId, at),
+  );
+}
+
 // Where a chat's card is on the board right now, remembered so a shutdown cannot lose its place.
 function columnOfChat(chat: ChatSnapshot): ColumnKey {
-  const columns: readonly BoardColumn[] = toBoardColumns([chat], (candidate: ChatSnapshot): boolean => seen.isUnseen(candidate), Date.now(), (candidate: ChatSnapshot): RestingColumn | null => restingPins.pinOf(candidate));
+  const columns: readonly BoardColumn[] = boardColumnsOf([chat], Date.now());
   return columns.find((column: BoardColumn) => column.chats.length > 0)?.key ?? 'idle';
 }
 
@@ -385,6 +393,7 @@ function boardMarks(): BoardMarks {
     suspended: suspension.snapshots(),
     isSuspendedCollapsed: suspension.isCollapsed,
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
+    lastRead: (chat: ChatSnapshot, now: number): number | null => seen.lastReadAt(chat.sessionId, now),
     devicesOf: (sessionId: string): ChatDevices => boardDevices.devicesOf(sessionId),
   };
 }
@@ -499,7 +508,7 @@ async function resumeLaunched(sessionId: string, launchedAt: number, afterCut: b
 // has focus, or its panel is open in a focused Orbit. Orbit Web never notifies.
 function announceNeedsYou(now: number): void {
   if (isWebHost()) return;
-  const needs: readonly ChatSnapshot[] = toBoardColumns(chats, (chat: ChatSnapshot): boolean => seen.isUnseen(chat), now, (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat))
+  const needs: readonly ChatSnapshot[] = boardColumnsOf(chats, now)
     .find((column: BoardColumn) => column.key === 'needs')?.chats ?? [];
   for (const chat of needsYouWatch.arrivals(needs)) {
     const inView: boolean = chat.isFocused || (sheet.sessionId === chat.sessionId && document.hasFocus());

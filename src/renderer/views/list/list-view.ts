@@ -16,7 +16,7 @@ import { RowDrag } from './row-drag';
 import { SortControl } from './sort-control';
 
 // What the list needs to know about each chat beyond its snapshot: the Board's own marks.
-export type ListMarks = Pick<BoardMarks, 'openSessionId' | 'isUnseen' | 'hasUnreadReply' | 'pinnedOrder' | 'restingPin'>;
+export type ListMarks = Pick<BoardMarks, 'openSessionId' | 'isUnseen' | 'hasUnreadReply' | 'pinnedOrder' | 'restingPin' | 'lastRead'>;
 
 export interface ListViewHandlers {
   // Opens the chat's side panel, or closes it if that chat is the one open.
@@ -102,7 +102,7 @@ export class ListView {
     if (this.input === null) return;
     const { chats, marks, now } = this.input;
     const order: string[] = listOrder(this.mode, chats, this.store.order);
-    const statuses: Map<string, ListStatus> = listStatuses(chats, marks.isUnseen, now, marks.restingPin);
+    const statuses: Map<string, ListStatus> = listStatuses(chats, marks.isUnseen, now, marks.restingPin, marks.lastRead);
     const reordered: boolean = this.syncRows(chats, order);
     for (const chat of chats) this.fill(chat, marks, statuses, now);
     if (reordered) this.placeRows(order);

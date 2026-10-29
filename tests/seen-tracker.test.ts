@@ -19,6 +19,15 @@ describe('SeenTracker', () => {
     expect(seen.isUnseen(chat('idle', 2000))).toBe(false);
   });
 
+  it('reports when the chat was last read: now while it is open, then when it was left', () => {
+    const seen: SeenTracker = new SeenTracker(1000);
+    expect(seen.lastReadAt('s1', 2000)).toBeNull();
+    seen.updateViewing(new Set(['s1']), 3000);
+    expect(seen.lastReadAt('s1', 3500)).toBe(3500);
+    seen.updateViewing(new Set(), 4000);
+    expect(seen.lastReadAt('s1', 9000)).toBe(4000);
+  });
+
   it('marks a chat seen only once the user leaves it', () => {
     const seen: SeenTracker = new SeenTracker(1000);
     seen.updateViewing(new Set(['s1']), 3000);

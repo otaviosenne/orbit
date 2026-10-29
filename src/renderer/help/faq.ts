@@ -12,7 +12,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'columns',
     question: 'What do the board columns mean?',
-    answer: 'Needs you: waiting on a prompt, or finished with a reply you have not opened. Working: busy right now. Active: seen and finished less than 20 minutes ago. Idle: seen and quiet for longer.',
+    answer: 'Needs you: waiting on a prompt, or finished with a reply you have not opened. Working: busy right now. Active: seen, and it replied or you last read it less than 20 minutes ago (reopening a chat counts as reading it). Idle: seen and untouched for longer.',
   },
   {
     id: 'move-active-idle',

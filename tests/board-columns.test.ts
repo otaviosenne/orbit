@@ -82,3 +82,26 @@ describe('a chat with only a background shell running', () => {
     expect(workStateOf(chat('a', 'idle'))).toBe('resting');
   });
 });
+
+describe('the time in Active after reading', () => {
+  const never = (): boolean => false;
+  const noPin = (): null => null;
+
+  it('restarts when the chat is read, so one read long after it finished lands in Active', () => {
+    const old: ChatSnapshot = chat('old', 'idle', 3 * ACTIVE_WINDOW_MS);
+    const readJustNow = (): number => NOW - 1;
+    expect(names(toBoardColumns([old], never, NOW, noPin, readJustNow))).toEqual([[], [], ['old'], []]);
+  });
+
+  it('runs out a full window after the last read', () => {
+    const old: ChatSnapshot = chat('old', 'idle', 3 * ACTIVE_WINDOW_MS);
+    const readLongAgo = (): number => NOW - ACTIVE_WINDOW_MS - 1;
+    expect(names(toBoardColumns([old], never, NOW, noPin, readLongAgo))).toEqual([[], [], [], ['old']]);
+  });
+
+  it('keeps a chat being read in Active', () => {
+    const old: ChatSnapshot = chat('old', 'idle', 3 * ACTIVE_WINDOW_MS);
+    const beingRead = (_chat: ChatSnapshot, now: number): number => now;
+    expect(names(toBoardColumns([old], never, NOW, noPin, beingRead))).toEqual([[], [], ['old'], []]);
+  });
+});

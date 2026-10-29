@@ -17,7 +17,7 @@ describe('list statuses', () => {
   it('names the Board column each chat sits in', () => {
     const unseen = (item: ChatSnapshot): boolean => item.name === 'fresh';
     const chats: ChatSnapshot[] = [chat('fresh', 'idle'), chat('running', 'busy'), chat('recent', 'idle', 1), chat('old', 'idle', ACTIVE_WINDOW_MS + 1)];
-    const statuses: Map<string, ListStatus> = listStatuses(chats, unseen, NOW, (): null => null);
+    const statuses: Map<string, ListStatus> = listStatuses(chats, unseen, NOW, (): null => null, (): null => null);
     expect([...statuses.entries()].map(([name, status]: [string, ListStatus]) => `${name}:${status.label}`).sort()).toEqual([
       'fresh:Needs you', 'old:Idle', 'recent:Active', 'running:Working',
     ]);

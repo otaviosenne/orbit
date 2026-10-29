@@ -31,6 +31,11 @@ export class SeenTracker {
     return this.isUnseen(chat) && !this.viewing.has(chat.sessionId);
   }
 
+  // When the user last had the chat in front of them: now while they still do, null if never since storage began.
+  lastReadAt(sessionId: string, now: number): number | null {
+    return this.viewing.has(sessionId) ? now : this.seenAt.get(sessionId) ?? null;
+  }
+
   isUnseen(chat: ChatSnapshot): boolean {
     if (chat.status === 'busy') return false;
     // A chat with no reply yet has nothing to read; a reopened one keeps its old reply time, so a resume after

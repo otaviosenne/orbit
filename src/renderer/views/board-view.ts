@@ -10,7 +10,7 @@ import { renderWorkSpinner } from '../spinner';
 import { workStateOf } from '../work-state';
 import { renderChatNumber } from '../voice-nav/voice-number';
 import { renderAgentRows } from './agent-rows';
-import type { BoardColumn, RestingPin, UnseenCheck } from './board-columns';
+import type { BoardColumn, ReadCheck, RestingPin, UnseenCheck } from './board-columns';
 import { toBoardColumns } from './board-columns';
 import { DROP_ZONE_ATTRIBUTE, SESSION_ATTRIBUTE } from './board-attributes';
 import { renderPinMark } from './card-marks';
@@ -42,6 +42,7 @@ export interface BoardMarks {
   readonly isSuspendedCollapsed: boolean;
   // Active or Idle chosen by dragging, for the rest of the chat's resting stretch.
   readonly restingPin: RestingPin;
+  readonly lastRead: ReadCheck;
   // The emulator and Chrome tab the chat has open, shown as icons beside its name.
   readonly devicesOf: (sessionId: string) => ChatDevices;
 }
@@ -88,7 +89,7 @@ function renderPinnedSection(): HTMLElement {
 }
 
 function renderColumns(chats: readonly ChatSnapshot[], marks: BoardMarks, now: number): HTMLElement {
-  const [needs, busy, active, idle] = toBoardColumns(chats, marks.isUnseen, now, marks.restingPin).map((column: BoardColumn) => renderColumn(column, marks, now));
+  const [needs, busy, active, idle] = toBoardColumns(chats, marks.isUnseen, now, marks.restingPin, marks.lastRead).map((column: BoardColumn) => renderColumn(column, marks, now));
   const resting: HTMLDivElement = element('div', 'column-stack');
   resting.append(...[active, idle].filter((column): column is HTMLElement => column !== undefined));
   const board: HTMLElement = element('div', 'board');
