@@ -4,6 +4,7 @@ import { dictationSocketUrl } from './dictation/socket-url';
 import { RemoteDictation } from './dictation/remote-dictation';
 import { createHttpRadar } from './http-radar';
 import { installMobileLayout } from './mobile/mobile-layout';
+import { startBuildRefresh } from './refresh/build-refresh';
 import { createRemoteCall } from './remote-caller';
 import { hasSession, signIn, takePairingToken } from './session';
 import { showSignInForm } from './sign-in-form';
@@ -18,6 +19,7 @@ async function start(): Promise<void> {
   const voice: RemoteDictation = new RemoteDictation((): string => dictationSocketUrl(window.location), (url: string): WebSocket => new WebSocket(url));
   Object.defineProperty(window, 'radar', { value: createHttpRadar(createRemoteCall(fetch.bind(window), onSignedOut), voice) });
   installMobileLayout();
+  startBuildRefresh();
   await import('../renderer/app');
 }
 
