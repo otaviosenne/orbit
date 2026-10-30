@@ -4,13 +4,19 @@ type MuteListener = (muted: boolean) => void;
 
 let muted: boolean = false;
 const listeners: Set<MuteListener> = new Set();
+// Mute belongs to the always-on mic: said into a held-Space dictation it would only leave the next start muted.
+let canMute: () => boolean = (): boolean => true;
+
+export function onlyMuteWhile(condition: () => boolean): void {
+  canMute = condition;
+}
 
 export function isVoiceMuted(): boolean {
   return muted;
 }
 
 export function setVoiceMuted(next: boolean): void {
-  if (next === muted) return;
+  if (next === muted || (next && !canMute())) return;
   muted = next;
   for (const listener of listeners) listener(muted);
 }

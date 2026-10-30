@@ -16,7 +16,7 @@ import type { MicPress } from './mic-press';
 import { micPress } from './mic-press';
 import { onPageHidden } from './page-hidden';
 import { isPickingText, watchTextPicking } from './text-picking';
-import { onVoiceMuteChange, setVoiceMuted } from './voice-mute';
+import { onlyMuteWhile, onVoiceMuteChange, setVoiceMuted } from './voice-mute';
 import { usesSpaceGestures } from './space-gestures';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
@@ -56,6 +56,7 @@ export class VoiceHub {
     this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.toggleFromMic());
     // The mic shows from the start, faded; the mode's own reports only come when it changes.
     this.indicator.show('off');
+    onlyMuteWhile((): boolean => this.handsFree.isOn);
     onVoiceMuteChange((muted: boolean): void => {
       this.handsFree.setMuted(muted);
       this.indicator.showMuted(muted);

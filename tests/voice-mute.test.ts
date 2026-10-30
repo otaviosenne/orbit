@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseVoiceCommand } from '../src/renderer/sheet/voice/commands/command-parser';
 import type { ParseOptions, VoiceCommand } from '../src/renderer/sheet/voice/commands/voice-command';
-import { isVoiceMuted, onVoiceMuteChange, setVoiceMuted } from '../src/renderer/sheet/voice/voice-mute';
+import { isVoiceMuted, onlyMuteWhile, onVoiceMuteChange, setVoiceMuted } from '../src/renderer/sheet/voice/voice-mute';
 
 const FINAL: ParseOptions = { isSelectorOpen: false, isFinal: true };
 
@@ -54,6 +54,20 @@ function inputWith(text: string, sent: string[] = []): HTMLTextAreaElement {
   input.form = { requestSubmit: (): number => sent.push(input.value) };
   return input as unknown as HTMLTextAreaElement;
 }
+
+describe('when mute applies', () => {
+  it('ignores mute while the always-on mic is off, so it never starts muted', () => {
+    let isOn: boolean = false;
+    onlyMuteWhile((): boolean => isOn);
+    setVoiceMuted(true);
+    expect(isVoiceMuted()).toBe(false);
+    isOn = true;
+    setVoiceMuted(true);
+    expect(isVoiceMuted()).toBe(true);
+    setVoiceMuted(false);
+    onlyMuteWhile((): boolean => true);
+  });
+});
 
 describe('running mute', () => {
   it('mutes from the composer and keeps the draft before the phrase', async () => {
