@@ -66,13 +66,8 @@ export const FAQ: readonly FaqEntry[] = [
   },
   {
     id: 'stop-agent',
-    question: 'How do I stop an agent?',
-    answer: 'Hover the agent strip under the chat header, click the X beside the agent and confirm Stop agent. Click an agent instead to read its own transcript.',
-  },
-  {
-    id: 'stop-shell',
-    question: 'How do I stop a background shell?',
-    answer: 'Shells sit on the right of the agent strip. Click a row to see its command and output; its X interrupts a running shell, or hides a finished one.',
+    question: 'How do I stop an agent or a background shell?',
+    answer: 'Hover the agent strip under the chat header, click the X beside the agent and confirm Stop agent; click an agent instead to read its own transcript. Shells sit on the right of the strip: click a row to see its command and output, and its X interrupts a running shell or hides a finished one.',
   },
   {
     id: 'dictate',
