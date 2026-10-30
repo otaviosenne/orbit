@@ -1,8 +1,15 @@
+import { saveShared } from './shared-storage';
+
 const STORAGE_KEY: string = 'orbit.pinned';
 
 // Chats pinned to the row above the board, in the order they were pinned.
 export class PinnedChats {
   private readonly sessionIds: string[] = load();
+
+  // Another Orbit window changed the pins.
+  reload(): void {
+    this.sessionIds.splice(0, this.sessionIds.length, ...load());
+  }
 
   has(sessionId: string): boolean {
     return this.sessionIds.includes(sessionId);
@@ -51,9 +58,5 @@ function load(): string[] {
 }
 
 function save(sessionIds: readonly string[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionIds));
-  } catch {
-    // Not persisted.
-  }
+  saveShared(STORAGE_KEY, JSON.stringify(sessionIds));
 }

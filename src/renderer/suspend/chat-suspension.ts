@@ -8,15 +8,20 @@ export interface SuspensionHost {
   readonly close: (sessionId: string) => Promise<boolean>;
   // Re-derives the shown chats and redraws, since membership decides which runs count as open.
   readonly changed: () => void;
+  // Whether this window tells the others when a chat leaves Suspended on its own: only the desktop, which polls
+  // all the time.
+  readonly sharesSettled: boolean;
 }
 
 // Suspending a chat: closing it while keeping it in the board's Suspended section until it is open again.
 export class ChatSuspension {
-  private readonly store: SuspendedChats = new SuspendedChats();
+  private readonly store: SuspendedChats;
   private readonly prompt: SuspendPrompt = new SuspendPrompt();
   private collapsed: boolean = loadSuspendedCollapsed();
 
-  constructor(private readonly host: SuspensionHost) {}
+  constructor(private readonly host: SuspensionHost) {
+    this.store = new SuspendedChats(host.sharesSettled);
+  }
 
   get isCollapsed(): boolean {
     return this.collapsed;
@@ -40,6 +45,11 @@ export class ChatSuspension {
   remove(sessionId: string): void {
     this.store.remove(sessionId);
     this.host.changed();
+  }
+
+  // Another Orbit window changed Suspended.
+  reload(): void {
+    this.store.reload();
   }
 
   toggleCollapsed(): void {

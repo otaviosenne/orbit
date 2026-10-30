@@ -1,3 +1,4 @@
+import type { BoardState } from '../shared/board-state';
 import type { ChatColor } from '../shared/chat-colors';
 import type { EffortLevel, ModelChoice } from '../shared/chat-settings';
 import type { CycledPermissionMode } from '../shared/permission-modes';
@@ -111,6 +112,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     closeAllEmulators: (): Promise<number> => Promise.resolve(0),
     focusChatBrowser: (): Promise<DeviceFocus> => Promise.resolve('missing'),
     getChatResources: (): Promise<ResourceSnapshot> => call('GetChatResources', []),
+    getBoardState: (knownVersion: number | null): Promise<BoardState | null> => call('GetBoardState', [knownVersion]),
+    setBoardState: (key: string, value: string): Promise<ActionResult> => call('SetBoardState', [key, value]),
     getRemoteSettings: (): Promise<RemoteSettings> => desktopOnly(),
     setRemoteEnabled: (): Promise<RemoteSettings> => desktopOnly(),
     setRemoteExternalUrl: (): Promise<RemoteSettings> => desktopOnly(),

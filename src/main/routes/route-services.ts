@@ -1,3 +1,4 @@
+import type { BoardStateStore } from '../board-state/board-state-store';
 import type { ChatRadar } from '../../core/chat-radar';
 import type { ResourceSampler } from '../../core/resources/resource-sampler';
 import type { PastChatCatalog } from '../../core/past-chats/past-chat-catalog';
@@ -11,4 +12,5 @@ export interface RouteServices {
   readonly pastChats: PastChatCatalog;
   readonly timelineHistory: TimelineHistory;
   readonly resources: ResourceSampler;
+  readonly boardState: BoardStateStore;
 }

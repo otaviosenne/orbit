@@ -30,16 +30,18 @@ type ActionChannel =
   | 'AnswerQuestionSet'
   | 'DeclineQuestion'
   | 'StopAgent'
-  | 'InterruptShell';
+  | 'InterruptShell'
+  | 'SetBoardState';
 
 const NOT_A_CHAT: ActionResult = failure('Not a chat');
 const NOTHING_REACHED: PauseReport = { reached: [], skipped: [] };
 const NOT_IMAGES: ActionResult = failure('Attachments must be images');
 
-export function actionRoutes({ radar, pastChats }: RouteServices): Readonly<Record<ActionChannel, Route>> {
+export function actionRoutes({ radar, pastChats, boardState }: RouteServices): Readonly<Record<ActionChannel, Route>> {
   return {
     OpenLauncher: (name: unknown): Promise<ActionResult> => openLauncher(textArg(name)),
     OpenSignIn: (): Promise<ActionResult> => openSignIn(),
+    SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => boardState.set(key, value),
     ResumeChat: (sessionId: unknown, afterCut: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId, afterCut === true),
     RenameChat: (pid: unknown, name: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => renameChat(chat, textArg(name))),
     RecolorChat: (pid: unknown, color: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => recolorChat(chat, textArg(color))),

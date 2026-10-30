@@ -32,6 +32,10 @@ import { demoTimelineHistory } from './demo-timeline';
 import { demoTurnProgress } from './demo-turn-progress';
 import { demoUsage } from './demo-usage';
 import { demoAgentTranscript } from './transcripts/agents';
+import { app } from 'electron';
+import { join } from 'node:path';
+import { BoardStateStore } from '../main/board-state/board-state-store';
+import type { BoardState } from '../shared/board-state';
 
 export type DemoRoute = Route;
 
@@ -100,4 +104,15 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   DictationStart: (): DictationStart => ({ session: ++dictationSession, error: null }),
   DictationFinish: (): TranscriptionResult => EMPTY_TRANSCRIPTION,
   GetChatResources: (): ResourceSnapshot => demoResources(Date.now()),
+  // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
+  GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
+  SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),
 };
+
+let boardState: BoardStateStore | null = null;
+
+// Made on first use: the demo sets its profile folder only after this module loads.
+function demoBoardState(): BoardStateStore {
+  boardState ??= new BoardStateStore(join(app.getPath('userData'), 'board-state.json'));
+  return boardState;
+}

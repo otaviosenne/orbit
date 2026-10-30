@@ -1,5 +1,6 @@
 import type { ChatSnapshot } from '../../shared/types';
 import { closedChatSnapshot, toClosedChatInfo } from '../board/closed-chat-info';
+import { saveShared } from '../board/shared-storage';
 import type { SuspendedEntry } from './suspended-membership';
 import { leavingSessionIds, newestFirst, withoutSuspendedRuns } from './suspended-membership';
 
@@ -8,6 +9,9 @@ const STORAGE_KEY: string = 'orbit.suspended';
 // Chats closed on purpose to come back to later: kept at the bottom of the board until they are open again.
 export class SuspendedChats {
   private entries: SuspendedEntry[] = load();
+
+  // False on Orbit Web: see settle.
+  constructor(private readonly sharesSettled: boolean = true) {}
 
   has(sessionId: string): boolean {
     return this.entries.some((entry: SuspendedEntry) => entry.sessionId === sessionId);
@@ -20,15 +24,21 @@ export class SuspendedChats {
     save(this.entries);
   }
 
-  remove(sessionId: string): void {
+  remove(sessionId: string, share: boolean = true): void {
     if (!this.has(sessionId)) return;
     this.entries = this.entries.filter((entry: SuspendedEntry) => entry.sessionId !== sessionId);
-    save(this.entries);
+    save(this.entries, share);
+  }
+
+  // Another Orbit window changed Suspended.
+  reload(): void {
+    this.entries = load();
   }
 
   // Called with every poll: a chat that is open again in a new run, or whose close never took, leaves Suspended.
+  // Only the desktop sends these to the other windows (see saveShared).
   settle(live: readonly ChatSnapshot[], now: number): void {
-    leavingSessionIds(this.entries, live, now).forEach((sessionId: string): void => this.remove(sessionId));
+    leavingSessionIds(this.entries, live, now).forEach((sessionId: string): void => this.remove(sessionId, this.sharesSettled));
   }
 
   // The chats the board shows as live: a suspended run still closing is already in Suspended instead.
@@ -67,10 +77,6 @@ function isEntry(value: unknown): value is SuspendedEntry {
     && typeof entry.info === 'object' && entry.info !== null && typeof entry.info.name === 'string';
 }
 
-function save(entries: readonly SuspendedEntry[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  } catch {
-    // Not persisted.
-  }
+function save(entries: readonly SuspendedEntry[], share: boolean = true): void {
+  saveShared(STORAGE_KEY, JSON.stringify(entries), share);
 }

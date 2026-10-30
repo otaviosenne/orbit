@@ -1,3 +1,4 @@
+import type { BoardState } from './board-state';
 import type { ChatColor } from './chat-colors';
 import type { EffortLevel, ModelChoice } from './chat-settings';
 import type { CycledPermissionMode, PermissionMode } from './permission-modes';
@@ -511,6 +512,9 @@ export interface RadarApi {
   focusChatBrowser(sessionId: string): Promise<DeviceFocus>;
   // CPU and memory of every open chat's process tree, measured since the previous call.
   getChatResources(): Promise<ResourceSnapshot>;
+  // Pins and suspended chats every Orbit window shares; null when knownVersion is still current.
+  getBoardState(knownVersion: number | null): Promise<BoardState | null>;
+  setBoardState(key: string, value: string): Promise<ActionResult>;
   // ---------- Orbit Web (remote access); desktop window only ----------
   getRemoteSettings(): Promise<RemoteSettings>;
   setRemoteEnabled(enabled: boolean): Promise<RemoteSettings>;

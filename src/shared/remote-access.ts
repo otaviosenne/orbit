@@ -73,6 +73,9 @@ export const REMOTE_ACCESS = {
   DictationFinish: 'desktop',
   // CPU and memory of the open chats' own process trees; the server picks the processes, never the caller.
   GetChatResources: 'read',
+  GetBoardState: 'read',
+  // Only the shared board keys, and only text: the store refuses anything else.
+  SetBoardState: 'action',
 } as const satisfies Record<InvokeChannel, RemoteAccess>;
 
 type AccessTable = typeof REMOTE_ACCESS;

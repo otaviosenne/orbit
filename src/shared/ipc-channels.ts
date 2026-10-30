@@ -61,4 +61,6 @@ export const IpcChannel = {
   DictationCancel: 'radar:dictation-cancel',
   DictationTranscript: 'radar:dictation-transcript',
   GetChatResources: 'radar:get-chat-resources',
+  GetBoardState: 'radar:get-board-state',
+  SetBoardState: 'radar:set-board-state',
 } as const;

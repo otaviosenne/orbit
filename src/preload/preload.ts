@@ -1,3 +1,4 @@
+import type { BoardState } from '../shared/board-state';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ChatColor } from '../shared/chat-colors';
 import type { EffortLevel, ModelChoice } from '../shared/chat-settings';
@@ -106,6 +107,8 @@ const api: RadarApi = {
   closeAllEmulators: (): Promise<number> => ipcRenderer.invoke(IpcChannel.CloseAllEmulators),
   focusChatBrowser: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatBrowser, sessionId),
   getChatResources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IpcChannel.GetChatResources),
+  getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
+  setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),
   setRemoteEnabled: (enabled: boolean): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteEnabled, enabled),
   setRemoteExternalUrl: (url: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteExternalUrl, url),

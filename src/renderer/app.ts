@@ -50,6 +50,7 @@ import { PendingEdits } from './pending-edits';
 import { ChatSheet } from './sheet/chat-sheet';
 import { loadThread } from './sheet/thread-loader';
 import { SeenTracker } from './seen-tracker';
+import { BoardSync } from './board/board-sync';
 import type { ThemePreference } from './theme';
 import { applyTheme, isThemePreference, loadTheme, saveTheme } from './theme';
 import { THEME_CHOICE_ATTRIBUTE } from './views/appearance-section';
@@ -133,13 +134,20 @@ const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSecti
 const resourcesSection: ResourcesSection = new ResourcesSection((): readonly ChatSnapshot[] => chats);
 const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
-const pinnedInfo: PinnedInfoStore = new PinnedInfoStore();
+const pinnedInfo: PinnedInfoStore = new PinnedInfoStore(!isWebHost());
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
 const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar);
 const emulatorPrompt: EmulatorPrompt = new EmulatorPrompt();
 const cardOrder: CardOrder = new CardOrder();
-const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats() });
+const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats(), sharesSettled: !isWebHost() });
+// Pins and Suspended are shared with every Orbit window, the phone's included, through the main process.
+const boardSync: BoardSync = new BoardSync(window.radar, localStorage, (): void => {
+  pins.reload();
+  pinnedInfo.reload();
+  suspension.reload();
+  showChats();
+});
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());
 const boardDevices: BoardDevices = new BoardDevices(
   (sessionId: string): Promise<ChatDevices> => window.radar.getChatDevices(sessionId),
@@ -283,6 +291,7 @@ function leftOpenChats(): LeftOpenChat[] {
 
 async function refreshChats(): Promise<void> {
   polledChats = await window.radar.getChats();
+  void boardSync.refresh();
   closing.settle(polledChats, Date.now());
   suspension.settle(polledChats, Date.now());
   showChats();
@@ -812,7 +821,7 @@ installVoiceCommandContext(createNavigationContext({
   pinChat: pinByVoice,
 }));
 applyTheme(theme);
-void refreshChats();
+void boardSync.start(!isWebHost()).then((): Promise<void> => refreshChats());
 void refreshUsage();
 setInterval((): void => void refreshChats(), CHATS_POLL_MS);
 setInterval((): void => void refreshUsage(), USAGE_POLL_MS);

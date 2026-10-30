@@ -8,6 +8,7 @@ import { readAttachment } from '../attachment-reader';
 import { listLaunchers } from '../launcher';
 import { readQuestionPicker } from '../questions/chat-picker';
 import type { ResourceSnapshot } from '../../shared/chat-resources';
+import type { BoardState } from '../../shared/board-state';
 import type { RouteServices } from './route-services';
 import { textArg } from './route-args';
 
@@ -16,7 +17,7 @@ type ReadChannel = { [K in RemoteChannel]: (typeof REMOTE_ACCESS)[K] extends 're
 type SettingsRead = 'GetChatSettings' | 'ListSkills' | 'ListMcpServers' | 'GetChatPermissions';
 
 // Session ids are searched for as file names, so anything but a real one gets an empty answer.
-export function readRoutes({ radar, usage, pastChats, timelineHistory, resources }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
+export function readRoutes({ radar, usage, pastChats, timelineHistory, resources, boardState }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
   return {
     GetChats: (): Promise<ChatSnapshot[]> => radar.chats(),
     GetTranscript: (sessionId: unknown, limit: unknown): Promise<TranscriptItem[]> =>
@@ -37,5 +38,6 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetShellOutput: (sessionId: unknown, taskId: unknown): Promise<ShellOutput | null> =>
       isSessionId(sessionId) ? radar.shellOutput(sessionId, taskId) : Promise.resolve(null),
     GetChatResources: (): Promise<ResourceSnapshot> => resources.snapshot(),
+    GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => boardState.get(knownVersion),
   };
 }

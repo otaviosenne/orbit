@@ -56,6 +56,8 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getChatPermissions(SESSION), 'GetChatPermissions', [SESSION]],
   [(radar) => radar.setPermissionMode(SESSION, 'plan'), 'SetPermissionMode', [SESSION, 'plan']],
   [(radar) => radar.getChatResources(), 'GetChatResources', []],
+  [(radar) => radar.getBoardState(7), 'GetBoardState', [7]],
+  [(radar) => radar.setBoardState('orbit.pinned', '[]'), 'SetBoardState', ['orbit.pinned', '[]']],
 ];
 
 const PCM: Uint8Array = new Uint8Array([0, 1, 2, 3]);
