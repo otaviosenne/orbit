@@ -21,6 +21,7 @@ import { claimSingleInstance } from './single-instance';
 import { createRadarWindow } from './window';
 import { isDemoMode } from '../demo/demo-mode';
 import { startDemo } from '../demo/start-demo';
+import { startAutoApprover } from './approvals/auto-approver';
 
 // Becomes the Wayland app_id that the Hyprland window rule matches.
 const APP_ID: string = 'claude-radar';
@@ -48,6 +49,7 @@ async function start(): Promise<void> {
   registerIpcHandlers(services, routes);
   // Each Orbit Web browser gets its own service, so its dictation never touches the desktop window's or another's.
   await startRemoteAccess(routes, (): DictationEngine => new DictationService(), false);
+  startAutoApprover();
   createRadarWindow();
   void pruneOldAttachments(Date.now());
 }

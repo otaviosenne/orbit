@@ -5,7 +5,13 @@ import { APPROVALS_DIR } from './approval-file';
 // Chats the user answered "Always approve": one empty file per Claude Code session, so a request from that chat is
 // approved by the MCP server itself and never reaches the screen. Keyed by session, not pid: a chat reopened with
 // /resume keeps its say-so, a new chat in the same terminal does not.
-const ALWAYS_DIR: string = join(APPROVALS_DIR, 'always');
+const ALWAYS_FOLDER: string = 'always';
+
+export function alwaysDirOf(approvalsDir: string): string {
+  return join(approvalsDir, ALWAYS_FOLDER);
+}
+
+const ALWAYS_DIR: string = alwaysDirOf(APPROVALS_DIR);
 // Session ids are uuids; anything else could climb out of the folder.
 const SESSION_ID_PATTERN: RegExp = /^[A-Za-z0-9-]+$/;
 
