@@ -4,6 +4,7 @@ import { executeNavigation } from './commands/command-executor';
 import { parseVoiceCommand, pausedSendText } from './commands/command-parser';
 import type { SpokenCommand } from './commands/voice-command';
 import { actAfterPause, cancelPause } from './pause-send';
+import { setVoiceMuted } from './voice-mute';
 
 // After dictated words settle: a draft ending in a spoken command loses the phrase, then the command acts. Send
 // submits the draft the way the composer's Send button does (both composers send through their form); clear empties
@@ -19,9 +20,25 @@ export function runVoiceCommand(input: HTMLTextAreaElement, isFinal: boolean): b
   if (spoken === null) return false;
   if (spoken.command.action === 'clear') return replaceDraft(input, '');
   if (spoken.command.action === 'send') return sendDraft(input, spoken.remainder);
+  if (spoken.command.action === 'mute' || spoken.command.action === 'unmute') return setMute(input, spoken.remainder, spoken.command.action === 'mute');
   if (context === null) return false;
   replaceDraft(input, spoken.remainder);
   executeNavigation(spoken.command, context);
+  return true;
+}
+
+// While muted, hands-free writes into a scratch field that nobody sees, and only "Orbit unmute" is heard there: no
+// send, no navigation, nothing else said reaches the app.
+export function runMutedVoiceCommand(input: HTMLTextAreaElement, isFinal: boolean): boolean {
+  const spoken: SpokenCommand | null = parseVoiceCommand(input.value, { isSelectorOpen: false, isFinal });
+  if (spoken?.command.action !== 'unmute') return false;
+  return setMute(input, '', false);
+}
+
+// The phrase comes off first, so the draft keeps only what was said before it.
+function setMute(input: HTMLTextAreaElement, remainder: string, muted: boolean): boolean {
+  replaceDraft(input, remainder);
+  setVoiceMuted(muted);
   return true;
 }
 

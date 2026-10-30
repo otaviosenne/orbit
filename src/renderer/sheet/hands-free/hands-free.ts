@@ -1,4 +1,5 @@
-import { runVoiceCommand } from '../voice/voice-command-runner';
+import { createScratchField } from '../voice/commands/command-place';
+import { runMutedVoiceCommand, runVoiceCommand } from '../voice/voice-command-runner';
 import type { TranscriptionResult } from '../../../shared/types';
 import { PcmRecorder } from '../pcm-recorder';
 import { DictatedSpan } from './dictated-span';
@@ -52,6 +53,9 @@ export class HandsFree {
   // Starting and stopping the microphone take time; they run one after another, never interleaved.
   private capture: Promise<void> = Promise.resolve();
   private reported: HandsFreeState = 'off';
+  // Muted, the microphone stays on but the words land here, where only "Orbit unmute" is listened for.
+  private readonly mutedField: VoiceField = createScratchField();
+  private isMuted: boolean = false;
 
   constructor(private readonly hooks: HandsFreeHooks) {
     this.lane = new SegmentLane(window.radar, {
@@ -114,6 +118,15 @@ export class HandsFree {
       this.isRetargetQueued = false;
       this.retarget(this.requestedPlace);
     });
+  }
+
+  // From the next words on: what was already said stays where it went.
+  setMuted(muted: boolean): void {
+    if (muted === this.isMuted) return;
+    this.isMuted = muted;
+    if (!this.isCapturing) return;
+    this.attached = this.fieldBinding();
+    this.cut();
   }
 
   // The draft in field was sent: words said so far never come back, and what follows starts the next message.
@@ -218,6 +231,7 @@ export class HandsFree {
     if (segment === this.lane.active && binding.span.textOf(segment.id) !== text) this.clock?.wrote(Date.now());
     this.writer.write(binding, segment.id, text);
     if (binding.sink.kind !== 'field') return;
+    if (binding.sink.field === this.mutedField) return void runMutedVoiceCommand(binding.sink.field.input, false);
     this.hooks.onWords();
     // The send word is never said for anything else, so it goes out the moment it shows, on the words already there.
     runVoiceCommand(binding.sink.field.input, false);
@@ -230,13 +244,16 @@ export class HandsFree {
     // An empty final keeps whatever the live words showed.
     if (binding !== undefined && result.text.length > 0) this.writer.write(binding, segment.id, result.text);
     // Only a field on screen can be sent from; words kept for a composer that went away just wait there.
-    if (binding?.sink.kind === 'field') runVoiceCommand(binding.sink.field.input, true);
+    if (binding?.sink.kind !== 'field') return;
+    if (binding.sink.field === this.mutedField) runMutedVoiceCommand(binding.sink.field.input, true);
+    else runVoiceCommand(binding.sink.field.input, true);
   }
 
   // New words go into the target composer's field as it is now; a later move does not take this span along.
   private fieldBinding(): SpanBinding | null {
     const place: DictationPlace | null = this.place;
-    return place === null ? null : { span: new DictatedSpan(), sink: { kind: 'field', field: place.field } };
+    if (place === null) return null;
+    return { span: new DictatedSpan(), sink: { kind: 'field', field: this.isMuted ? this.mutedField : place.field } };
   }
 
   private fail(message: string): void {

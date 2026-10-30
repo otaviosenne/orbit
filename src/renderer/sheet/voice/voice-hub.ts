@@ -16,6 +16,7 @@ import type { MicPress } from './mic-press';
 import { micPress } from './mic-press';
 import { onPageHidden } from './page-hidden';
 import { isPickingText, watchTextPicking } from './text-picking';
+import { onVoiceMuteChange, setVoiceMuted } from './voice-mute';
 import { usesSpaceGestures } from './space-gestures';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
@@ -55,6 +56,10 @@ export class VoiceHub {
     this.indicator = new HandsFreeIndicator(indicator, (): number => this.handsFree.level(), (): void => this.toggleFromMic());
     // The mic shows from the start, faded; the mode's own reports only come when it changes.
     this.indicator.show('off');
+    onVoiceMuteChange((muted: boolean): void => {
+      this.handsFree.setMuted(muted);
+      this.indicator.showMuted(muted);
+    });
     this.router = new DictationRouter((place: DictationPlace | null): void => this.handsFree.follow(place), createCommandPlace());
     // Nothing is on screen yet: hands-free starts out listening for commands only.
     this.router.showSurface('drawer');
@@ -222,6 +227,8 @@ export class VoiceHub {
 
   private showHandsFree(state: HandsFreeState): void {
     this.handsFreeState = state;
+    // Mute lives only while the mic is on: turned on again, it listens.
+    if (state === 'off') setVoiceMuted(false);
     // Finishing is the tail of turning off; paused is still on, only with no composer to write to.
     // Remembered for the desktop's next start only; Orbit Web never turns it back on by itself.
     if (state !== 'finishing' && !isWebHost() && !this.isUnloading) rememberHandsFree(state !== 'off');

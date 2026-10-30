@@ -1548,6 +1548,8 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 }
 .hands-free-indicator[data-state='off']:hover { opacity: 0.65; }
 .hands-free-indicator[data-state='paused'] { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); box-shadow: none; }
+/* Muted by voice: still on, but red and still, so it never looks like it is taking words down */
+.hands-free-indicator[data-muted='true'] { background: var(--danger); color: var(--on-accent); box-shadow: none; transform: none; }
 /* Collapsed rows, "Title · value", each unfolding its controls; one open at a time */
 .chat-settings-disclosure { gap: 0; }
 .chat-settings-disclosure + .chat-settings-disclosure { border-top: 1px solid var(--separator); }

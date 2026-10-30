@@ -13,7 +13,9 @@ export type VoiceCommand =
   | { readonly action: 'cancel' }
   | { readonly action: 'suspend' }
   | { readonly action: 'pin' }
-  | { readonly action: 'unpin' };
+  | { readonly action: 'unpin' }
+  | { readonly action: 'mute' }
+  | { readonly action: 'unmute' };
 
 export interface SpokenCommand {
   readonly command: VoiceCommand;

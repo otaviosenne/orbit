@@ -18,6 +18,22 @@ export const SEND_PAUSE_MS: number = 1000;
 // Words no prompt ends with by accident. This table is the one place to change them; longer forms come first so all
 // of their words are removed. Rules are tried in order. Words are bare: lowercase, no accents or punctuation.
 export const PHRASE_RULES: readonly PhraseRule[] = [
+  // Unmute first: its glued forms end with the mute ones' letters. Dictation hears "mute" as "multi", "muti" and the
+  // like, and "unmute" as "desmulti", "dismulti" and so on, however spaced: add any new variant here.
+  {
+    command: { action: 'unmute' },
+    phrases: [['orbit', 'unmute']],
+    gluedPhrases: [
+      'orbitunmute', 'orbitunmuti', 'orbitunmulti', 'orbitanmute', 'orbitanmulti',
+      'orbitdesmute', 'orbitdesmuti', 'orbitdesmulti', 'orbitdismute', 'orbitdismuti', 'orbitdismulti',
+      'orbitdesmutar', 'orbitdesmuta', 'orbitdesmutado',
+    ],
+  },
+  {
+    command: { action: 'mute' },
+    phrases: [['orbit', 'mute']],
+    gluedPhrases: ['orbitmute', 'orbitmuti', 'orbitmulti', 'orbitmutar', 'orbitmuta', 'orbitmudo', 'orbitmutado'],
+  },
   {
     command: { action: 'clear' },
     phrases: [['orbit', 'clear'], ['orbit', 'limpar'], ['chat', 'clear'], ['chat', 'limpar']],

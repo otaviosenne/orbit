@@ -33,6 +33,11 @@ class CommandField implements VoiceField {
   }
 }
 
+// A field of the same kind for words that must go nowhere: hands-free's while muted.
+export function createScratchField(): VoiceField {
+  return new CommandField();
+}
+
 export function createCommandPlace(): DictationPlace {
   return { target: { kind: 'commands' }, field: new CommandField(), kept: null };
 }

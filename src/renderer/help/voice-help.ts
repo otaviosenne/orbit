@@ -39,6 +39,8 @@ export const VOICE_HELP: readonly VoiceHelpEntry[] = [
     does: `Send the message after a ${SEND_PAUSE_MS / MS_PER_SECOND} second pause: say it, then stop talking`,
   },
   { group: 'Write and send', says: ['orbit limpar', 'orbit clear'], does: 'Clear the message box' },
+  { group: 'Write and send', says: ['orbit mute', 'orbit multi'], does: 'Mute: the mic stays on (red) but ignores everything until you say Orbit unmute' },
+  { group: 'Write and send', says: ['orbit unmute', 'orbit desmulti'], does: 'Listen again after Orbit mute' },
   { group: 'Devices', says: ['orbit emulador'], does: "Go to the open chat's emulator (nothing if it has none)" },
   { group: 'Devices', says: ['orbit navegador'], does: "Go to the open chat's browser tab (nothing if it has none)" },
 ];
