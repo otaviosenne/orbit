@@ -716,7 +716,7 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
    under the pointer and while its confirmation is open; the row keeps room for it so the time never moves */
 .agent-strip-item { position: relative; }
 
-/* ---------- Banners under the chat header: local CI running (green), a request for approval (blue) ---------- */
+/* ---------- Banners under the chat header, above the agents and shells: local CI running (green), a request for approval (blue) ---------- */
 .chat-banner[hidden] { display: none; }
 .chat-banner {
   display: flex; align-items: center; gap: 8px 10px; padding: 8px 12px; font-size: 12.5px;
