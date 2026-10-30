@@ -61,8 +61,13 @@ export class Composer {
     this.form.addEventListener('submit', (event: SubmitEvent): void => {
       event.preventDefault();
       void this.submit();
+      // On a phone Send is the only way to send by hand, and the keyboard is put away once the message is off.
+      if (isTouchWeb() && event.submitter === this.button) this.input.blur();
     });
-    if (isTouchWeb()) showNewLineReturnKey(this.input);
+    if (isTouchWeb()) {
+      showNewLineReturnKey(this.input);
+      keepFocusOnPress(this.button);
+    }
     this.input.addEventListener('keydown', (event: KeyboardEvent): void => {
       if (returnKeyAction(event, isTouchWeb()) !== 'send') return;
       event.preventDefault();
@@ -183,4 +188,12 @@ export class Composer {
     const added: number = this.tray.add(files);
     if (!restoresText) this.markers.appendMarkers(added);
   }
+}
+
+// A press on the button would first take the focus from the field: the keyboard closes under the finger, the page
+// shrinks back, the button moves and the tap lands nowhere, so the first tap only closed the keyboard.
+function keepFocusOnPress(button: HTMLButtonElement): void {
+  const keep = (event: Event): void => event.preventDefault();
+  button.addEventListener('pointerdown', keep);
+  button.addEventListener('mousedown', keep);
 }
