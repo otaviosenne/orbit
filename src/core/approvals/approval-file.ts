@@ -13,6 +13,12 @@ export function approvalPath(pid: number): string {
   return join(APPROVALS_DIR, `${pid}${APPROVAL_SUFFIX}`);
 }
 
+// The chat's Claude Code session, which the MCP server adds to the request; null from an older server.
+export function approvalSessionId(raw: unknown): string | null {
+  const sessionId: unknown = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>)['sessionId'] : null;
+  return typeof sessionId === 'string' ? sessionId : null;
+}
+
 // The file is written by another program, so every field is checked before it reaches the screen.
 export function parseApproval(raw: unknown): ApprovalRequest | null {
   if (typeof raw !== 'object' || raw === null) return null;

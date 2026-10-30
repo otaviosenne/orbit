@@ -4,10 +4,11 @@ export type ApprovalAction = 'main' | 'release';
 
 export const APPROVAL_ACTIONS: readonly ApprovalAction[] = ['main', 'release'];
 
-// Discuss answers nothing: the request goes away and the user talks it over in the chat.
-export type ApprovalAnswer = 'approve' | 'deny' | 'discuss';
+// Discuss answers nothing: the request goes away and the user talks it over in the chat. Always approves this one
+// and every later request from the same chat.
+export type ApprovalAnswer = 'approve' | 'always' | 'deny' | 'discuss';
 
-const APPROVAL_ANSWERS: readonly ApprovalAnswer[] = ['approve', 'deny', 'discuss'];
+const APPROVAL_ANSWERS: readonly ApprovalAnswer[] = ['approve', 'always', 'deny', 'discuss'];
 
 export interface ApprovalRequest {
   readonly action: ApprovalAction;

@@ -18,13 +18,20 @@ interface ShownRequest {
 const BUTTONS: readonly { readonly answer: ApprovalAnswer; readonly label: string; readonly className: string }[] = [
   { answer: 'discuss', label: 'Discuss', className: 'button' },
   { answer: 'deny', label: 'Deny', className: 'button' },
+  { answer: 'always', label: 'Always approve', className: 'button' },
   { answer: 'approve', label: 'Approve', className: 'button button-primary' },
 ];
 
-const ANSWER_TEXTS: Readonly<Record<ApprovalAnswer, string>> = { approve: 'Approved', deny: 'Denied', discuss: 'Over to the chat' };
+const ANSWER_TEXTS: Readonly<Record<ApprovalAnswer, string>> = {
+  approve: 'Approved',
+  always: 'Approved, and this chat from now on',
+  deny: 'Denied',
+  discuss: 'Over to the chat',
+};
 const SENDING_CLASS: string = 'is-sending';
 
-// A chat's request for the go-ahead on main or a release, in blue under the header: the summary and three answers.
+// A chat's request for the go-ahead on main or a release, in blue under the header: the summary and four answers in
+// a two-by-two grid, so the bar stays narrow.
 export class ApprovalBar {
   private shown: ShownRequest | null = null;
   // Answered here: the next poll may still carry the request before its file is gone.

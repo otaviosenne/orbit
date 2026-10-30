@@ -756,7 +756,7 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 .approval-text { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .approval-title { font-weight: 650; color: color-mix(in srgb, var(--banner-tint) 80%, var(--text)); }
 .approval-summary { color: var(--text); line-height: 1.35; overflow-wrap: anywhere; }
-.approval-buttons { display: flex; gap: 6px; margin-left: auto; }
+.approval-buttons { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; margin-left: auto; }
 .approval-bar.is-sending { opacity: 0.8; }
 .local-ci-bar { --banner-tint: var(--tag-green); }
 .local-ci-pulse { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--banner-tint); animation: local-ci-pulse 1.4s ease-in-out infinite; }
