@@ -4,6 +4,7 @@ import { isTextField } from '../../sheet/space-to-talk';
 import { DictationDisplay, createVoiceBars } from '../../sheet/voice/dictation-display';
 import type { DictationPlace } from '../../sheet/voice/dictation-place';
 import type { KeptDraft } from '../../sheet/voice/kept-draft';
+import { isPickingText } from '../../sheet/voice/text-picking';
 import type { VoiceField } from '../../sheet/voice/voice-field';
 import type { VoiceHub } from '../../sheet/voice/voice-hub';
 
@@ -71,6 +72,6 @@ export class TileVoiceField implements VoiceField {
 
   // Many tiles sit side by side: words finishing in one must not pull the focus away from another composer.
   mayRefocus(): boolean {
-    return !isTextField(document.activeElement);
+    return !isTextField(document.activeElement) && !isPickingText();
   }
 }

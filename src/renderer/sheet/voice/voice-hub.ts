@@ -15,6 +15,7 @@ import { FieldVoice } from './field-voice';
 import type { MicPress } from './mic-press';
 import { micPress } from './mic-press';
 import { onPageHidden } from './page-hidden';
+import { isPickingText, watchTextPicking } from './text-picking';
 import { usesSpaceGestures } from './space-gestures';
 import type { VoiceSurface } from './place-resolution';
 import { TranscriptFeed } from './transcript-feed';
@@ -44,6 +45,7 @@ export class VoiceHub {
   private isUnloading: boolean = false;
 
   constructor(indicator: HTMLButtonElement) {
+    watchTextPicking();
     this.handsFree = new HandsFree({
       onState: (state: HandsFreeState): void => this.showHandsFree(state),
       onMoved: (): void => this.moved(),
@@ -204,11 +206,11 @@ export class VoiceHub {
   }
 
   // While hands-free listens its composer holds the caret, so Backspace and Enter act on the words as they come.
-  // Another text field the user is typing in (a rename, a search) keeps its focus. A touch screen is left alone:
-  // focusing there raises the on-screen keyboard over the thread.
+  // Another text field the user is typing in (a rename, a search) keeps its focus, and so does text being picked to
+  // copy. A touch screen is left alone: focusing there raises the on-screen keyboard over the thread.
   private focusTarget(): void {
     const field: VoiceField | null = this.handsFree.isOn && !isTouchWeb() ? this.handsFree.field : null;
-    if (field === null || document.activeElement === field.input || isTextField(document.activeElement)) return;
+    if (field === null || document.activeElement === field.input || isTextField(document.activeElement) || isPickingText()) return;
     field.input.focus({ preventScroll: true });
   }
 

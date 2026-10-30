@@ -19,6 +19,7 @@ import type { KeptDrafts } from './voice/kept-draft';
 import { keptDraftOf } from './voice/kept-draft';
 import { carryPause } from './voice/pause-send';
 import { sharedVoiceHub } from './voice/shared-voice-hub';
+import { isPickingText } from './voice/text-picking';
 import type { VoiceField } from './voice/voice-field';
 import type { VoiceHub } from './voice/voice-hub';
 
@@ -83,7 +84,7 @@ export class Composer {
       showState: (state: DictationState): void => this.display.show(state),
       draftChanged: (): void => this.display.placeBars(),
       showError: onProblem,
-      mayRefocus: (): boolean => true,
+      mayRefocus: (): boolean => !isPickingText(),
     };
     this.voice = this.hub.attach(this.field);
     this.reserveSpaceInThread();
