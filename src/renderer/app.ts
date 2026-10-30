@@ -274,7 +274,10 @@ function knownSessionIds(): Set<string> {
   return new Set([...chats, ...openChats.closed(chats)].map((chat: { readonly sessionId: string }) => chat.sessionId));
 }
 
+// Only the desktop watches all the time. Orbit Web sleeps whenever the phone does, so chats closed meanwhile were
+// never seen going and would sit on its board as closed cards in their old column, Working included.
 function leftOpenChats(): LeftOpenChat[] {
+  if (isWebHost()) return [];
   return openChats.closed(chats).map((entry: RememberedChat): LeftOpenChat => ({ chat: closedChatSnapshot(entry.sessionId, entry.info), column: entry.column }));
 }
 
