@@ -16,12 +16,12 @@ function shellChat(shells: readonly ShellSnapshot[]): ChatSnapshot {
 }
 
 describe('a chat kept busy only by background commands', () => {
-  it('stays in Working while a command is younger than 30 minutes', () => {
+  it('stays in Working while a command is younger than 10 minutes', () => {
     expect(workStateOf(shellChat([shell(LONG_SHELL_MS - 1)]), NOW)).toBe('shell-only');
     expect(workStateOf(shellChat([shell(LONG_SHELL_MS + 1), shell(1)]), NOW)).toBe('shell-only');
   });
 
-  it('rests once every running command is older than 30 minutes', () => {
+  it('rests once every running command is older than 10 minutes', () => {
     expect(workStateOf(shellChat([shell(LONG_SHELL_MS + 1)]), NOW)).toBe('resting');
     expect(workStateOf(shellChat([shell(LONG_SHELL_MS + 1), shell(1, 'completed')]), NOW)).toBe('resting');
   });

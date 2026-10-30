@@ -6,7 +6,7 @@ export type WorkState = 'working' | 'shell-only' | 'resting';
 
 // A background command running longer than this is a server or a watcher, not work about to finish, so it no longer
 // keeps its chat in Working.
-export const LONG_SHELL_MS: number = 30 * 60_000;
+export const LONG_SHELL_MS: number = 10 * 60_000;
 
 export function workStateOf(chat: ChatSnapshot, now: number = Date.now()): WorkState {
   if (chat.status === 'busy') return 'working';
