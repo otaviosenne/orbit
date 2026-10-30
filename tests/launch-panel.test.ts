@@ -13,7 +13,7 @@ const RESUMED_COLOR: string = 'cyan';
 function chat(sessionId: string, name: string, startedAt: number): ChatSnapshot {
   return {
     sessionId, pid: 7, name, color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt,
-    status: 'idle', statusSince: startedAt, agents: [], shells: [], lastReplyAt: null, isFocused: false,
+    status: 'idle', statusSince: startedAt, agents: [], shells: [], lastReplyAt: null, isFocused: false, approval: null, localCi: null,
   };
 }
 

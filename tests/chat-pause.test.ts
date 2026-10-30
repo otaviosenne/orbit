@@ -8,7 +8,7 @@ let store: Map<string, string> = new Map();
 function chat(sessionId: string, pid: number, status: ChatSnapshot['status'], lastReplyAt: number = 1): ChatSnapshot {
   return {
     sessionId, pid, name: sessionId, color: 'blue', repository: { name: 'acme', root: '/code/acme' }, cwd: '/code/acme', startedAt: 1,
-    status, statusSince: 1, agents: [], shells: [], lastReplyAt, isFocused: false,
+    status, statusSince: 1, agents: [], shells: [], lastReplyAt, isFocused: false, approval: null, localCi: null,
   };
 }
 

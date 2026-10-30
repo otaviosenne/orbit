@@ -9,7 +9,7 @@ const NOW: number = 100 * ACTIVE_WINDOW_MS;
 function chat(name: string, status: ChatStatus, finishedAgo: number = 0): ChatSnapshot {
   return {
     sessionId: name, pid: 1, name, color: null, repository: { name: 'repo', root: '/repo' }, cwd: '/repo', startedAt: 0,
-    status, statusSince: NOW - finishedAgo, agents: [], shells: [], lastReplyAt: null, isFocused: false,
+    status, statusSince: NOW - finishedAgo, agents: [], shells: [], lastReplyAt: null, isFocused: false, approval: null, localCi: null,
   };
 }
 

@@ -5,6 +5,8 @@ import type { DeviceReferences } from './devices/device-references';
 import { NO_DEVICE_REFERENCES } from './devices/device-references';
 import { PermissionRecordReader } from './chat-settings/permission-reader';
 import type { PermissionMode } from '../shared/permission-modes';
+import { readApproval } from './approvals/approval-reader';
+import { findLocalCi } from './local-ci/local-ci-finder';
 import { AGENT_READ_BYTES, TRANSCRIPT_ITEM_LIMIT } from './config';
 import { FileMemo } from './file-memo';
 import { readTail } from './file-reader';
@@ -158,6 +160,8 @@ export class ChatRadar {
       agents,
       shells,
       isFocused: activeWindow !== null && (await this.windowOf(session.pid)) === activeWindow,
+      approval: await readApproval(session),
+      localCi: await findLocalCi(session.pid),
     };
   }
 

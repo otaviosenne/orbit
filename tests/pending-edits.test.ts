@@ -3,7 +3,7 @@ import { PendingEdits } from '../src/renderer/pending-edits';
 import type { ChatSnapshot } from '../src/shared/types';
 
 const chat: ChatSnapshot = {
-  sessionId: 's1', pid: 1, name: 'OLD', color: 'red', repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status: 'idle', statusSince: 0, agents: [], shells: [], lastReplyAt: null, isFocused: false,
+  sessionId: 's1', pid: 1, name: 'OLD', color: 'red', repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status: 'idle', statusSince: 0, agents: [], shells: [], lastReplyAt: null, isFocused: false, approval: null, localCi: null,
 };
 
 describe('PendingEdits', () => {

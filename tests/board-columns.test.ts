@@ -8,7 +8,7 @@ const NOW: number = 100 * ACTIVE_WINDOW_MS;
 function chat(name: string, status: ChatStatus, finishedAgo: number = 0): ChatSnapshot {
   return {
     sessionId: name, pid: 1, name, color: null, repository: { name: 'repo', root: '/repo' }, cwd: '/repo', startedAt: 0,
-    status, statusSince: NOW - finishedAgo, agents: [], shells: [], lastReplyAt: null, isFocused: false,
+    status, statusSince: NOW - finishedAgo, agents: [], shells: [], lastReplyAt: null, isFocused: false, approval: null, localCi: null,
   };
 }
 
@@ -25,6 +25,11 @@ describe('toBoardColumns', () => {
       chat('old', 'idle', ACTIVE_WINDOW_MS + 1),
     ];
     expect(names(toBoardColumns(chats, unseen, NOW))).toEqual([['fresh', 'asking'], ['running'], ['recent'], ['old']]);
+  });
+
+  it('keeps a chat asking for approval in Needs you even once it was read', () => {
+    const asking: ChatSnapshot = { ...chat('release', 'idle', ACTIVE_WINDOW_MS + 1), approval: { action: 'release', summary: 'v1.2', requestedAt: 0 } };
+    expect(names(toBoardColumns([asking], () => false, NOW))).toEqual([['release'], [], [], []]);
   });
 
   it('keeps a resting chat where it was dragged, whatever its age', () => {

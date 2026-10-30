@@ -20,7 +20,7 @@ function open(sessionId: string, repository: string, name: string = sessionId): 
     statusSince: NOW,
     agents: [],
     shells: [], lastReplyAt: null,
-    isFocused: false,
+    isFocused: false, approval: null, localCi: null,
   };
 }
 

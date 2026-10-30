@@ -13,7 +13,7 @@ function shell(status: ShellStatus): ShellSnapshot {
 function chat(status: ChatStatus, agents: AgentSnapshot[] = [], shells: ShellSnapshot[] = []): ChatSnapshot {
   return {
     sessionId: 's', pid: 7, name: 'n', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0,
-    status, statusSince: 0, agents, shells, lastReplyAt: null, isFocused: false,
+    status, statusSince: 0, agents, shells, lastReplyAt: null, isFocused: false, approval: null, localCi: null,
   };
 }
 

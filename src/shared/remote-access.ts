@@ -39,6 +39,8 @@ export const REMOTE_ACCESS = {
   SendMessage: 'chat',
   // Ends a Claude Code process: Close and Suspend from the phone, limited to chats that are open.
   CloseChat: 'chat',
+  // Types the answer to a chat's request for approval into that chat, as Send would.
+  AnswerApproval: 'chat',
   InterruptChat: 'chat',
   PauseChats: 'chat',
   ContinueChats: 'chat',

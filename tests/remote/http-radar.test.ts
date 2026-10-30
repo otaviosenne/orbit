@@ -58,6 +58,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getChatResources(), 'GetChatResources', []],
   [(radar) => radar.getBoardState(7), 'GetBoardState', [7]],
   [(radar) => radar.closeChat(PID), 'CloseChat', [PID]],
+  [(radar) => radar.answerApproval(PID, 'approve'), 'AnswerApproval', [PID, 'approve']],
   [(radar) => radar.focusChat(PID), 'FocusChat', [PID]],
   [(radar) => radar.openChatWindow(SESSION), 'OpenChatWindow', [SESSION]],
   [(radar) => radar.setBoardState('orbit.pinned', '[]'), 'SetBoardState', ['orbit.pinned', '[]']],

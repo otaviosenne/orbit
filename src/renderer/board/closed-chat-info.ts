@@ -23,6 +23,6 @@ export function closedChatSnapshot(sessionId: string, info: ClosedChatInfo): Cha
     sessionId, pid: 0, name: info.name, color: info.color,
     repository: { name: info.repositoryName, root: info.repositoryRoot }, cwd: info.cwd, startedAt: 0,
     status: 'idle', statusSince: info.lastReplyAt ?? 0, lastReplyAt: info.lastReplyAt,
-    agents: [], shells: [], isFocused: false,
+    agents: [], shells: [], isFocused: false, approval: null, localCi: null,
   };
 }

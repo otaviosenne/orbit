@@ -34,9 +34,10 @@ interface ColumnRule {
   readonly accepts: (chat: ChatSnapshot, isUnseen: UnseenCheck, now: number, pin: RestingPin, lastRead: ReadCheck) => boolean;
 }
 
-// Waiting on a permission prompt, or finished with a reply you have not opened yet.
+// Waiting on a permission prompt or on the go-ahead for main or a release (even once read), or finished with a
+// reply you have not opened yet.
 function needsUser(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {
-  return chat.status === 'waiting' || isUnseen(chat);
+  return chat.status === 'waiting' || chat.approval !== null || isUnseen(chat);
 }
 
 function isResting(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {

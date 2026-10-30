@@ -11,7 +11,7 @@ function shell(startedAgo: number, status: ShellSnapshot['status'] = 'running'):
 function shellChat(shells: readonly ShellSnapshot[]): ChatSnapshot {
   return {
     sessionId: 'c', pid: 1, name: 'c', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0,
-    status: 'shell', statusSince: 0, agents: [], shells, lastReplyAt: null, isFocused: false,
+    status: 'shell', statusSince: 0, agents: [], shells, lastReplyAt: null, isFocused: false, approval: null, localCi: null,
   };
 }
 

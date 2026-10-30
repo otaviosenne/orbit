@@ -1,3 +1,4 @@
+import type { ApprovalAnswer } from '../shared/approval';
 import type { BoardState } from '../shared/board-state';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ChatColor } from '../shared/chat-colors';
@@ -77,6 +78,7 @@ const api: RadarApi = {
   sendMessage: (pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.SendMessage, pid, text, attachments),
   closeChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CloseChat, pid),
+  answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerApproval, pid, answer),
   interruptChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptChat, pid),
   pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.PauseChats, targets),
   continueChats: (pids: readonly number[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, pids),

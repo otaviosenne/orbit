@@ -1,3 +1,4 @@
+import type { ApprovalAnswer } from '../shared/approval';
 import type { BoardState } from '../shared/board-state';
 import type { ChatColor } from '../shared/chat-colors';
 import type { EffortLevel, ModelChoice } from '../shared/chat-settings';
@@ -82,6 +83,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     sendMessage: (pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> =>
       call('SendMessage', [pid, text, attachments]),
     closeChat: (pid: number): Promise<ActionResult> => call('CloseChat', [pid]),
+    answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => call('AnswerApproval', [pid, answer]),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
     pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
     continueChats: (pids: readonly number[]): Promise<PauseReport> => call('ContinueChats', [pids]),

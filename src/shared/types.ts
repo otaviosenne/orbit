@@ -1,3 +1,5 @@
+import type { ApprovalAnswer, ApprovalRequest } from './approval';
+import type { LocalCiRun } from './local-ci';
 import type { BoardState } from './board-state';
 import type { ChatColor } from './chat-colors';
 import type { EffortLevel, ModelChoice } from './chat-settings';
@@ -76,6 +78,10 @@ export interface ChatSnapshot {
   readonly shells: readonly ShellSnapshot[];
   // Its terminal window is the one focused right now, so the user is looking at it.
   readonly isFocused: boolean;
+  // Waiting on the user's go-ahead to push to main or release, asked through Orbit's MCP tool.
+  readonly approval: ApprovalRequest | null;
+  // The monorepo's local CI running under this chat, shown in green above its thread.
+  readonly localCi: LocalCiRun | null;
 }
 
 export type MessageRole = 'user' | 'assistant';
@@ -462,6 +468,7 @@ export interface RadarApi {
   recolorChat(pid: number, color: ChatColor): Promise<ActionResult>;
   sendMessage(pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult>;
   closeChat(pid: number): Promise<ActionResult>;
+  answerApproval(pid: number, answer: ApprovalAnswer): Promise<ActionResult>;
   interruptChat(pid: number): Promise<ActionResult>;
   // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.
   pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;

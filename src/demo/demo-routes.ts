@@ -71,6 +71,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   RecolorChat: (): ActionResult => DONE,
   SendMessage: (): ActionResult => DONE,
   CloseChat: (): ActionResult => DONE,
+  AnswerApproval: (): ActionResult => DONE,
   InterruptChat: (): ActionResult => DONE,
   // Nothing is typed into a terminal in the demo.
   PauseChats: (): PauseReport => ({ reached: [], skipped: [] }),

@@ -13,6 +13,8 @@ import { answerQuestionSet } from '../questions/set-answerer';
 import { declineQuestion } from '../questions/question-decliner';
 import { failure } from '../terminal-input';
 import { closeChat } from '../chat-closer';
+import { answerApproval } from '../approvals/approval-answerer';
+import { isApprovalAnswer } from '../../shared/approval';
 import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
 import { isAttachmentList, isPauseTargets, isPid, isPidList, textArg } from './route-args';
@@ -36,12 +38,14 @@ type ActionChannel =
   | 'InterruptShell'
   | 'SetBoardState'
   | 'CloseChat'
+  | 'AnswerApproval'
   | 'FocusChat'
   | 'OpenChatWindow';
 
 const NOT_A_CHAT: ActionResult = failure('Not a chat');
 const NOTHING_REACHED: PauseReport = { reached: [], skipped: [] };
 const NOT_IMAGES: ActionResult = failure('Attachments must be images');
+const NOT_AN_ANSWER: ActionResult = failure('Unknown answer');
 
 export function actionRoutes({ radar, pastChats, boardState, chatWindows }: RouteServices): Readonly<Record<ActionChannel, Route>> {
   return {
@@ -49,6 +53,8 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows }: Rout
     OpenSignIn: (): Promise<ActionResult> => openSignIn(),
     SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => boardState.set(key, value),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
+    AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
+      onChat(pid, (chat: number) => (isApprovalAnswer(answer) ? answerApproval(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
     FocusChat: (pid: unknown): Promise<void> => (isPid(pid) ? focusTerminalOf(pid) : Promise.resolve()),
     // The id ends up in a file URL, so anything but a real id is ignored.
     OpenChatWindow: (sessionId: unknown): void => {

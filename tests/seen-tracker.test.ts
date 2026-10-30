@@ -3,7 +3,7 @@ import { SeenTracker } from '../src/renderer/seen-tracker';
 import type { ChatSnapshot } from '../src/shared/types';
 
 const chat = (status: ChatSnapshot['status'], statusSince: number): ChatSnapshot => ({
-  sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince, agents: [], shells: [], lastReplyAt: statusSince, isFocused: false,
+  sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince, agents: [], shells: [], lastReplyAt: statusSince, isFocused: false, approval: null, localCi: null,
 });
 
 describe('SeenTracker', () => {

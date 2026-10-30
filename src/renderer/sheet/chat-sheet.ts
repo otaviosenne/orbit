@@ -11,6 +11,8 @@ import { renderWorkSpinner } from '../spinner';
 import { workStateOf } from '../work-state';
 import { chatStatusLabel } from '../status-label';
 import { AgentView } from './agent-view';
+import { ApprovalBar } from './approval-bar';
+import { LocalCiBar } from './local-ci-bar';
 import type { AgentTitle } from './agent-view';
 import { ColorPicker } from './color-picker';
 import type { ComposerDraft } from './draft-store';
@@ -87,6 +89,13 @@ export class ChatSheet {
   private readonly settings: ChatSettingsPopover;
   // The Emulator and Browser pills, for a chat that tests on an emulator or in Chrome.
   private readonly devices: DeviceLinks = new DeviceLinks((text: string, isError: boolean): void => this.showStatus(text, isError));
+  // Under the header: a request for the go-ahead on main or a release (blue), and local CI running (green).
+  private readonly approval: ApprovalBar = new ApprovalBar(requireElement('#approval-bar'), {
+    answer: (pid, answer) => window.radar.answerApproval(pid, answer),
+    discuss: (): void => this.composer.focus(),
+    report: (result: ActionResult, successText: string): void => this.report(result, successText),
+  });
+  private readonly localCi: LocalCiBar = new LocalCiBar(requireElement('#local-ci-bar'));
   private chat: ChatSnapshot | null = null;
   // Why the closed chat shown has no process: "Closed" (a closed pin) or "Suspended".
   private closedLabel: string = '';
@@ -271,6 +280,8 @@ export class ChatSheet {
     // A closed chat drives nothing any more, so it gets no device buttons.
     if (this.isShowingClosed) this.devices.clear();
     else this.devices.follow(chat.sessionId);
+    this.approval.show(this.isShowingClosed ? null : chat);
+    this.localCi.show(this.isShowingClosed ? null : chat, now);
     this.agentView.update(chat, now);
     this.composer.followDictationTarget(this.dictationTarget());
     const agent: AgentTitle | null = this.agentView.title(now);

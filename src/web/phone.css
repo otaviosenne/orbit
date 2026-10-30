@@ -179,6 +179,9 @@
   .hands-free-indicator { position: relative; }
   .hands-free-indicator::after { content: ''; position: absolute; inset: calc((24px - var(--web-touch)) / 2); border-radius: 50%; }
   .composer .button { min-height: var(--web-touch); padding: 0 18px; border-radius: 22px; font-size: 15px; }
+  /* The three answers share the width under the summary, each a full-size target */
+  .approval-buttons { flex: 1 1 100%; }
+  .approval-buttons .button { flex: 1; font-size: 15px; }
   /* The working line keeps to the screen: a long count shortens, the verb and the stop button always show */
   .working-indicator { left: var(--web-gutter); max-width: calc(100% - 2 * var(--web-gutter)); }
   .working-verb, .working-stop { flex: none; }

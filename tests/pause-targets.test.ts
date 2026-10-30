@@ -5,7 +5,7 @@ import type { AgentSnapshot, ChatSnapshot, ShellSnapshot } from '../src/shared/t
 function chat(sessionId: string, pid: number, status: ChatSnapshot['status'], extra: Partial<ChatSnapshot> = {}): ChatSnapshot {
   return {
     sessionId, pid, name: sessionId, color: 'blue', repository: { name: 'acme', root: '/code/acme' }, cwd: '/code/acme', startedAt: 1,
-    status, statusSince: 1, agents: [], shells: [], lastReplyAt: 1, isFocused: false, ...extra,
+    status, statusSince: 1, agents: [], shells: [], lastReplyAt: 1, isFocused: false, approval: null, localCi: null, ...extra,
   };
 }
 

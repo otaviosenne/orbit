@@ -38,6 +38,8 @@ const nodeTarget = {
 
 await build({ ...nodeTarget, entryPoints: ['src/main/main.ts'], outfile: `${OUT_DIR}/main.js` });
 await build({ ...nodeTarget, entryPoints: ['src/preload/preload.ts'], outfile: `${OUT_DIR}/preload.js` });
+// Orbit's MCP server, which every Claude Code chat starts on its own with plain node (registered as "orbit").
+await build({ ...nodeTarget, entryPoints: ['src/mcp/orbit-mcp.ts'], outfile: `${OUT_DIR}/orbit-mcp.js` });
 await build({
   bundle: true,
   platform: 'browser',
