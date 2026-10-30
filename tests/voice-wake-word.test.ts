@@ -9,7 +9,7 @@ function commandOf(text: string): VoiceCommand | null {
   return parseVoiceCommand(text, FINAL)?.command ?? null;
 }
 
-const MISHEARD: readonly string[] = ['arbit', 'Arbit', 'orbitt', 'orbite', 'orbita', 'urbit', 'orbit,', 'arbitinho', 'arbitrinho', 'orbiting', 'rbt', 'or bit', 'ar bit', 'orb it'];
+const MISHEARD: readonly string[] = ['arbit', 'Arbit', 'orbitt', 'orbite', 'orbita', 'urbit', 'orbit,', 'arbitinho', 'arbitrinho', 'orbiting', 'rbt', 'orbchain', 'Orbichain', 'or bit', 'ar bit', 'orb it'];
 
 describe('the wake word', () => {
   it.each(MISHEARD)('"%s" is read as Orbit', (word: string) => {

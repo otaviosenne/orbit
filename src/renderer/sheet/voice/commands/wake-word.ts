@@ -7,7 +7,7 @@ export const WAKE_WORD: string = 'orbit';
 // are ordinary words and stay out.
 const WAKE_PATTERN: RegExp = /^(?:[oau]r|o)[bv][iey]t(?:t|e|s|a|inho|rinho|zinho|ing)?$/;
 // Heard as something that no pattern can tell from other words.
-const WAKE_VARIANTS: ReadonlySet<string> = new Set(['rbt', 'rbit', 'orbt']);
+const WAKE_VARIANTS: ReadonlySet<string> = new Set(['rbt', 'rbit', 'orbt', 'orbchain', 'orbichain']);
 // Dictation sometimes splits the name ("or bit"); only short pieces are joined, so ordinary sentences are left alone.
 const MAX_PIECE_LENGTH: number = 4;
 
