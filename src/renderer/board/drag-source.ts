@@ -1,5 +1,4 @@
 import { DROP_ZONE_ATTRIBUTE, DROP_ZONE_SELECTOR, SESSION_ATTRIBUTE } from '../views/board-view';
-import { isWebHost } from '../host';
 import type { BoardZone, DragSource } from './drop-rules';
 
 // Set on the stand-in cards of closed chats (closed pins and suspended chats).
@@ -10,7 +9,7 @@ export function dragSourceOf(card: HTMLElement, root: HTMLElement): DragSource |
   const zone: BoardZone | null = zoneOf(card);
   const sessionId: string | undefined = card.dataset[SESSION_ATTRIBUTE];
   if (zone === null || sessionId === undefined) return null;
-  const canSuspend: boolean = !card.classList.contains(CLOSED_CARD_CLASS) && !isWebHost();
+  const canSuspend: boolean = !card.classList.contains(CLOSED_CARD_CLASS);
   return { zone, isPinned: isPinnedOnBoard(sessionId, root), canSuspend };
 }
 

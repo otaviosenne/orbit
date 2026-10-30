@@ -37,8 +37,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'suspend-chat',
     question: 'What does suspending a chat do?',
-    answer: 'It closes the chat but keeps it, faded, in Suspended at the bottom of the board (click its header to fold it). Use Suspend in Chat settings, on a card’s right-click menu, by dragging the card there, or {key:chat-suspend}. Send it a message, or press Reopen chat, and it comes back.',
-    desktopOnly: true,
+    answer: 'It closes the chat but keeps it, faded, in Suspended at the bottom of the board (click its header to fold it). Use Suspend in Chat settings, on a card’s right-click menu, by dragging the card there, or {key:chat-suspend}. Send it a message, or press Reopen chat, and it comes back. On a phone, hold a card for its menu.',
   },
   {
     id: 'pin-chat',
@@ -144,7 +143,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'orbit-web',
     question: 'What is Orbit Web?',
-    answer: 'Board, Timeline, List and chats on a phone or another browser, behind a token, with dictation through the composer’s mic. Turn it on in Settings → Orbit Web; windows and closing chats stay on the desktop.',
+    answer: 'Board, Timeline, List and chats on a phone or another browser, behind a token, with dictation through the composer’s mic. Turn it on in Settings → Orbit Web. Close and Suspend work from there too; Go to chat and New window act on the desktop’s screen.',
   },
   {
     id: 'appearance-usage',

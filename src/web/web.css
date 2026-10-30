@@ -13,8 +13,8 @@ html, body { background: var(--web-window); }
 body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 
 /* ---------- Desktop-only controls (see REMOTE_ACCESS in src/shared/remote-access.ts) ---------- */
-/* Focus or pop out a desktop window, attach a folder: none of it reaches a phone. Dictation does, through the mic */
-#action-focus, #action-window, #sheet-devices, .new-chat-add, .new-chat-separator { display: none !important; }
+/* Emulators, browser tabs and saved folders stay at the desk; Go to chat and New window act on the desktop's screen */
+#sheet-devices, .new-chat-add, .new-chat-separator { display: none !important; }
 /* The phone's own back button, shown only on narrow screens */
 .web-sheet-back { display: none; }
 
@@ -92,7 +92,8 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   }
   .sheet.is-open { transform: none; }
   .sheet-head { padding: calc(6px + env(safe-area-inset-top)) var(--web-gutter) 8px 4px; }
-  .sheet-actions, .sheet-meta, .panel-resizer { display: none; }
+  /* The back button closes the panel; the settings button stays, for Suspend and Close among the rest */
+  #sheet-close, #action-window, .sheet-meta, .panel-resizer { display: none; }
   /* Renaming works from the phone too: the pencil keeps a finger-sized target, and the field takes the row */
   #action-rename { width: 36px; height: 36px; }
   .rename-form { flex: 1; min-width: 0; gap: 6px; }

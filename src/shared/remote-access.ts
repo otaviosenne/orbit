@@ -32,17 +32,18 @@ export const REMOTE_ACCESS = {
   ResumeChat: 'action',
   // Opens a window on the desktop's screen for a browser sign-in.
   OpenSignIn: 'desktop',
-  // Moves the desktop's focus, which helps nobody away from it.
-  FocusChat: 'desktop',
+  // Brings the chat's terminal up on the desktop's screen, for when the user gets back to it.
+  FocusChat: 'chat',
   RenameChat: 'chat',
   RecolorChat: 'chat',
   SendMessage: 'chat',
-  // Ends a Claude Code process; too destructive for a lost phone.
-  CloseChat: 'desktop',
+  // Ends a Claude Code process: Close and Suspend from the phone, limited to chats that are open.
+  CloseChat: 'chat',
   InterruptChat: 'chat',
   PauseChats: 'chat',
   ContinueChats: 'chat',
-  OpenChatWindow: 'desktop',
+  // Opens an Orbit window on the desktop's screen; the route takes only a real session id.
+  OpenChatWindow: 'action',
   GetQuestionPicker: 'read',
   AnswerQuestion: 'action',
   SubmitAnswers: 'action',

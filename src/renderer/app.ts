@@ -222,7 +222,7 @@ const sheet: ChatSheet = new ChatSheet(closeSheet, {
     showChats();
   },
 }, (): void => void refreshSheet(), (sessionId: string): void => void closeChat(sessionId), {
-  suspend: isWebHost() ? null : (sessionId: string): void => suspendNow(sessionId),
+  suspend: (sessionId: string): void => suspendNow(sessionId),
   reopen: reopenClosed,
 });
 const launches: LaunchPanel = new LaunchPanel(new LaunchWatch((): string | null => sheet.sessionId), {

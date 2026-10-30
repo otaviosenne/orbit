@@ -144,13 +144,14 @@ describe('Orbit Web server', () => {
   });
 
   it('hides desktop-only and unknown channels', async () => {
-    for (const channel of ['CloseChat', 'OpenChatWindow', 'GetRemoteSettings', 'RegenerateRemoteToken', 'constructor', 'Nope']) {
+    for (const channel of ['AddShortcut', 'ChooseFolder', 'GetRemoteSettings', 'RegenerateRemoteToken', 'constructor', 'Nope']) {
       expect((await apiCall(channel, [])).status, channel).toBe(404);
     }
   });
 
   it('acts only on chats that are open right now', async () => {
     expect((await apiCall('SendMessage', [1, 'hi', []])).status).toBe(403);
+    expect((await apiCall('CloseChat', [1])).status).toBe(403);
     const chats: ChatSnapshot[] = decodeWire((await apiCall('GetChats', [])).body) as ChatSnapshot[];
     const pid: number = chats[0]?.pid ?? 0;
     const bytes: Uint8Array = new Uint8Array([137, 80, 78, 71]);

@@ -14,11 +14,15 @@ describe('remote access policy', () => {
     }
   });
 
-  it('keeps window-bound channels, closing chats and Orbit Web’s own settings off the web', () => {
-    for (const channel of [...WINDOW_BOUND_CHANNELS, 'CloseChat', 'OpenChatWindow', 'FocusChat', 'AddShortcut']) {
-      expect(remoteAccessOf(channel), channel).toBe('desktop');
-    }
+  it('keeps window-bound channels, shortcuts and Orbit Web’s own settings off the web', () => {
+    for (const channel of [...WINDOW_BOUND_CHANNELS, 'AddShortcut']) expect(remoteAccessOf(channel), channel).toBe('desktop');
     for (const channel of [...REMOTE_SETTINGS_CHANNELS, ...LISTENER_CHANNELS]) expect(isRemoteChannel(channel), channel).toBe(false);
+  });
+
+  it('lets the phone close, suspend, focus and pop out chats, closing only open ones', () => {
+    expect(remoteAccessOf('CloseChat')).toBe('chat');
+    expect(remoteAccessOf('FocusChat')).toBe('chat');
+    expect(remoteAccessOf('OpenChatWindow')).toBe('action');
   });
 
   it('does not mistake inherited object keys for channels', () => {

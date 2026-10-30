@@ -76,16 +76,16 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     getAgentTranscript: (sessionId: string, agentId: string, limit?: number): Promise<TranscriptItem[]> =>
       call('GetAgentTranscript', [sessionId, agentId, limit ?? null]),
     getUsage: (): Promise<UsageSnapshot> => call('GetUsage', []),
-    focusChat: (): Promise<void> => Promise.resolve(),
+    focusChat: (pid: number): Promise<void> => call('FocusChat', [pid]),
     renameChat: (pid: number, name: string): Promise<ActionResult> => call('RenameChat', [pid, name]),
     recolorChat: (pid: number, color: ChatColor): Promise<ActionResult> => call('RecolorChat', [pid, color]),
     sendMessage: (pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult> =>
       call('SendMessage', [pid, text, attachments]),
-    closeChat: (): Promise<ActionResult> => Promise.resolve(DESKTOP_ONLY_RESULT),
+    closeChat: (pid: number): Promise<ActionResult> => call('CloseChat', [pid]),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
     pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
     continueChats: (pids: readonly number[]): Promise<PauseReport> => call('ContinueChats', [pids]),
-    openChatWindow: (): Promise<void> => Promise.resolve(),
+    openChatWindow: (sessionId: string): Promise<void> => call('OpenChatWindow', [sessionId]),
     getQuestionPicker: (sessionId: string): Promise<QuestionPicker | null> => call('GetQuestionPicker', [sessionId]),
     answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>
       call('AnswerQuestion', [sessionId, fingerprint, answer]),

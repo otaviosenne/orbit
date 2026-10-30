@@ -1,3 +1,4 @@
+import type { ChatWindows } from '../chat-windows';
 import type { BoardStateStore } from '../board-state/board-state-store';
 import type { ChatRadar } from '../../core/chat-radar';
 import type { ResourceSampler } from '../../core/resources/resource-sampler';
@@ -13,4 +14,5 @@ export interface RouteServices {
   readonly timelineHistory: TimelineHistory;
   readonly resources: ResourceSampler;
   readonly boardState: BoardStateStore;
+  readonly chatWindows: ChatWindows;
 }

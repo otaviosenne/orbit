@@ -1,5 +1,4 @@
 import { element } from '../dom';
-import { isWebHost } from '../host';
 import { CLOSE_ICON, OPEN_OUTSIDE_ICON, TERMINAL_ICON, PENCIL_ICON, PIN_FILLED_ICON, PIN_ICON, REOPEN_ICON, SUSPEND_ICON } from '../icons';
 
 // The chat a right click landed on, and which of its cards (a pinned chat has one in the Pinned row too).
@@ -52,7 +51,7 @@ export class CardMenu {
 
   open(target: CardMenuTarget, x: number, y: number): void {
     this.target = target;
-    this.root.replaceChildren(...this.visibleItems(target).map((item: MenuItem) => this.renderItem(item)));
+    this.root.replaceChildren(...this.items(target).map((item: MenuItem) => this.renderItem(item)));
     this.root.classList.add('is-open');
     // Kept inside the window when opened near its right or bottom edge.
     this.root.style.left = `${Math.max(0, Math.min(x, window.innerWidth - this.root.offsetWidth))}px`;
@@ -92,13 +91,6 @@ export class CardMenu {
 
   private pinItem(target: CardMenuTarget): MenuItem {
     return { icon: target.isPinned ? PIN_FILLED_ICON : PIN_ICON, label: target.isPinned ? 'Unpin' : 'Pin', isDestructive: false, run: this.actions.togglePin };
-  }
-
-  // Orbit Web leaves out what opens or focuses a desktop window or ends a chat's process (suspending ends it too).
-  private visibleItems(target: CardMenuTarget): MenuItem[] {
-    if (!isWebHost()) return this.items(target);
-    const desktopOnly: ReadonlySet<MenuItem['run']> = new Set([this.actions.openWindow, this.actions.goToChat, this.actions.suspend, this.actions.close]);
-    return this.items(target).filter((item: MenuItem) => !desktopOnly.has(item.run));
   }
 
   private renderItem(item: MenuItem): HTMLButtonElement {
