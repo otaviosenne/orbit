@@ -151,6 +151,11 @@ export const FAQ: readonly FaqEntry[] = [
     answer: 'Board, Timeline, List and chats on a phone or another browser, behind a token, with dictation through the composer’s mic. Turn it on in Settings → Orbit Web. Close and Suspend work from there too; Go to chat and New window act on the desktop’s screen.',
   },
   {
+    id: 'computer',
+    question: 'Can I control the computer from my phone?',
+    answer: 'Settings → Computer: turn the screens off and on, lock, suspend, restart or shut down (risky ones ask for a second tap), see CPU, RAM, temperatures, disks and the heaviest programs, and set volume, output, brightness, media, notifications and the status menu’s shortcuts. Batteries of the mouse and headset show there too.',
+  },
+  {
     id: 'appearance-usage',
     question: 'Where are Orbit’s own settings?',
     answer: 'The gear ({key:view-settings}): Light, Dark or Auto appearance, your usage limits with their reset times, and Orbit Web.',
