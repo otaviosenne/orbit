@@ -90,6 +90,7 @@ import { renderWordmark } from './wordmark';
 import { isTouchWeb, isWebHost } from './host';
 import { RemoteSection } from './views/remote-section';
 import { ResourcesSection } from './views/resources-section';
+import { ComputerSection } from './views/computer/computer-section';
 import { BoardFocus } from './board/board-focus';
 import { HelpModal } from './help/help-modal';
 import { VOICE_HELP } from './help/voice-help';
@@ -132,6 +133,7 @@ const pendingEdits: PendingEdits = new PendingEdits();
 // Orbit Web's own settings exist only in the desktop window: a phone must not be able to read or change its token.
 const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSection();
 const resourcesSection: ResourcesSection = new ResourcesSection((): readonly ChatSnapshot[] => chats);
+const computerSection: ComputerSection = new ComputerSection();
 const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore(!isWebHost());
@@ -329,9 +331,11 @@ function renderView(): void {
   nav.replaceChildren(...renderNav(view));
   settingsButton.classList.toggle('is-active', view === 'settings');
   resourcesSection.setActive(view === 'settings' && settingsPage === 'resources');
+  computerSection.setActive(view === 'settings' && settingsPage === 'computer');
   // A card being renamed holds an open text field; rebuilding the board would throw the typing away.
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
   if (view === 'settings' && remoteSection?.isEditing === true) return;
+  if (view === 'settings' && settingsPage === 'computer' && computerSection.isHolding) return;
   if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
     boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
@@ -354,10 +358,11 @@ function showSettings(now: number): void {
   if (column !== null) column.scrollTop = scrollTop;
 }
 
-// Orbit Web and Resources keep their own state between renders, so their elements are reused, not rebuilt.
+// Orbit Web, Resources and Computer keep their own state between renders, so their elements are reused, not rebuilt.
 function settingsContent(now: number): HTMLElement {
   if (settingsPage === 'usage') return renderUsageSection(usage, now, signIn);
   if (settingsPage === 'resources') return resourcesSection.root;
+  if (settingsPage === 'computer') return computerSection.root;
   if (settingsPage === 'web' && remoteSection !== null) return remoteSection.root;
   return renderAppearanceSection(theme);
 }

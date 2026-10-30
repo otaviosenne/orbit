@@ -1,5 +1,6 @@
 import type { ApprovalAnswer, ApprovalRequest } from './approval';
 import type { LocalCiRun } from './local-ci';
+import type { ComputerAction, ComputerStatus } from './computer';
 import type { BoardState } from './board-state';
 import type { ChatColor } from './chat-colors';
 import type { EffortLevel, ModelChoice } from './chat-settings';
@@ -519,6 +520,9 @@ export interface RadarApi {
   focusChatBrowser(sessionId: string): Promise<DeviceFocus>;
   // CPU and memory of every open chat's process tree, measured since the previous call.
   getChatResources(): Promise<ResourceSnapshot>;
+  // The desktop for the Computer page, and the one thing on it to change.
+  getComputerStatus(): Promise<ComputerStatus>;
+  runComputerAction(action: ComputerAction): Promise<ActionResult>;
   // Pins and suspended chats every Orbit window shares; null when knownVersion is still current.
   getBoardState(knownVersion: number | null): Promise<BoardState | null>;
   setBoardState(key: string, value: string): Promise<ActionResult>;

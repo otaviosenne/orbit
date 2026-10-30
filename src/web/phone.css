@@ -179,6 +179,14 @@
   .hands-free-indicator { position: relative; }
   .hands-free-indicator::after { content: ''; position: absolute; inset: calc((24px - var(--web-touch)) / 2); border-radius: 50%; }
   .composer .button { min-height: var(--web-touch); padding: 0 18px; border-radius: 22px; font-size: 15px; }
+  /* Computer: buttons fill their row and sliders get the whole line under their name, for a thumb */
+  .computer-buttons .button, .computer-media-buttons .button { flex: 1 1 auto; }
+  .computer-volume { flex-wrap: wrap; }
+  .computer-volume .computer-row-label { flex: 1 1 60%; }
+  .computer-volume .computer-slider { order: 3; flex: 1 1 100%; min-height: var(--web-touch); }
+  .computer-select { flex: 1 1 100%; min-height: var(--web-touch); font-size: 15px; }
+  .computer-output { flex-wrap: wrap; }
+  .computer-processes { grid-template-columns: 1fr; gap: 12px; }
   /* The three answers share the width under the summary, each a full-size target */
   .approval-buttons { flex: 1 1 100%; }
   .approval-buttons .button { flex: 1; font-size: 15px; }

@@ -603,6 +603,35 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .meter { width: 180px; height: 6px; border-radius: 3px; background: var(--segment-track); overflow: hidden; }
 .meter-fill { height: 100%; border-radius: 3px; background: var(--accent); }
 .limit.is-high .meter-fill { background: var(--warning); }
+
+/* ---------- Settings · Computer: the desktop from the phone (power, load, sound, batteries, notifications) ---------- */
+.computer-section .settings-note.is-error { color: var(--danger); }
+.computer-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.computer-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--group); box-shadow: var(--shadow-card); }
+.computer-tile-value { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.computer-tile-caption { color: var(--secondary); font-size: 11.5px; }
+.computer-row-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.computer-row-value { flex: none; color: var(--secondary); font-variant-numeric: tabular-nums; }
+.computer-buttons { flex-wrap: wrap; gap: 8px 10px; }
+.computer-power { justify-content: flex-start; }
+.computer-section .button.is-armed { background: var(--danger); color: #ffffff; box-shadow: none; }
+.computer-disk .meter, .computer-battery .meter { flex: 0 1 180px; }
+.computer-disk.is-high .meter-fill, .computer-battery.is-high .meter-fill { background: var(--warning); }
+.computer-volume .computer-row-label { flex: 0 1 34%; }
+.computer-slider { flex: 1 1 auto; min-width: 80px; accent-color: var(--accent); }
+.computer-volume .computer-row-value { width: 3.2em; text-align: right; }
+.computer-select { flex: 0 1 60%; min-width: 0; padding: 3px 6px; border-radius: var(--radius-control); border: 0; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
+.computer-processes { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; padding: 10px 14px; }
+.computer-process-column { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.computer-process-title { font-size: 11.5px; font-weight: 600; color: var(--secondary); margin-bottom: 2px; }
+.computer-process { display: flex; gap: 8px; }
+.computer-process-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.computer-media { flex-wrap: wrap; }
+.computer-media-text { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.computer-media-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.computer-media-artist { color: var(--secondary); font-size: 11.5px; }
+.computer-media-buttons { display: flex; gap: 6px; }
+.computer-shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .limit-percent { width: 44px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
 .limit.is-high .limit-percent { color: var(--warning); }
 .share { justify-content: space-between; }

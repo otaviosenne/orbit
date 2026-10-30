@@ -36,6 +36,8 @@ import { app } from 'electron';
 import { join } from 'node:path';
 import { BoardStateStore } from '../main/board-state/board-state-store';
 import type { BoardState } from '../shared/board-state';
+import type { ComputerStatus } from '../shared/computer';
+import { DEMO_COMPUTER } from './demo-computer';
 
 export type DemoRoute = Route;
 
@@ -105,6 +107,9 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   DictationStart: (): DictationStart => ({ session: ++dictationSession, error: null }),
   DictationFinish: (): TranscriptionResult => EMPTY_TRANSCRIPTION,
   GetChatResources: (): ResourceSnapshot => demoResources(Date.now()),
+  GetComputerStatus: (): ComputerStatus => DEMO_COMPUTER,
+  // Shutting down or muting the real machine from a demo would be a surprise.
+  RunComputerAction: (): ActionResult => DONE,
   // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
   GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
   SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),

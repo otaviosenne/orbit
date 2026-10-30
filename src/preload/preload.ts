@@ -1,4 +1,5 @@
 import type { ApprovalAnswer } from '../shared/approval';
+import type { ComputerAction, ComputerStatus } from '../shared/computer';
 import type { BoardState } from '../shared/board-state';
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ChatColor } from '../shared/chat-colors';
@@ -109,6 +110,8 @@ const api: RadarApi = {
   closeAllEmulators: (): Promise<number> => ipcRenderer.invoke(IpcChannel.CloseAllEmulators),
   focusChatBrowser: (sessionId: string): Promise<DeviceFocus> => ipcRenderer.invoke(IpcChannel.FocusChatBrowser, sessionId),
   getChatResources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IpcChannel.GetChatResources),
+  getComputerStatus: (): Promise<ComputerStatus> => ipcRenderer.invoke(IpcChannel.GetComputerStatus),
+  runComputerAction: (action: ComputerAction): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.RunComputerAction, action),
   getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
   setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),

@@ -22,6 +22,8 @@ describe('remote access policy', () => {
   it('lets the phone close, suspend, focus and pop out chats, closing only open ones', () => {
     expect(remoteAccessOf('CloseChat')).toBe('chat');
     expect(remoteAccessOf('AnswerApproval')).toBe('chat');
+    expect(remoteAccessOf('GetComputerStatus')).toBe('read');
+    expect(remoteAccessOf('RunComputerAction')).toBe('action');
     expect(remoteAccessOf('FocusChat')).toBe('chat');
     expect(remoteAccessOf('OpenChatWindow')).toBe('action');
   });

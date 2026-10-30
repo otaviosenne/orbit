@@ -8,6 +8,7 @@ import { UsageService } from '../core/usage-service';
 import { pruneOldAttachments } from './attachments';
 import { BoardStateStore } from './board-state/board-state-store';
 import { ChatWindows } from './chat-windows';
+import { Computer } from './computer/computer';
 import { DictationService } from './dictation-service';
 import type { DictationEngine } from './remote/dictation/dictation-engine';
 import { activeWindowPid, findTerminalWindowPid } from './terminal-window';
@@ -41,7 +42,7 @@ async function start(): Promise<void> {
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);
   const boardState: BoardStateStore = new BoardStateStore(join(app.getPath('userData'), BOARD_STATE_FILE));
-  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), pastChats, timelineHistory, resources: new ResourceSampler(), boardState };
+  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), computer: new Computer(), pastChats, timelineHistory, resources: new ResourceSampler(), boardState };
   // One table answers the desktop window over IPC and Orbit Web over HTTP.
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);

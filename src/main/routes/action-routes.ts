@@ -39,6 +39,7 @@ type ActionChannel =
   | 'SetBoardState'
   | 'CloseChat'
   | 'AnswerApproval'
+  | 'RunComputerAction'
   | 'FocusChat'
   | 'OpenChatWindow';
 
@@ -47,11 +48,12 @@ const NOTHING_REACHED: PauseReport = { reached: [], skipped: [] };
 const NOT_IMAGES: ActionResult = failure('Attachments must be images');
 const NOT_AN_ANSWER: ActionResult = failure('Unknown answer');
 
-export function actionRoutes({ radar, pastChats, boardState, chatWindows }: RouteServices): Readonly<Record<ActionChannel, Route>> {
+export function actionRoutes({ radar, pastChats, boardState, chatWindows, computer }: RouteServices): Readonly<Record<ActionChannel, Route>> {
   return {
     OpenLauncher: (name: unknown): Promise<ActionResult> => openLauncher(textArg(name)),
     OpenSignIn: (): Promise<ActionResult> => openSignIn(),
     SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => boardState.set(key, value),
+    RunComputerAction: (action: unknown): Promise<ActionResult> => computer.run(action),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
       onChat(pid, (chat: number) => (isApprovalAnswer(answer) ? answerApproval(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),

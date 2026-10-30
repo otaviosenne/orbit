@@ -1,7 +1,7 @@
 import { element } from '../dom';
-import { GAUGE_ICON, GLOBE_SIMPLE_ICON, PALETTE_ICON, CPU_ICON } from '../icons';
+import { GAUGE_ICON, GLOBE_SIMPLE_ICON, PALETTE_ICON, CPU_ICON, DESKTOP_ICON } from '../icons';
 
-export type SettingsPage = 'appearance' | 'usage' | 'resources' | 'web';
+export type SettingsPage = 'appearance' | 'usage' | 'resources' | 'computer' | 'web';
 
 interface PageEntry {
   readonly page: SettingsPage;
@@ -13,6 +13,7 @@ const PAGES: readonly PageEntry[] = [
   { page: 'appearance', label: 'Appearance', icon: PALETTE_ICON },
   { page: 'usage', label: 'Usage', icon: GAUGE_ICON },
   { page: 'resources', label: 'Resources', icon: CPU_ICON },
+  { page: 'computer', label: 'Computer', icon: DESKTOP_ICON },
   { page: 'web', label: 'Orbit Web', icon: GLOBE_SIMPLE_ICON },
 ];
 

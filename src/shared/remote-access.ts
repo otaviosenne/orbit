@@ -76,6 +76,11 @@ export const REMOTE_ACCESS = {
   DictationFinish: 'desktop',
   // CPU and memory of the open chats' own process trees; the server picks the processes, never the caller.
   GetChatResources: 'read',
+  // The Computer page: load, temperatures, disks, batteries, volume, brightness, notifications and media.
+  GetComputerStatus: 'read',
+  // Power (shutdown, reboot, suspend, lock), screens off/on, volume, brightness, notifications, media and the status
+  // menu's shortcuts: the route accepts only those, checks every value, and never runs text through a shell.
+  RunComputerAction: 'action',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',
