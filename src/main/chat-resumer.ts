@@ -6,6 +6,7 @@ import { CUT_MESSAGE } from '../shared/pause-messages';
 import type { ActionResult } from '../shared/types';
 import { launchChatInBackground } from './chat-workspace';
 import { buildResumeCommand } from './resume-command';
+import { sendAfterResume } from './resumed-chat-message';
 import { failure } from './terminal-input';
 
 // Reopens a closed chat in a new kitty window, in the folder it was started in.
@@ -18,7 +19,11 @@ export async function resumeChat(catalog: PastChatCatalog, sessionId: unknown, a
   if ((await liveSessionIds()).has(sessionId)) return failure('This chat is already open');
   if (!(await exists(entry.cwd))) return failure(`Its folder no longer exists: ${entry.cwd}`);
   try {
-    await launchChatInBackground(buildResumeCommand(entry.cwd, sessionId, afterCut ? CUT_MESSAGE : undefined));
+    await launchChatInBackground(buildResumeCommand(entry.cwd, sessionId));
+    // Not waited for: the reopened chat is told while the user goes on; a failure is only logged.
+    if (afterCut) void sendAfterResume(sessionId, CUT_MESSAGE).then((result: ActionResult): void => {
+      if (!result.ok) console.error(`Telling ${sessionId} it was cut off failed: ${result.error ?? 'unknown'}`);
+    });
     return { ok: true, method: null, error: null };
   } catch (error: unknown) {
     return failure(error instanceof Error ? error.message : String(error));

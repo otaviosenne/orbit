@@ -57,7 +57,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => boardState.set(key, value),
     RunComputerAction: (action: unknown): Promise<ActionResult> => computer.run(action),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
-    RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(pid) : Promise.resolve(NOT_A_CHAT)),
+    RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(radar, pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
       onChat(pid, (chat: number) => (isApprovalAnswer(answer) ? answerApproval(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
     FocusChat: (pid: unknown): Promise<void> => (isPid(pid) ? focusTerminalOf(pid) : Promise.resolve()),

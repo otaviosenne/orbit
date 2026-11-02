@@ -1,18 +1,12 @@
-import type { AgentSnapshot, ChatSnapshot, ShellSnapshot } from '../../shared/types';
+import type { ChatWork } from '../../shared/chat-work';
+import { chatWork } from '../../shared/chat-work';
+import type { ChatSnapshot } from '../../shared/types';
 
 // What closing a chat right now would cut short.
-export interface SuspendStops {
-  readonly isWorking: boolean;
-  readonly agents: number;
-  readonly shells: number;
-}
+export type SuspendStops = ChatWork;
 
 export function suspendStops(chat: ChatSnapshot): SuspendStops {
-  return {
-    isWorking: chat.status === 'busy',
-    agents: chat.agents.filter((agent: AgentSnapshot) => agent.state !== 'done').length,
-    shells: chat.shells.filter((shell: ShellSnapshot) => shell.status === 'running').length,
-  };
+  return chatWork(chat);
 }
 
 // Suspending is reversible, so it only asks first when it would stop work; null means it needs no confirmation.

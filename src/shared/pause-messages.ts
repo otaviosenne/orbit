@@ -1,4 +1,4 @@
-// Plain words without quotes: they travel through a shell command line (the resume prompt) and a terminal paste.
+// Plain words without quotes: they reach the chat as a terminal paste.
 
 // Pausing is a request to the chat itself: only it can stop its own agents and background shells.
 export const PAUSE_MESSAGE: string =
@@ -6,6 +6,11 @@ export const PAUSE_MESSAGE: string =
   + 'Do not start anything new, and ignore task notifications and messages from other chats until I tell you to continue. Reply with one short line.';
 
 export const CONTINUE_MESSAGE: string = 'Continue: you can resume the work you paused. Restart anything you stopped if it is still needed.';
+
+// Sent to a chat Orbit restarted (to load new skills, MCP servers and settings) while it had work running.
+export const RESTART_CONTINUE_MESSAGE: string =
+  'Continue: you were restarted to load new skills, MCP servers and settings, which cut off your turn and any running agent or background shell. '
+  + 'Carry on with what you were doing, and restart anything you still need.';
 
 // Sent to a chat that was working when the machine went down, once it is reopened.
 export const CUT_MESSAGE: string =

@@ -1,25 +1,32 @@
+import type { ChatRadar } from '../core/chat-radar';
 import { listLiveSessions } from '../core/session-registry';
+import { chatWork, hasWork } from '../shared/chat-work';
+import { RESTART_CONTINUE_MESSAGE } from '../shared/pause-messages';
 import type { SessionRecord } from '../core/session-registry';
-import type { ActionResult } from '../shared/types';
+import type { ActionResult, ChatSnapshot } from '../shared/types';
 import { closeChat } from './chat-closer';
 import { CHAT_WORKSPACE } from './chat-workspace';
 import { launchThroughHyprland, silentlyOnWorkspace } from './hyprland-exec';
 import { buildResumeCommand } from './resume-command';
 import { delay } from './run-command';
+import { sendAfterResume } from './resumed-chat-message';
 import { failure } from './terminal-input';
 import type { WindowPlacement } from './terminal-window';
 import { findTerminalWindowPid, windowPlacement } from './terminal-window';
 
 // Claude Code reads its skills, MCP servers, CLAUDE.md files and settings when it starts; the session cannot
-// reload them in place. Restarting closes the chat and resumes the same session, on the workspace it was on.
+// reload them in place. Restarting closes the chat and resumes the same session, on the workspace it was on; a chat
+// that had work running is told to continue it, a resting one is reopened without a word.
 const EXIT_CHECK_MS: number = 200;
 // Long enough for Claude Code to save its transcript and stop its MCP servers after the window closes.
 const EXIT_TIMEOUT_MS: number = 15_000;
 const RESTARTED: ActionResult = { ok: true, method: null, error: null };
 
-export async function restartChat(chatPid: number): Promise<ActionResult> {
+export async function restartChat(radar: ChatRadar, chatPid: number): Promise<ActionResult> {
   const session: SessionRecord | undefined = (await listLiveSessions()).find((candidate: SessionRecord) => candidate.pid === chatPid);
   if (session === undefined) return failure('Chat not found');
+  // Read before closing: once the window is gone the chat shows no work at all.
+  const prompt: string | undefined = (await hadWorkRunning(radar, chatPid)) ? RESTART_CONTINUE_MESSAGE : undefined;
   const workspace: number = await workspaceOf(chatPid);
   const closed: ActionResult = await closeChat(chatPid);
   if (!closed.ok) return closed;
@@ -27,10 +34,15 @@ export async function restartChat(chatPid: number): Promise<ActionResult> {
   if (!(await hasExited(chatPid))) return failure('The chat did not close in time; it was not reopened');
   try {
     await launchThroughHyprland(silentlyOnWorkspace(workspace, buildResumeCommand(session.cwd, session.sessionId)));
-    return RESTARTED;
   } catch (error: unknown) {
     return failure(`Closed, but could not reopen it: ${error instanceof Error ? error.message : String(error)}`);
   }
+  return prompt === undefined ? RESTARTED : sendAfterResume(session.sessionId, prompt);
+}
+
+async function hadWorkRunning(radar: ChatRadar, chatPid: number): Promise<boolean> {
+  const chat: ChatSnapshot | undefined = (await radar.chats()).find((candidate: ChatSnapshot) => candidate.pid === chatPid);
+  return chat !== undefined && hasWork(chatWork(chat));
 }
 
 // A chat whose window cannot be found reopens where new chats wait.
