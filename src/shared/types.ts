@@ -476,6 +476,8 @@ export interface RadarApi {
   recolorChat(pid: number, color: ChatColor): Promise<ActionResult>;
   sendMessage(pid: number, text: string, attachments: readonly AttachmentUpload[]): Promise<ActionResult>;
   closeChat(pid: number): Promise<ActionResult>;
+  // Closes the chat and resumes the same session, so it loads changed skills, MCP servers, CLAUDE.md and settings.
+  restartChat(pid: number): Promise<ActionResult>;
   answerApproval(pid: number, answer: ApprovalAnswer): Promise<ActionResult>;
   interruptChat(pid: number): Promise<ActionResult>;
   // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.

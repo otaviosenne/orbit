@@ -61,6 +61,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getComputerStatus(), 'GetComputerStatus', []],
   [(radar) => radar.runComputerAction({ kind: 'mute' }), 'RunComputerAction', [{ kind: 'mute' }]],
   [(radar) => radar.closeChat(PID), 'CloseChat', [PID]],
+  [(radar) => radar.restartChat(PID), 'RestartChat', [PID]],
   [(radar) => radar.answerApproval(PID, 'approve'), 'AnswerApproval', [PID, 'approve']],
   [(radar) => radar.focusChat(PID), 'FocusChat', [PID]],
   [(radar) => radar.openChatWindow(SESSION), 'OpenChatWindow', [SESSION]],

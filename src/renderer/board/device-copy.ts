@@ -1,6 +1,6 @@
 import { copyText } from '../clipboard';
-import { showCopyToast } from '../copy-toast';
-import type { ToastText } from '../copy-toast';
+import { showToast } from '../toast';
+import type { ToastText } from '../toast';
 import type { BrowserLink, ChatDevices, EmulatorLink } from '../../shared/types';
 import type { CardDeviceKind } from './card-devices';
 
@@ -16,10 +16,10 @@ const NOT_OPEN: DeviceCopy = { text: null, toast: { title: 'This device is no lo
 // the tunnel address of the Metro the emulator loads from, or of the page the Chrome tab shows.
 export function copyDeviceAddress(kind: CardDeviceKind, devices: ChatDevices): void {
   const copy: DeviceCopy = deviceCopy(kind, devices);
-  if (copy.text === null) return showCopyToast(copy.toast);
+  if (copy.text === null) return showToast(copy.toast);
   // Started inside the press: a phone refuses a copy that comes later.
   void copyText(copy.text).then((copied: boolean): void =>
-    showCopyToast(copied ? copy.toast : { title: 'The browser did not allow copying', preview: copy.text ?? undefined, isProblem: true }),
+    showToast(copied ? copy.toast : { title: 'The browser did not allow copying', preview: copy.text ?? undefined, isProblem: true }),
   );
 }
 

@@ -23,6 +23,7 @@ export const IpcChannel = {
   RecolorChat: 'radar:recolor-chat',
   SendMessage: 'radar:send-message',
   CloseChat: 'radar:close-chat',
+  RestartChat: 'radar:restart-chat',
   AnswerApproval: 'radar:answer-approval',
   InterruptChat: 'radar:interrupt-chat',
   PauseChats: 'radar:pause-chats',

@@ -36,6 +36,7 @@ import { attachAppMenu } from './app-menu';
 import { ChatPause } from './pause/chat-pause';
 import { EmulatorPrompt } from './pause/emulator-prompt';
 import { pauseEverything } from './pause/pause-flow';
+import { restartIdleChats, showRestartReport } from './restart/restart-idle';
 import type { RemoteSettings } from '../shared/remote-settings';
 import { PAIRING_HASH_KEY } from '../shared/remote-settings';
 import { GEAR_ICON } from './icons';
@@ -764,6 +765,7 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   pauseAll: (): void => void pauseEverything(chatPause, window.radar, (labels: readonly string[]) => emulatorPrompt.ask(labels)),
   continueAll: (): void => void chatPause.continueAll(),
   pausedCount: (): number => chatPause.pausedCount,
+  restartIdle: (): void => void restartIdleChats(chats, (pid: number) => window.radar.restartChat(pid)).then(showRestartReport),
 });
 // The failure is kept on the badge's tooltip, where the user is already looking.
 function signIn(): void {

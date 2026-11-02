@@ -1,4 +1,4 @@
-import { showCopyToast } from '../copy-toast';
+import { showToast } from '../toast';
 import { isTouchWeb } from '../host';
 
 const TOAST_TEXT: string = 'Copied';
@@ -9,7 +9,7 @@ export function installCopyOnSelect(thread: HTMLElement): void {
   thread.addEventListener('mouseup', (): void => {
     const text: string = selectedTextIn(thread);
     if (text.length === 0) return;
-    void navigator.clipboard.writeText(text).then((): void => showCopyToast({ title: TOAST_TEXT }), (): void => undefined);
+    void navigator.clipboard.writeText(text).then((): void => showToast({ title: TOAST_TEXT }), (): void => undefined);
   });
 }
 

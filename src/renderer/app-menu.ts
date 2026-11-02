@@ -1,5 +1,5 @@
 import { element } from './dom';
-import { BROWSER_ICON, BUG_ICON, CONTINUE_ICON, GITHUB_ICON, PAUSE_ICON, PHONE_ICON, QUESTION_ICON } from './icons';
+import { BROWSER_ICON, BUG_ICON, CONTINUE_ICON, GITHUB_ICON, PAUSE_ICON, PHONE_ICON, QUESTION_ICON, RESTART_ICON } from './icons';
 import { actionShortcut } from './shortcuts/shortcut-catalog';
 import { shortcutKeysText } from './shortcuts/shortcut-hint';
 
@@ -20,6 +20,8 @@ export interface AppMenuPause {
   readonly continueAll: () => void;
   // The paused chats that are open, which Continue can reach; the item is shown only while there are some.
   readonly pausedCount: () => number;
+  // Reopens every resting chat, so it loads skills, MCP servers, CLAUDE.md and settings changed since it started.
+  readonly restartIdle: () => void;
 }
 
 interface AppMenuLink {
@@ -38,7 +40,7 @@ const LINKS: readonly AppMenuLink[] = [
 export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null, pause: AppMenuPause): void {
   const menu: HTMLDivElement = element('div', 'card-menu app-menu');
   const continueItem: HTMLButtonElement = renderAction(CONTINUE_ICON, 'Continue paused chats', pause.continueAll);
-  menu.append(renderHelpItem(openHelp), renderAction(PAUSE_ICON, 'Pause all chats', pause.pauseAll), continueItem, ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
+  menu.append(renderHelpItem(openHelp), renderAction(PAUSE_ICON, 'Pause all chats', pause.pauseAll), continueItem, renderAction(RESTART_ICON, 'Restart idle chats', pause.restartIdle), ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
   document.body.append(menu);
   trigger.classList.add('has-menu');
   trigger.addEventListener('click', (): void => {

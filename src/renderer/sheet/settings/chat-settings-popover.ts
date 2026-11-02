@@ -5,6 +5,7 @@ import type { ActionResult, ChatPermissions, ChatSettings, ChatSnapshot, Setting
 import { element } from '../../dom';
 import { SLIDERS_ICON } from '../../icons';
 import { CloseChatAction } from './close-chat-action';
+import { RestartChatAction } from './restart-chat-action';
 import { SuspendChatAction } from './suspend-chat-action';
 import type { SectionKey } from './disclosure';
 import { choiceLabel, effortLabel } from './model-label';
@@ -69,6 +70,7 @@ export class ChatSettingsPopover {
   );
   private readonly closeAction: CloseChatAction = new CloseChatAction((): void => this.closeChat());
   private readonly suspendAction: SuspendChatAction | null;
+  private readonly restartAction: RestartChatAction = new RestartChatAction((): ChatSnapshot | null => this.chat, (): void => void this.restartChat());
   private expanded: SectionKey | null = null;
   private staged: StagedPicks = {};
   private readonly pending: PendingSettings = new PendingSettings();
@@ -123,6 +125,7 @@ export class ChatSettingsPopover {
     void this.flushStaged();
     this.closeAction.dismiss();
     this.suspendAction?.dismiss();
+    this.restartAction.dismiss();
     this.root.hidden = true;
     this.button.classList.remove(ACTIVE_CLASS);
   }
@@ -315,9 +318,18 @@ export class ChatSettingsPopover {
     if (chat !== null) this.host.suspendChat?.(chat.sessionId);
   }
 
-  // Both end the chat's process, so they sit apart from the settings, below a divider.
+  // Restarting reloads what Claude Code reads only at start; the window comes back on the same workspace.
+  private async restartChat(): Promise<void> {
+    const chat: ChatSnapshot | null = this.chat;
+    this.hide();
+    if (chat === null) return;
+    this.host.report(await window.radar.restartChat(chat.pid), 'Restarting: the chat reopens in a moment');
+  }
+
+  // All three end the chat's process, so they sit apart from the settings, below a divider.
   private renderEndActions(): HTMLElement {
     const row: HTMLDivElement = element('div', 'chat-settings-danger');
+    row.append(this.restartAction.root);
     if (this.suspendAction !== null) row.append(this.suspendAction.root);
     row.append(this.closeAction.root);
     return row;

@@ -366,23 +366,23 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
    tooltips and the drag's own lifted card */
 .card-flight { position: fixed; z-index: 1; margin: 0; pointer-events: none; }
 /* The "Copied" note after selecting text in a chat (sheet/copy-on-select.ts), always in the bottom-left corner */
-.copy-toast {
+.toast {
   position: fixed; z-index: 70; left: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 3px;
   max-width: min(440px, calc(100vw - 32px)); padding: 6px 11px; border-radius: 10px; pointer-events: none;
   box-shadow: var(--shadow-card); background: var(--text); color: var(--window); font-size: 12px; font-weight: 600;
-  animation: copy-toast-fade 1.2s ease-out forwards;
+  animation: toast-fade 1.2s ease-out forwards;
 }
-/* Holds as long as copy-toast.ts keeps an address on screen, so it can be read before pasting */
-.copy-toast.is-detailed { padding: 8px 12px; animation-duration: 3.2s; }
-.copy-toast.is-problem { background: var(--danger); color: #fff; }
-.copy-toast-head { display: flex; align-items: center; gap: 6px; }
-.copy-toast svg { width: 14px; height: 14px; flex: none; fill: currentColor; }
-.copy-toast-preview {
+/* Holds as long as toast.ts keeps a detail line on screen, so a copied address can be read before pasting */
+.toast.is-detailed { padding: 8px 12px; animation-duration: 3.2s; }
+.toast.is-problem { background: var(--danger); color: #fff; }
+.toast-head { display: flex; align-items: center; gap: 6px; }
+.toast svg { width: 14px; height: 14px; flex: none; fill: currentColor; }
+.toast-preview {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono);
   font-size: 11.5px; font-weight: 500; opacity: 0.85;
 }
-.copy-toast-note { font-size: 11px; font-weight: 500; opacity: 0.7; }
-@keyframes copy-toast-fade { 0% { opacity: 0; transform: translateY(4px); } 12%, 70% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.toast-note { font-size: 11px; font-weight: 500; opacity: 0.7; }
+@keyframes toast-fade { 0% { opacity: 0; transform: translateY(4px); } 12%, 70% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 .card.is-arriving { visibility: hidden; }
 /* Only a from step, so the fade ends on the card's own opacity (a closed pin stays faded) */
 @keyframes card-enter { from { opacity: 0; transform: scale(0.97); } }
@@ -1572,12 +1572,14 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .chat-settings-disclosure:not(.is-open) .chat-settings-caret { transform: rotate(-90deg); }
 .chat-settings-body { display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px 8px 10px; }
 .chat-settings-body[hidden] { display: none; }
-/* Suspend and Close chat sit side by side apart from the settings, below a divider, like the card menu's destructive item */
+/* Restart, Suspend and Close chat sit side by side apart from the settings, below a divider, like the card menu's destructive item */
 .chat-settings-danger { display: flex; gap: 4px; margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--separator); }
 .chat-settings-end {
   flex: 1 1 0; min-width: 0; padding: 8px; border: 0; border-radius: 7px; cursor: default; text-align: left;
   background: transparent; font: inherit; font-size: 13px; font-weight: 500;
 }
+.chat-settings-restart { color: var(--accent); }
+.chat-settings-restart:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .chat-settings-suspend { color: var(--caution-text); }
 .chat-settings-suspend:hover { background: var(--tag-yellow); color: #1d1d1f; }
 .chat-settings-close { color: var(--danger); }
