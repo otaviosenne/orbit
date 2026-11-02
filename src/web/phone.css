@@ -190,6 +190,8 @@
   /* The three answers share the width under the summary, each a full-size target */
   .approval-buttons { flex: 1 1 100%; grid-template-columns: repeat(2, 1fr); }
   .approval-buttons .button { font-size: 15px; }
+  /* The copied address shows at the top: the composer and the tab bar fill the bottom */
+  .copy-toast { top: calc(env(safe-area-inset-top) + 12px); bottom: auto; left: var(--web-gutter); right: var(--web-gutter); max-width: none; }
   /* The working line keeps to the screen: a long count shortens, the verb and the stop button always show */
   .working-indicator { left: var(--web-gutter); max-width: calc(100% - 2 * var(--web-gutter)); }
   .working-verb, .working-stop { flex: none; }

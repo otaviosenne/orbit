@@ -1,7 +1,8 @@
 import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink } from '../../shared/types';
 import { element } from '../dom';
+import { isWebHost } from '../host';
 import { ANDROID_ICON, BROWSER_ICON } from '../icons';
-import { browserLines } from '../sheet/device-links';
+import { browserLines, emulatorLines } from '../sheet/device-links';
 import { setTip } from '../tooltip';
 
 export type CardDeviceKind = 'emulator' | 'browser';
@@ -13,6 +14,8 @@ export interface DeviceRecheck {
 const CARD_DEVICE_ATTRIBUTE: string = 'cardDevice';
 const CARD_DEVICE_SELECTOR: string = '[data-card-device]';
 const BROWSER_LABEL: string = 'Open browser tab';
+const BROWSER_COPY_LABEL: string = 'Copy the page address';
+const EMULATOR_COPY_LABEL: string = 'Copy the Metro address';
 
 // The same focus the chat panel's Emulator and Browser pills ask for.
 const FOCUS_REQUESTS: Readonly<Record<CardDeviceKind, (sessionId: string) => Promise<DeviceFocus>>> = {
@@ -46,14 +49,17 @@ export async function openCardDevice(kind: CardDeviceKind, sessionId: string, de
 }
 
 function emulatorButton(emulator: EmulatorLink): HTMLButtonElement {
-  const button: HTMLButtonElement = deviceButton('emulator', ANDROID_ICON, `Open emulator ${emulator.label}`);
-  setTip(button, { title: 'Open emulator', lines: [emulator.label] });
+  // Orbit Web copies the address instead of focusing a window on the computer (see device-copy.ts).
+  const isWeb: boolean = isWebHost();
+  const button: HTMLButtonElement = deviceButton('emulator', ANDROID_ICON, isWeb ? EMULATOR_COPY_LABEL : `Open emulator ${emulator.label}`);
+  setTip(button, { title: isWeb ? EMULATOR_COPY_LABEL : 'Open emulator', lines: emulatorLines(emulator) });
   return button;
 }
 
 function browserButton(browser: BrowserLink): HTMLButtonElement {
-  const button: HTMLButtonElement = deviceButton('browser', BROWSER_ICON, BROWSER_LABEL);
-  setTip(button, { title: BROWSER_LABEL, lines: browserLines(browser) });
+  const label: string = isWebHost() ? BROWSER_COPY_LABEL : BROWSER_LABEL;
+  const button: HTMLButtonElement = deviceButton('browser', BROWSER_ICON, label);
+  setTip(button, { title: label, lines: browserLines(browser) });
   return button;
 }
 

@@ -56,6 +56,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getChatPermissions(SESSION), 'GetChatPermissions', [SESSION]],
   [(radar) => radar.setPermissionMode(SESSION, 'plan'), 'SetPermissionMode', [SESSION, 'plan']],
   [(radar) => radar.getChatResources(), 'GetChatResources', []],
+  [(radar) => radar.getChatDevices(SESSION), 'GetChatDevices', [SESSION]],
   [(radar) => radar.getBoardState(7), 'GetBoardState', [7]],
   [(radar) => radar.getComputerStatus(), 'GetComputerStatus', []],
   [(radar) => radar.runComputerAction({ kind: 'mute' }), 'RunComputerAction', [{ kind: 'mute' }]],
@@ -104,7 +105,7 @@ describe('Orbit Web radar over HTTP', () => {
     const { radar, calls } = recordingRadar();
     expect((await radar.addShortcut({ label: 'x', chatName: 'x', folder: '/tmp' })).ok).toBe(false);
     expect(await radar.chooseFolder()).toBeNull();
-    expect(await radar.getChatDevices(SESSION)).toEqual({ emulator: null, browser: null });
+    expect(await radar.focusChatEmulator(SESSION)).toBe('missing');
     await expect(radar.getRemoteSettings()).rejects.toThrow();
     expect(calls).toEqual([]);
   });

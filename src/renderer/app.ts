@@ -25,6 +25,7 @@ import { RestingPins } from './board/resting-pins';
 import { BoardDevices } from './board/board-devices';
 import type { CardDeviceKind } from './board/card-devices';
 import { cardDeviceAt, focusCardDevice } from './board/card-devices';
+import { copyDeviceAddress } from './board/device-copy';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
 import { OpenChatsMemory, type RememberedChat } from './restore/open-chats-memory';
@@ -677,11 +678,20 @@ viewRoot.addEventListener('pointerdown', (event: PointerEvent): void => {
   // Checked before the card's own press, which would otherwise open or start dragging the card under the icon.
   const device: CardDeviceKind | null = cardDeviceAt(event.target);
   const deviceSession: string | undefined = device === null ? undefined : cardSessionAt(event.target);
-  if (device !== null && deviceSession !== undefined) return void openCardDevice(device, deviceSession);
+  // Orbit Web copies on the click below: a phone allows copying only at the end of a tap, not when it starts.
+  if (device !== null && deviceSession !== undefined) return isWebHost() ? undefined : void openCardDevice(device, deviceSession);
   if (openTimelineAgent(event.target)) return;
   if (view === 'board' && cardDrag.begin(event)) return;
   const sessionId: string | undefined = cardSessionAt(event.target);
   if (sessionId !== undefined) toggleSheet(sessionId);
+});
+
+// A card's device icon on Orbit Web copies the address a phone can open, from what the last poll found.
+viewRoot.addEventListener('click', (event: MouseEvent): void => {
+  if (!isWebHost()) return;
+  const device: CardDeviceKind | null = cardDeviceAt(event.target);
+  const deviceSession: string | undefined = device === null ? undefined : cardSessionAt(event.target);
+  if (device !== null && deviceSession !== undefined) copyDeviceAddress(device, boardDevices.devicesOf(deviceSession));
 });
 
 viewRoot.addEventListener('contextmenu', (event: MouseEvent): void => {

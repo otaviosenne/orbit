@@ -3,8 +3,8 @@ import { BoardDevices, sameDevices } from '../src/renderer/board/board-devices';
 import type { ChatDevices } from '../src/shared/types';
 
 const NONE: ChatDevices = { emulator: null, browser: null };
-const PIXEL: ChatDevices = { emulator: { label: 'Pixel_6a_2:5558' }, browser: null };
-const CHECKOUT: ChatDevices = { emulator: null, browser: { title: 'Checkout', url: 'http://localhost:5173/checkout' } };
+const PIXEL: ChatDevices = { emulator: { label: 'Pixel_6a_2:5558', metroPort: null, publicUrl: null }, browser: null };
+const CHECKOUT: ChatDevices = { emulator: null, browser: { title: 'Checkout', url: 'http://localhost:5173/checkout', publicUrl: null } };
 // Past the store's pause between two questions about the same chat.
 const LATER_MS: number = 10_000;
 
@@ -106,10 +106,11 @@ describe('BoardDevices', () => {
 });
 
 describe('sameDevices', () => {
-  it('compares the emulator label and the browser title and URL', () => {
-    expect(sameDevices(PIXEL, { emulator: { label: 'Pixel_6a_2:5558' }, browser: null })).toBe(true);
-    expect(sameDevices(PIXEL, { emulator: { label: 'Pixel_6a:5554' }, browser: null })).toBe(false);
-    expect(sameDevices(CHECKOUT, { emulator: null, browser: { title: 'Checkout', url: 'http://localhost:5173/' } })).toBe(false);
-    expect(sameDevices(NONE, { emulator: null, browser: { title: null, url: null } })).toBe(false);
+  it('compares the emulator label, the browser title and URL, and the addresses a phone copies', () => {
+    expect(sameDevices(PIXEL, { emulator: { label: 'Pixel_6a_2:5558', metroPort: null, publicUrl: null }, browser: null })).toBe(true);
+    expect(sameDevices(PIXEL, { emulator: { label: 'Pixel_6a:5554', metroPort: null, publicUrl: null }, browser: null })).toBe(false);
+    expect(sameDevices(CHECKOUT, { emulator: null, browser: { title: 'Checkout', url: 'http://localhost:5173/', publicUrl: null } })).toBe(false);
+    expect(sameDevices(NONE, { emulator: null, browser: { title: null, url: null, publicUrl: null } })).toBe(false);
+    expect(sameDevices(PIXEL, { emulator: { label: 'Pixel_6a_2:5558', metroPort: 8081, publicUrl: 'https://8081.example.com' }, browser: null })).toBe(false);
   });
 });

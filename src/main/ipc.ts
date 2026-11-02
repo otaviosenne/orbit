@@ -20,10 +20,10 @@ export interface RadarServices extends RouteServices {
 
 // The shared routes answer every channel Orbit Web can also call; the rest below belong to the desktop window alone
 // (see REMOTE_ACCESS in shared/remote-access.ts).
-export function registerIpcHandlers({ radar, dictation }: RadarServices, routes: SharedRoutes): void {
+export function registerIpcHandlers({ devices, dictation }: RadarServices, routes: SharedRoutes): void {
   registerRoutes(routes);
   registerDesktopHandlers();
-  registerDeviceHandlers(radar);
+  registerDeviceHandlers(devices);
   registerDictationHandlers(dictation);
 }
 

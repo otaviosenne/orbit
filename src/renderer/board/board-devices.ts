@@ -64,6 +64,13 @@ export class BoardDevices {
   }
 }
 
+// The addresses count too: a Metro that comes up later changes what the phone copies, and the tip that shows it.
 export function sameDevices(a: ChatDevices, b: ChatDevices): boolean {
-  return a.emulator?.label === b.emulator?.label && a.browser?.title === b.browser?.title && a.browser?.url === b.browser?.url;
+  return (
+    a.emulator?.label === b.emulator?.label &&
+    a.emulator?.publicUrl === b.emulator?.publicUrl &&
+    a.browser?.title === b.browser?.title &&
+    a.browser?.url === b.browser?.url &&
+    a.browser?.publicUrl === b.browser?.publicUrl
+  );
 }

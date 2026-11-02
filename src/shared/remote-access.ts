@@ -64,8 +64,9 @@ export const REMOTE_ACCESS = {
   AnswerSettingSwitch: 'chat',
   GetChatPermissions: 'read',
   SetPermissionMode: 'action',
-  // The emulator and browser buttons focus desktop windows, so the web hides them and needs none of the three.
-  GetChatDevices: 'desktop',
+  // The chat's emulator and Chrome tab, with the tunnel addresses Orbit Web copies for them; changes nothing.
+  GetChatDevices: 'read',
+  // Focusing moves windows on the desktop's screen; on the web the same buttons copy the address instead.
   FocusChatEmulator: 'desktop',
   ListOpenEmulators: 'desktop',
   // Ends processes on the desktop; too destructive for a lost phone.

@@ -3,16 +3,23 @@ import type { BrowserTabReference, DeviceReferences } from '../../core/devices/d
 import type { DesktopWindow } from '../../core/devices/desktop-window';
 import type { EmulatorWindow } from '../../core/devices/emulator-windows';
 import { emulatorLabel, pickEmulatorWindow } from '../../core/devices/emulator-windows';
+import { publicUrlOf } from '../../core/devices/public-url';
+import type { TunnelHosts } from '../../core/devices/tunnel-hosts';
 import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink } from '../../shared/types';
 import { BrowserLocator } from './browser-locator';
 import { DesktopWindowList, focusWindowAt } from './desktop-windows';
+import { MetroLocator } from './metro-locator';
+import { TunnelHostReader } from './tunnel-host-reader';
 
 export const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
 
-// Ties a chat's transcript to the emulator window and Chrome tab it worked with, and focuses them on request.
+// Ties a chat's transcript to the emulator window and Chrome tab it worked with, focuses them on request, and gives
+// the addresses Orbit Web copies for them.
 export class ChatDeviceService {
   private readonly windowList: DesktopWindowList = new DesktopWindowList();
   private readonly browser: BrowserLocator = new BrowserLocator(this.windowList);
+  private readonly metro: MetroLocator = new MetroLocator();
+  private readonly tunnel: TunnelHostReader = new TunnelHostReader();
 
   constructor(private readonly radar: ChatRadar) {}
 
@@ -20,8 +27,12 @@ export class ChatDeviceService {
   async devicesOf(sessionId: string): Promise<ChatDevices> {
     const references: DeviceReferences = await this.radar.deviceReferences(sessionId);
     if (references.emulators.length === 0 && references.browserTab === null) return NO_DEVICES;
-    const windows: DesktopWindow[] = await this.windowList.recent();
-    return { emulator: emulatorLink(references, windows), browser: await this.browserLink(references, windows) };
+    const [windows, hosts]: [DesktopWindow[], TunnelHosts] = await Promise.all([this.windowList.recent(), this.tunnel.hosts()]);
+    const [emulator, browser]: [EmulatorLink | null, BrowserLink | null] = await Promise.all([
+      this.emulatorLink(sessionId, references, windows, hosts),
+      this.browserLink(references, windows, hosts),
+    ]);
+    return { emulator, browser };
   }
 
   // Resolved again on click from a fresh window list: windows may have closed since the buttons were drawn.
@@ -38,14 +49,16 @@ export class ChatDeviceService {
     return references.browserTab === null ? 'missing' : this.browser.focus(references.browserTab);
   }
 
-  private async browserLink(references: DeviceReferences, windows: readonly DesktopWindow[]): Promise<BrowserLink | null> {
+  private async emulatorLink(sessionId: string, references: DeviceReferences, windows: readonly DesktopWindow[], hosts: TunnelHosts): Promise<EmulatorLink | null> {
+    const emulator: EmulatorWindow | null = pickEmulatorWindow(references.emulators, windows);
+    if (emulator === null) return null;
+    const metroPort: number | null = await this.metro.portOf(sessionId);
+    return { label: emulatorLabel(emulator), metroPort, publicUrl: metroPort === null ? null : (hosts.get(metroPort) ?? null) };
+  }
+
+  private async browserLink(references: DeviceReferences, windows: readonly DesktopWindow[], hosts: TunnelHosts): Promise<BrowserLink | null> {
     const tab: BrowserTabReference | null = references.browserTab;
     if (tab === null || !(await this.browser.mayBeOpen(tab, windows))) return null;
-    return { title: tab.title, url: tab.url };
+    return { title: tab.title, url: tab.url, publicUrl: publicUrlOf(tab.url, hosts) };
   }
-}
-
-function emulatorLink(references: DeviceReferences, windows: readonly DesktopWindow[]): EmulatorLink | null {
-  const emulator: EmulatorWindow | null = pickEmulatorWindow(references.emulators, windows);
-  return emulator === null ? null : { label: emulatorLabel(emulator) };
 }

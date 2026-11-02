@@ -408,14 +408,21 @@ export interface SkillEntry {
 // ---------- Devices a chat tests on (Android emulator, Claude in Chrome tab) ----------
 
 // The emulator window the chat used last that is still open, named "<avd>:<port>" like its window title.
+// metroPort is the Metro bundler the chat runs for it (null when none is found); publicUrl is that port's tunnel
+// address, which a phone can load the same app from (null when the port is not published).
 export interface EmulatorLink {
   readonly label: string;
+  readonly metroPort: number | null;
+  readonly publicUrl: string | null;
 }
 
 // The Claude in Chrome tab the chat used last; title is its last known title (null when never reported).
+// publicUrl is the address a phone can open: the tunnel address of a local page, or the URL itself for any other
+// page; null when the page is on a local port the tunnel does not publish.
 export interface BrowserLink {
   readonly title: string | null;
   readonly url: string | null;
+  readonly publicUrl: string | null;
 }
 
 // What the panel's Emulator and Browser buttons and the cards' device icons lead to; null hides that button.

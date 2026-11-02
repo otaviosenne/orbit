@@ -13,8 +13,9 @@ html, body { background: var(--web-window); }
 body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 
 /* ---------- Desktop-only controls (see REMOTE_ACCESS in src/shared/remote-access.ts) ---------- */
-/* Emulators, browser tabs and saved folders stay at the desk; Go to chat and New window act on the desktop's screen */
-#sheet-devices, .new-chat-add, .new-chat-separator { display: none !important; }
+/* Saved folders stay at the desk; Go to chat and New window act on the desktop's screen. The emulator and browser
+   pills stay: on the web they copy the address a phone can open (src/renderer/board/device-copy.ts) */
+.new-chat-add, .new-chat-separator { display: none !important; }
 /* The phone's own back button, shown only on narrow screens */
 .web-sheet-back { display: none; }
 
@@ -102,6 +103,10 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   .web-sheet-back svg { width: 18px; height: 18px; }
   .sheet.is-agent .web-sheet-back { display: none; }
   .sheet-name { font-size: 17px; }
+  /* Emulator and Browser as finger-sized icons side by side: their words would squeeze the chat's name */
+  .sheet-devices { flex: 0 0 auto; flex-direction: row; gap: 6px; min-width: 0; padding-top: 0; }
+  .device-link { min-width: 0; width: 36px; height: 36px; padding: 0; font-size: 0; border-radius: 10px; }
+  .device-link svg { width: 18px; height: 18px; }
   /* A card's menu rises from the bottom like a phone's action sheet, instead of at the finger (it sets its own
      left/top inline, hence !important) */
   .card-menu:not(.app-menu) {

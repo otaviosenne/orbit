@@ -16,6 +16,7 @@ import { registerIpcHandlers } from './ipc';
 import type { RadarServices } from './ipc';
 import { startRemoteAccess } from './remote/start-remote';
 import { buildSharedRoutes } from './routes/shared-routes';
+import { ChatDeviceService } from './devices/chat-devices';
 import type { SharedRoutes } from './routes/shared-routes';
 import { claimSingleInstance } from './single-instance';
 import { createRadarWindow } from './window';
@@ -43,7 +44,7 @@ async function start(): Promise<void> {
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);
   const boardState: BoardStateStore = new BoardStateStore(join(app.getPath('userData'), BOARD_STATE_FILE));
-  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), computer: new Computer(), pastChats, timelineHistory, resources: new ResourceSampler(), boardState };
+  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), computer: new Computer(), devices: new ChatDeviceService(radar), pastChats, timelineHistory, resources: new ResourceSampler(), boardState };
   // One table answers the desktop window over IPC and Orbit Web over HTTP.
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);

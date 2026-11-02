@@ -40,7 +40,6 @@ import type { RemoteCall } from './remote-caller';
 
 const DESKTOP_ONLY: string = 'Only available in the desktop app';
 const DESKTOP_ONLY_RESULT: ActionResult = { ok: false, method: null, error: DESKTOP_ONLY };
-const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
 
 // The dictation steps window.radar needs; RemoteDictation carries them over Orbit Web's dictation socket.
 export type RemoteVoice = Pick<RemoteDictation, 'prepare' | 'start' | 'feed' | 'finish' | 'cancel' | 'onTranscript'>;
@@ -108,8 +107,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     answerSettingSwitch: (pid: number, accept: boolean): Promise<ActionResult> => call('AnswerSettingSwitch', [pid, accept]),
     getChatPermissions: (sessionId: string): Promise<ChatPermissions> => call('GetChatPermissions', [sessionId]),
     setPermissionMode: (sessionId: string, mode: CycledPermissionMode): Promise<ActionResult> => call('SetPermissionMode', [sessionId, mode]),
-    // No device buttons on the web: they focus windows on the desktop.
-    getChatDevices: (): Promise<ChatDevices> => Promise.resolve(NO_DEVICES),
+    // The device buttons show on the web too, but copy the device's address: focusing moves the desktop's windows.
+    getChatDevices: (sessionId: string): Promise<ChatDevices> => call('GetChatDevices', [sessionId]),
     focusChatEmulator: (): Promise<DeviceFocus> => Promise.resolve('missing'),
     listOpenEmulators: (): Promise<string[]> => Promise.resolve([]),
     closeAllEmulators: (): Promise<number> => Promise.resolve(0),

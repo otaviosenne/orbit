@@ -3,7 +3,7 @@ import type { RemoteChannel } from '../../shared/remote-access';
 import { REMOTE_ACCESS } from '../../shared/remote-access';
 import type { Route } from '../../shared/ipc-routing';
 import { isSessionId } from '../../shared/session-id';
-import type { AttachmentBlob, ChatSnapshot, ClosedChatActivity, LauncherEntry, PastChat, QuestionPicker, ShellOutput, TranscriptItem, TurnProgress, UsageSnapshot } from '../../shared/types';
+import type { AttachmentBlob, ChatDevices, ChatSnapshot, ClosedChatActivity, LauncherEntry, PastChat, QuestionPicker, ShellOutput, TranscriptItem, TurnProgress, UsageSnapshot } from '../../shared/types';
 import { readAttachment } from '../attachment-reader';
 import { listLaunchers } from '../launcher';
 import { readQuestionPicker } from '../questions/chat-picker';
@@ -12,13 +12,14 @@ import type { BoardState } from '../../shared/board-state';
 import type { ComputerStatus } from '../../shared/computer';
 import type { RouteServices } from './route-services';
 import { textArg } from './route-args';
+import { NO_DEVICES } from '../devices/chat-devices';
 
 type ReadChannel = { [K in RemoteChannel]: (typeof REMOTE_ACCESS)[K] extends 'read' ? K : never }[RemoteChannel];
 // The chat settings popover's reads live with its actions in chat-settings-routes.ts.
 type SettingsRead = 'GetChatSettings' | 'ListSkills' | 'ListMcpServers' | 'GetChatPermissions';
 
 // Session ids are searched for as file names, so anything but a real one gets an empty answer.
-export function readRoutes({ radar, usage, pastChats, timelineHistory, resources, boardState, computer }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
+export function readRoutes({ radar, usage, pastChats, timelineHistory, resources, boardState, computer, devices }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
   return {
     GetChats: (): Promise<ChatSnapshot[]> => radar.chats(),
     GetTranscript: (sessionId: unknown, limit: unknown): Promise<TranscriptItem[]> =>
@@ -41,5 +42,7 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetChatResources: (): Promise<ResourceSnapshot> => resources.snapshot(),
     GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => boardState.get(knownVersion),
     GetComputerStatus: (): Promise<ComputerStatus> => computer.status(),
+    GetChatDevices: (sessionId: unknown): Promise<ChatDevices> =>
+      isSessionId(sessionId) ? devices.devicesOf(sessionId) : Promise.resolve(NO_DEVICES),
   };
 }

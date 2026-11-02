@@ -1,5 +1,6 @@
 import type { ChatWindows } from '../chat-windows';
 import type { Computer } from '../computer/computer';
+import type { ChatDeviceService } from '../devices/chat-devices';
 import type { BoardStateStore } from '../board-state/board-state-store';
 import type { ChatRadar } from '../../core/chat-radar';
 import type { ResourceSampler } from '../../core/resources/resource-sampler';
@@ -17,4 +18,5 @@ export interface RouteServices {
   readonly boardState: BoardStateStore;
   readonly chatWindows: ChatWindows;
   readonly computer: Computer;
+  readonly devices: ChatDeviceService;
 }
