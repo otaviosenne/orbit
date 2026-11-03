@@ -9,7 +9,7 @@ function commandOf(text: string): VoiceCommand | null {
   return parseVoiceCommand(text, FINAL)?.command ?? null;
 }
 
-const MISHEARD: readonly string[] = ['arbit', 'Arbit', 'orbitt', 'orbite', 'orbita', 'urbit', 'orbit,', 'arbitinho', 'arbitrinho', 'orbiting', 'rbt', 'orbchain', 'Orbichain', 'or bit', 'ar bit', 'orb it'];
+const MISHEARD: readonly string[] = ['arbit', 'Arbit', 'orbitt', 'orbite', 'orbita', 'urbit', 'orbit,', 'arbitinho', 'arbitrinho', 'orbiting', 'rbt', 'orbchain', 'Orbichain', 'or bit', 'ar bit', 'orb it', 'Rabbit', 'rabit'];
 
 describe('the wake word', () => {
   it.each(MISHEARD)('"%s" is read as Orbit', (word: string) => {
@@ -32,9 +32,31 @@ describe('the wake word', () => {
   });
 
   it('leaves ordinary words alone', () => {
-    for (const word of ['habit', 'bit', 'orbital', 'arbitrary', 'arbitration', 'rabbit']) expect(isWakeWord(word)).toBe(false);
+    for (const word of ['habit', 'bit', 'orbital', 'arbitrary', 'arbitration']) expect(isWakeWord(word)).toBe(false);
     expect(commandOf('a bad habit board')).toBeNull();
     expect(commandOf('it is arbitrary board')).toBeNull();
+    expect(commandOf('vamos orbitar')).toBeNull();
+    expect(commandOf('a arbitragem')).toBeNull();
+  });
+
+  it.each<[string, VoiceCommand]>([
+    ['RabbitMute.', { action: 'mute' }],
+    ['Arbitmute', { action: 'mute' }],
+    ['arbitmulti', { action: 'mute' }],
+    ['Orbitunmute', { action: 'unmute' }],
+    ['arbitboard', { action: 'view', view: 'board' }],
+    ['Rabbitlist', { action: 'view', view: 'list' }],
+    ['arbitinhosuspende', { action: 'suspend' }],
+    ['arbitlinha do tempo', { action: 'view', view: 'timeline' }],
+    ['arbitchat 3', { action: 'choose', number: 3 }],
+    ['arbit3', { action: 'choose', number: 3 }],
+    ['Arbitinvr', { action: 'send' }],
+  ])('"%s", the name glued to the command, works like the spaced one', (text: string, command: VoiceCommand) => {
+    expect(commandOf(text)).toEqual(command);
+  });
+
+  it('keeps the draft before a glued command', () => {
+    expect(parseVoiceCommand('corrige o bug. Arbitmute', FINAL)).toEqual({ command: { action: 'mute' }, remainder: 'corrige o bug' });
   });
 });
 
