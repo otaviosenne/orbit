@@ -3,6 +3,8 @@ import type { BrowserTabReference, DeviceReferences } from '../../core/devices/d
 import type { DesktopWindow } from '../../core/devices/desktop-window';
 import type { EmulatorWindow } from '../../core/devices/emulator-windows';
 import { emulatorLabel, pickEmulatorWindow } from '../../core/devices/emulator-windows';
+import { metroAppName } from '../../core/devices/metro-app-name';
+import type { MetroServer } from '../../core/devices/metro-port';
 import { publicUrlOf } from '../../core/devices/public-url';
 import type { TunnelHosts } from '../../core/devices/tunnel-hosts';
 import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink } from '../../shared/types';
@@ -52,8 +54,9 @@ export class ChatDeviceService {
   private async emulatorLink(sessionId: string, references: DeviceReferences, windows: readonly DesktopWindow[], hosts: TunnelHosts): Promise<EmulatorLink | null> {
     const emulator: EmulatorWindow | null = pickEmulatorWindow(references.emulators, windows);
     if (emulator === null) return null;
-    const metroPort: number | null = await this.metro.portOf(sessionId);
-    return { label: emulatorLabel(emulator), metroPort, publicUrl: metroPort === null ? null : (hosts.get(metroPort) ?? null) };
+    const metro: MetroServer | null = await this.metro.serverOf(sessionId, emulator.port);
+    if (metro === null) return { label: emulatorLabel(emulator), metroPort: null, metroApp: null, publicUrl: null };
+    return { label: emulatorLabel(emulator), metroPort: metro.port, metroApp: metroAppName(metro.folder), publicUrl: hosts.get(metro.port) ?? null };
   }
 
   private async browserLink(references: DeviceReferences, windows: readonly DesktopWindow[], hosts: TunnelHosts): Promise<BrowserLink | null> {

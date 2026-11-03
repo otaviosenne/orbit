@@ -1,20 +1,13 @@
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 import type { DesktopWindow } from '../../core/devices/desktop-window';
 import type { EmulatorWindow } from '../../core/devices/emulator-windows';
 import { emulatorLabel, emulatorWindows } from '../../core/devices/emulator-windows';
 import { runCommand } from '../run-command';
+import { adbPath } from './adb-path';
 
 export type CommandRunner = (command: string, args: readonly string[]) => Promise<string>;
 
 export interface WindowSource {
   fresh(): Promise<DesktopWindow[]>;
-}
-
-// Where the SDK puts adb when it is not on Orbit's PATH, which comes from the compositor and not from a shell profile.
-function adbPath(): string {
-  const sdk: string = process.env['ANDROID_HOME'] ?? process.env['ANDROID_SDK_ROOT'] ?? join(homedir(), 'Android', 'Sdk');
-  return join(sdk, 'platform-tools', 'adb');
 }
 
 // Lists and shuts down the Android emulators open on the desktop, for "pause everything" to quiet the machine.

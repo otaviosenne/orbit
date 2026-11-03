@@ -7,7 +7,7 @@ const DEMO_DEVICES: ReadonlyMap<string, ChatDevices> = new Map([
   [
     '9d3b6e1f-4c8a-4f2e-a7d9-1c5e8b3f6a20',
     {
-      emulator: { label: 'Pixel_8_API_35:5554', metroPort: 8081, publicUrl: 'https://8081.example.com' },
+      emulator: { label: 'Pixel_8_API_35:5554', metroPort: 8081, metroApp: 'mobile', publicUrl: 'https://8081.example.com' },
       browser: { title: 'Notifications · Acme Console', url: 'http://localhost:3000/notifications', publicUrl: 'https://3000.example.com/notifications' },
     },
   ],

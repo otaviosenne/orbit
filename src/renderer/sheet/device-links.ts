@@ -103,7 +103,14 @@ const BROWSER_OUTCOMES: FocusMessages = {
 };
 
 export function emulatorLines(emulator: EmulatorLink): string[] {
-  return [emulator.label, ...(emulator.publicUrl === null ? [] : [emulator.publicUrl])];
+  return [emulator.label, ...metroLines(emulator)];
+}
+
+// Which Metro the emulator loads from, named by its folder: worktrees of one repo each run their own.
+function metroLines(emulator: EmulatorLink): string[] {
+  if (emulator.metroPort === null) return ['No Metro found'];
+  const metro: string = `Metro ${emulator.metroPort}${emulator.metroApp === null ? '' : ` · ${emulator.metroApp}`}`;
+  return emulator.publicUrl === null ? [metro, 'Not published by the tunnel'] : [metro, emulator.publicUrl];
 }
 
 export function browserLines(browser: BrowserLink): string[] {

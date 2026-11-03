@@ -68,6 +68,8 @@ export class BoardDevices {
 export function sameDevices(a: ChatDevices, b: ChatDevices): boolean {
   return (
     a.emulator?.label === b.emulator?.label &&
+    a.emulator?.metroPort === b.emulator?.metroPort &&
+    a.emulator?.metroApp === b.emulator?.metroApp &&
     a.emulator?.publicUrl === b.emulator?.publicUrl &&
     a.browser?.title === b.browser?.title &&
     a.browser?.url === b.browser?.url &&

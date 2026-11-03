@@ -3,7 +3,7 @@ import { deviceCopy } from '../src/renderer/board/device-copy';
 import type { DeviceCopy } from '../src/renderer/board/device-copy';
 import type { ChatDevices } from '../src/shared/types';
 
-const PIXEL: ChatDevices['emulator'] = { label: 'Pixel_8:5554', metroPort: 8081, publicUrl: 'https://8081.example.com' };
+const PIXEL: ChatDevices['emulator'] = { label: 'Pixel_8:5554', metroPort: 8081, metroApp: 'mobile', publicUrl: 'https://8081.example.com' };
 
 describe('device copy on Orbit Web', () => {
   it('copies the Metro tunnel address for the emulator', () => {
