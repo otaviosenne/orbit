@@ -27,11 +27,12 @@ export function runVoiceCommand(input: HTMLTextAreaElement, isFinal: boolean): b
   return true;
 }
 
-// While muted, hands-free writes into a scratch field that nobody sees, and only "Orbit unmute" is heard there: no
-// send, no navigation, nothing else said reaches the app.
+// While muted, hands-free writes into a scratch field that nobody sees, and only the mute phrases are heard there: no
+// send, no navigation, nothing else said reaches the app. "Orbit mute" toggles, so saying it again unmutes too; dictation
+// mishears "unmute" far more often than "mute".
 export function runMutedVoiceCommand(input: HTMLTextAreaElement, isFinal: boolean): boolean {
   const spoken: SpokenCommand | null = parseVoiceCommand(input.value, { isSelectorOpen: false, isFinal });
-  if (spoken?.command.action !== 'unmute') return false;
+  if (spoken?.command.action !== 'unmute' && spoken?.command.action !== 'mute') return false;
   return setMute(input, '', false);
 }
 

@@ -1,5 +1,5 @@
-// "Orbit mute" keeps the microphone on but stops listening to anything except "Orbit unmute"; only a spoken command
-// changes it, so a hand on the keyboard never unmutes by accident. One state for the whole window, like the mic.
+// "Orbit mute" keeps the microphone on but stops listening to anything except "Orbit unmute" or "Orbit mute" again (a
+// toggle, voice-command-runner.ts); only a spoken command changes it, so a hand on the keyboard never unmutes by accident. One state for the whole window, like the mic.
 type MuteListener = (muted: boolean) => void;
 
 let muted: boolean = false;

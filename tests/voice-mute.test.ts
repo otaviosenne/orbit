@@ -90,4 +90,13 @@ describe('running mute', () => {
     expect(runMutedVoiceCommand(inputWith('blá blá Orbit desmulti', sent), true)).toBe(true);
     expect(isVoiceMuted()).toBe(false);
   });
+
+  it('while muted, Orbit mute again unmutes: it toggles', async () => {
+    const { runMutedVoiceCommand } = await import('../src/renderer/sheet/voice/voice-command-runner');
+    setVoiceMuted(true);
+    const input: HTMLTextAreaElement = inputWith('Orbit multi');
+    expect(runMutedVoiceCommand(input, true)).toBe(true);
+    expect(input.value).toBe('');
+    expect(isVoiceMuted()).toBe(false);
+  });
 });
