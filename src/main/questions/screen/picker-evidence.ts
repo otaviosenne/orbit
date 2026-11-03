@@ -58,6 +58,8 @@ function showsCutReviewRows(shown: string): boolean {
 // True only on positive evidence that the picker on screen asks something else than this set.
 export function contradictsSet(view: QuestionPicker | null, questions: readonly Question[]): boolean {
   if (view === null || view.kind === 'unreadable' || view.kind === 'set') return false;
+  // A permission prompt in front of the question set is not the set.
+  if (view.kind === 'permission') return true;
   const headers: string[] = questions.map((question: Question) => question.header);
   if (view.tabs.length > 0 && view.tabs.some((tab, index: number) => squeeze(tab.header) !== squeeze(headers[index] ?? ''))) return true;
   if (view.kind === 'question') return !questions.some((question: Question) => sameText(question.question, view.question));

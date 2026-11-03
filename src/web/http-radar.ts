@@ -97,6 +97,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     answerQuestionSet: (sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> =>
       call('AnswerQuestionSet', [sessionId, questionId, answers]),
     declineQuestion: (sessionId: string): Promise<ActionResult> => call('DeclineQuestion', [sessionId]),
+    answerPermission: (sessionId: string, fingerprint: string, option: number): Promise<ActionResult> => call('AnswerPermission', [sessionId, fingerprint, option]),
     stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => call('StopAgent', [sessionId, agentId]),
     getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => call('GetShellOutput', [sessionId, taskId]),
     interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => call('InterruptShell', [sessionId, taskId]),

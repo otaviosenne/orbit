@@ -11,6 +11,7 @@ import { openLauncher } from '../launcher';
 import { answerQuestion, submitAnswers } from '../questions/question-answerer';
 import { answerQuestionSet } from '../questions/set-answerer';
 import { declineQuestion } from '../questions/question-decliner';
+import { answerPermission } from '../questions/permission-answerer';
 import { failure } from '../terminal-input';
 import { closeChat } from '../chat-closer';
 import { restartChat } from '../chat-restarter';
@@ -35,6 +36,7 @@ type ActionChannel =
   | 'SubmitAnswers'
   | 'AnswerQuestionSet'
   | 'DeclineQuestion'
+  | 'AnswerPermission'
   | 'StopAgent'
   | 'InterruptShell'
   | 'SetBoardState'
@@ -79,6 +81,8 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     AnswerQuestionSet: (sessionId: unknown, questionId: unknown, answers: unknown): Promise<ActionResult> =>
       answerQuestionSet(radar, sessionId, questionId, answers),
     DeclineQuestion: (sessionId: unknown): Promise<ActionResult> => declineQuestion(radar, sessionId),
+    AnswerPermission: (sessionId: unknown, fingerprint: unknown, option: unknown): Promise<ActionResult> =>
+      answerPermission(radar, sessionId, fingerprint, option),
     StopAgent: (sessionId: unknown, agentId: unknown): Promise<ActionResult> => stopAgent(radar, sessionId, agentId),
     InterruptShell: (sessionId: unknown, taskId: unknown): Promise<ActionResult> => interruptShell(radar, sessionId, taskId),
   };

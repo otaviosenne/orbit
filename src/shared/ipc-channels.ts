@@ -34,6 +34,7 @@ export const IpcChannel = {
   SubmitAnswers: 'radar:submit-answers',
   AnswerQuestionSet: 'radar:answer-question-set',
   DeclineQuestion: 'radar:decline-question',
+  AnswerPermission: 'radar:answer-permission',
   StopAgent: 'radar:stop-agent',
   GetShellOutput: 'radar:get-shell-output',
   InterruptShell: 'radar:interrupt-shell',

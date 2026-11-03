@@ -85,6 +85,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   AnswerQuestion: (): ActionResult => DONE,
   SubmitAnswers: (): ActionResult => DONE,
   AnswerQuestionSet: (): ActionResult => DONE,
+  AnswerPermission: (): ActionResult => DONE,
   DeclineQuestion: (): ActionResult => DONE,
   StopAgent: (): ActionResult => DONE,
   GetShellOutput: (): null => null,

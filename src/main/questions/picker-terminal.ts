@@ -25,6 +25,11 @@ export class PickerTerminal {
     return runCommand('kitty', [...this.target, 'get-text', '--ansi']);
   }
 
+  // The scrollback too, without colors: a permission prompt for a long command or edit starts above the screen.
+  history(): Promise<string> {
+    return runCommand('kitty', [...this.target, 'get-text', '--extent', 'all']);
+  }
+
   // Without colors, for screens read by their text alone.
   plainScreen(): Promise<string> {
     return runCommand('kitty', [...this.target, 'get-text']);

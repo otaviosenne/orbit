@@ -11,6 +11,8 @@ export interface PickerActions {
   answer(fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   submit(fingerprint: string): Promise<ActionResult>;
   answerSet(questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
+  // Picks a numbered answer of a permission prompt.
+  answerPermission(fingerprint: string, option: number): Promise<ActionResult>;
   // Dismisses the question without an answer, as Esc does in the chat window.
   decline(): Promise<ActionResult>;
   // Called after a successful step so the next tab (or the answered summary) shows without waiting for a poll.

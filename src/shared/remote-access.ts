@@ -53,6 +53,7 @@ export const REMOTE_ACCESS = {
   SubmitAnswers: 'action',
   AnswerQuestionSet: 'action',
   DeclineQuestion: 'action',
+  AnswerPermission: 'action',
   StopAgent: 'action',
   GetShellOutput: 'read',
   // The route finds the command's processes itself, from the session and task ids, under that chat only.

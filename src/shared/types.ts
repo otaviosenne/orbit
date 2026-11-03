@@ -239,7 +239,29 @@ export interface PickerSetView {
   readonly questions: readonly Question[];
 }
 
-export type QuestionPicker = PickerQuestionView | PickerReviewView | PickerUnreadableView | PickerSetView;
+// A tool permission prompt ("Bash command", "Edit file"), read off the chat's terminal: what the tool wants to do,
+// the safety warnings Claude Code added, and the numbered answers it offers.
+export interface PickerPermissionView {
+  readonly kind: 'permission';
+  // Identifies the prompt on screen, so an answer never lands on a different one than the one shown.
+  readonly fingerprint: string;
+  // "Bash command · from the general-purpose agent"; null when it scrolled out of the terminal.
+  readonly title: string | null;
+  readonly description: string | null;
+  // The command, or the edit, as Claude Code shows it.
+  readonly detail: string | null;
+  // Claude Code's safety warnings ("Dangerous rm operation…") and notices ("will automatically block…").
+  readonly warnings: readonly string[];
+  readonly question: string;
+  readonly options: readonly PermissionOption[];
+}
+
+export interface PermissionOption {
+  readonly number: number;
+  readonly label: string;
+}
+
+export type QuestionPicker = PickerQuestionView | PickerReviewView | PickerUnreadableView | PickerSetView | PickerPermissionView;
 
 export type TranscriptItem = MessageItem | ToolItem | PeerItem | NoticeItem | TurnItem | QuestionItem;
 
@@ -500,6 +522,8 @@ export interface RadarApi {
   getQuestionPicker(sessionId: string): Promise<QuestionPicker | null>;
   // Answers the question on screen (matched by fingerprint); a lone question resolves once the chat recorded it.
   answerQuestion(sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
+  // Picks a numbered answer of the permission prompt on screen (matched by fingerprint); resolves once it went away.
+  answerPermission(sessionId: string, fingerprint: string, option: number): Promise<ActionResult>;
   // Answers every question of a set (PickerSetView) in the terminal and submits; resolves once the chat recorded it.
   answerQuestionSet(sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
   // Dismisses the waiting question without an answer, as Esc does in the chat's terminal.

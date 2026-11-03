@@ -4,6 +4,7 @@ import { findTerminalWindowPid } from '../terminal-window';
 import { PickerTerminal } from './picker-terminal';
 import type { QuestionSource } from './question-lookup';
 import { pendingQuestion } from './question-lookup';
+import { parsePermission } from './screen/permission-parser';
 import { parsePicker } from './screen/picker-parser';
 
 export type PickerAccess = { readonly ok: true; readonly terminal: PickerTerminal } | { readonly ok: false; readonly error: string };
@@ -26,7 +27,8 @@ export async function readQuestionPicker(source: QuestionSource, sessionId: unkn
     const pending: QuestionItem | null = await pendingQuestion(source, sessionId as string);
     if (pending !== null) return setView(pending);
     const access: PickerAccess = await pickerAccess(source, sessionId);
-    return access.ok ? parsePicker(await access.terminal.screen()) : null;
+    if (!access.ok) return null;
+    return parsePicker(await access.terminal.screen()) ?? parsePermission(await access.terminal.history());
   } catch (error: unknown) {
     console.error('Could not read the question picker:', error);
     return null;
