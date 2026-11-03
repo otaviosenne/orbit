@@ -1,4 +1,4 @@
-import type { AttachmentUpload, PauseTarget } from '../../shared/types';
+import type { AttachmentUpload, ContinueTarget, PauseTarget } from '../../shared/types';
 
 // A chat is named by its Claude Code process id: always a positive whole number.
 export function isPid(value: unknown): value is number {
@@ -20,8 +20,15 @@ function isAttachment(value: unknown): value is AttachmentUpload {
   return typeof candidate['name'] === 'string' && typeof candidate['mediaType'] === 'string' && candidate['bytes'] instanceof Uint8Array;
 }
 
-export function isPidList(value: unknown): value is number[] {
-  return Array.isArray(value) && value.every(isPid);
+export function isContinueTargets(value: unknown): value is ContinueTarget[] {
+  return Array.isArray(value) && value.every(isContinueTarget);
+}
+
+function isContinueTarget(value: unknown): value is ContinueTarget {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate: Record<string, unknown> = value as Record<string, unknown>;
+  const emulator: unknown = candidate['emulator'];
+  return isPid(candidate['pid']) && typeof candidate['resumesWork'] === 'boolean' && (emulator === null || typeof emulator === 'string');
 }
 
 export function isPauseTargets(value: unknown): value is PauseTarget[] {

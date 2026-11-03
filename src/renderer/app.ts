@@ -34,6 +34,8 @@ import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
 import { ChatPause } from './pause/chat-pause';
+import { ClosedEmulators } from './pause/closed-emulators';
+import type { EmulatorApi } from './pause/pause-flow';
 import { EmulatorPrompt } from './pause/emulator-prompt';
 import { pauseEverything } from './pause/pause-flow';
 import { restartIdleChats, showRestartReport } from './restart/restart-idle';
@@ -141,7 +143,16 @@ const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore(!isWebHost());
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory();
-const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar);
+const closedEmulators: ClosedEmulators = new ClosedEmulators();
+const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar, Date.now, closedEmulators);
+// Which chat used which emulator is noted just before they close, so Continue can ask each chat to open its own again.
+const pauseEmulators: EmulatorApi = {
+  listOpenEmulators: (): Promise<string[]> => window.radar.listOpenEmulators(),
+  closeAllEmulators: async (): Promise<number> => {
+    await closedEmulators.rememberOpen(chats, (sessionId: string) => window.radar.getChatDevices(sessionId));
+    return window.radar.closeAllEmulators();
+  },
+};
 const emulatorPrompt: EmulatorPrompt = new EmulatorPrompt();
 const cardOrder: CardOrder = new CardOrder();
 const suspension: ChatSuspension = new ChatSuspension({ close: closeChat, changed: (): void => showChats(), sharesSettled: !isWebHost() });
@@ -301,6 +312,7 @@ async function refreshChats(): Promise<void> {
   showChats();
   openChats.observe(chats, columnOfChat, Date.now());
   chatPause.settle(chats, Date.now());
+  closedEmulators.settle((sessionId: string): boolean => boardDevices.devicesOf(sessionId).emulator !== null, Date.now());
   chatPause.prune(knownSessionIds());
   // Only the board shows device icons, so other views do not ask about every chat's windows.
   if (view === 'board') void boardDevices.follow(chats.map((chat: ChatSnapshot) => chat.sessionId), Date.now());
@@ -762,7 +774,7 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   openInBrowser: (): void => void openWebInBrowser(),
   pairPhone: showRemoteSettings,
 }, {
-  pauseAll: (): void => void pauseEverything(chatPause, window.radar, (labels: readonly string[]) => emulatorPrompt.ask(labels)),
+  pauseAll: (): void => void pauseEverything(chatPause, pauseEmulators, (labels: readonly string[]) => emulatorPrompt.ask(labels)),
   continueAll: (): void => void chatPause.continueAll(),
   pausedCount: (): number => chatPause.pausedCount,
   restartIdle: (): void => void restartIdleChats(chats, (pid: number) => window.radar.restartChat(pid)).then(showRestartReport),

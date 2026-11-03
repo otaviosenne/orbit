@@ -40,7 +40,7 @@ export class EmulatorPrompt {
   ask(labels: readonly string[]): Promise<EmulatorAnswer> {
     this.answer('cancel');
     this.title.textContent = labels.length === 1 ? 'Close the emulator too?' : `Close the ${labels.length} emulators too?`;
-    this.note.textContent = `Open now: ${labels.join(', ')}. Closing shuts them down without saving their state.`;
+    this.note.textContent = `Open now: ${labels.join(', ')}. Closing shuts them down without saving their state; Continue asks each chat to open its own again.`;
     this.overlay.hidden = false;
     return new Promise((resolve: (answer: EmulatorAnswer) => void): void => {
       this.settle = resolve;

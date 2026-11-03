@@ -1,4 +1,5 @@
-import type { ChatSnapshot, PauseReport, PauseTarget } from '../../shared/types';
+import type { ChatSnapshot, ContinueTarget, PauseReport, PauseTarget } from '../../shared/types';
+import { ClosedEmulators } from './closed-emulators';
 import { isMidWork, pauseTargets } from './pause-targets';
 
 const STORAGE_KEY: string = 'orbit.paused-chats';
@@ -13,7 +14,7 @@ interface PausedChat {
 
 export interface PauseApi {
   pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;
-  continueChats(pids: readonly number[]): Promise<PauseReport>;
+  continueChats(targets: readonly ContinueTarget[]): Promise<PauseReport>;
 }
 
 // The chats told to stop. They are remembered across restarts: a paused chat is still waiting for its go-ahead after a
@@ -25,9 +26,10 @@ export class ChatPause {
     private readonly chats: () => readonly ChatSnapshot[],
     private readonly api: PauseApi,
     private readonly clock: () => number = Date.now,
+    private readonly emulators: ClosedEmulators = new ClosedEmulators(clock),
   ) {}
 
-  // The paused chats that are open now: the ones Continue can reach.
+  // The open chats Continue reaches: the paused ones and the ones whose emulator the pause closed.
   get pausedCount(): number {
     return this.pausedChats().length;
   }
@@ -41,15 +43,17 @@ export class ChatPause {
   }
 
   async continueAll(): Promise<void> {
-    const paused: ChatSnapshot[] = this.pausedChats();
-    if (paused.length === 0) return;
-    const report: PauseReport = await this.api.continueChats(paused.map((chat: ChatSnapshot) => chat.pid));
+    const waiting: ChatSnapshot[] = this.pausedChats();
+    if (waiting.length === 0) return;
+    const report: PauseReport = await this.api.continueChats(waiting.map((chat: ChatSnapshot) => this.continueTarget(chat)));
     this.remember(report.reached, false);
+    this.emulators.forget(waiting.filter((chat: ChatSnapshot) => report.reached.includes(chat.pid)).map((chat: ChatSnapshot) => chat.sessionId));
     if (report.skipped.length > 0) console.error(`Could not continue ${report.skipped.length} chat(s): no kitty remote control`);
   }
 
   // Forgets paused chats that are neither open nor remembered as left open: nothing can bring them back.
   prune(knownSessionIds: ReadonlySet<string>): void {
+    this.emulators.prune(knownSessionIds);
     const gone: string[] = [...this.paused.keys()].filter((sessionId: string) => !knownSessionIds.has(sessionId));
     if (gone.length === 0) return;
     gone.forEach((sessionId: string): boolean => this.paused.delete(sessionId));
@@ -74,7 +78,11 @@ export class ChatPause {
   }
 
   private pausedChats(): ChatSnapshot[] {
-    return this.chats().filter((chat: ChatSnapshot) => this.paused.has(chat.sessionId));
+    return this.chats().filter((chat: ChatSnapshot) => this.paused.has(chat.sessionId) || this.emulators.avdOf(chat.sessionId) !== null);
+  }
+
+  private continueTarget(chat: ChatSnapshot): ContinueTarget {
+    return { pid: chat.pid, resumesWork: this.paused.has(chat.sessionId), emulator: this.emulators.avdOf(chat.sessionId) };
   }
 
   private remember(pids: readonly number[], paused: boolean): void {

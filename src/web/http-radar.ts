@@ -11,6 +11,7 @@ import type {
   SettingResult,
   PauseReport,
   PauseTarget,
+  ContinueTarget,
   AttachmentBlob,
   AttachmentUpload,
   ChatDevices,
@@ -87,7 +88,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => call('AnswerApproval', [pid, answer]),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
     pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
-    continueChats: (pids: readonly number[]): Promise<PauseReport> => call('ContinueChats', [pids]),
+    continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => call('ContinueChats', [targets]),
     openChatWindow: (sessionId: string): Promise<void> => call('OpenChatWindow', [sessionId]),
     getQuestionPicker: (sessionId: string): Promise<QuestionPicker | null> => call('GetQuestionPicker', [sessionId]),
     answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>

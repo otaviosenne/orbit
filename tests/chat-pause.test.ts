@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatPause } from '../src/renderer/pause/chat-pause';
 import type { PauseApi } from '../src/renderer/pause/chat-pause';
-import type { ChatSnapshot, PauseReport, PauseTarget } from '../src/shared/types';
+import { ClosedEmulators } from '../src/renderer/pause/closed-emulators';
+import { continueMessage } from '../src/shared/pause-messages';
+import type { ChatDevices, ChatSnapshot, ContinueTarget, PauseReport, PauseTarget } from '../src/shared/types';
 
 let store: Map<string, string> = new Map();
 
@@ -12,8 +14,8 @@ function chat(sessionId: string, pid: number, status: ChatSnapshot['status'], la
   };
 }
 
-function api(skipped: readonly number[] = []): PauseApi & { paused: PauseTarget[][]; continued: number[][] } {
-  const calls: { paused: PauseTarget[][]; continued: number[][] } = { paused: [], continued: [] };
+function api(skipped: readonly number[] = []): PauseApi & { paused: PauseTarget[][]; continued: number[][]; targets: ContinueTarget[][] } {
+  const calls: { paused: PauseTarget[][]; continued: number[][]; targets: ContinueTarget[][] } = { paused: [], continued: [], targets: [] };
   const report = (pids: readonly number[]): PauseReport => ({ reached: pids.filter((pid: number) => !skipped.includes(pid)), skipped });
   return {
     ...calls,
@@ -21,8 +23,10 @@ function api(skipped: readonly number[] = []): PauseApi & { paused: PauseTarget[
       calls.paused.push([...targets]);
       return Promise.resolve(report(targets.map((target: PauseTarget) => target.pid)));
     },
-    continueChats: (pids: readonly number[]): Promise<PauseReport> => {
-      calls.continued.push([...pids]);
+    continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => {
+      const pids: number[] = targets.map((target: ContinueTarget) => target.pid);
+      calls.continued.push(pids);
+      calls.targets.push([...targets]);
       return Promise.resolve(report(pids));
     },
   };
@@ -141,5 +145,45 @@ describe('ChatPause settling', () => {
     chats.splice(0, 1, chat('a', 1, 'busy', 5));
     pause.settle(chats, AFTER_GRACE + 2000);
     expect(pause.pausedCount).toBe(0);
+  });
+
+  it('asks every chat whose emulator the pause closed to open it again, resting ones too', async () => {
+    const chats: ChatSnapshot[] = [chat('a', 1, 'busy'), chat('b', 2, 'idle'), chat('c', 3, 'idle')];
+    const calls = api();
+    let now: number = 1000;
+    const emulators: ClosedEmulators = new ClosedEmulators(() => now);
+    const pause: ChatPause = new ChatPause(() => chats, calls, () => now, emulators);
+    await pause.pauseAll();
+    const devices: Record<string, ChatDevices> = {
+      a: { emulator: { label: 'Pixel_6a_mux:5566', metroPort: 8081, metroApp: 'mux', publicUrl: null }, browser: null },
+      b: { emulator: { label: 'Pixel_6a_stories:5580', metroPort: null, metroApp: null, publicUrl: null }, browser: null },
+      c: { emulator: null, browser: null },
+    };
+    await emulators.rememberOpen(chats, (sessionId: string) => Promise.resolve(devices[sessionId] as ChatDevices));
+    expect(pause.pausedCount).toBe(2);
+    // The closed emulator still shows for a moment: that is not the chat reopening it.
+    emulators.settle(() => true, now + 1);
+    await pause.continueAll();
+    expect(calls.targets).toEqual([[
+      { pid: 1, resumesWork: true, emulator: 'Pixel_6a_mux' },
+      { pid: 2, resumesWork: false, emulator: 'Pixel_6a_stories' },
+    ]]);
+    expect(pause.pausedCount).toBe(0);
+  });
+
+  it('does not ask again once the chat opened its emulator by itself', async () => {
+    let now: number = 0;
+    const emulators: ClosedEmulators = new ClosedEmulators(() => now);
+    const chats: ChatSnapshot[] = [chat('b', 2, 'idle')];
+    await emulators.rememberOpen(chats, () => Promise.resolve({ emulator: { label: 'Pixel:5554', metroPort: null, metroApp: null, publicUrl: null }, browser: null }));
+    now = 60_000;
+    emulators.settle((sessionId: string) => sessionId === 'b', now);
+    expect(new ChatPause(() => chats, api(), () => now, emulators).pausedCount).toBe(0);
+  });
+
+  it('words the message for what the chat lost', () => {
+    expect(continueMessage(true, null)).toMatch(/^Continue:/);
+    expect(continueMessage(false, 'Pixel_6a')).toMatch(/^Orbit closed your Android emulator \(Pixel_6a\).*where it was\.$/);
+    expect(continueMessage(true, 'Pixel_6a')).toMatch(/^Continue:.*Pixel_6a/);
   });
 });

@@ -18,7 +18,7 @@ import { answerApproval } from '../approvals/approval-answerer';
 import { isApprovalAnswer } from '../../shared/approval';
 import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
-import { isAttachmentList, isPauseTargets, isPid, isPidList, textArg } from './route-args';
+import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, textArg } from './route-args';
 import type { RouteServices } from './route-services';
 
 type ActionChannel =
@@ -72,7 +72,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
       onChat(pid, (chat: number) => (isAttachmentList(uploads) ? sendMessage(chat, textArg(text), uploads) : Promise.resolve(NOT_IMAGES))),
     InterruptChat: (pid: unknown): Promise<ActionResult> => onChat(pid, interruptChat),
     PauseChats: (targets: unknown): Promise<PauseReport> => (isPauseTargets(targets) ? pauseChats(targets) : Promise.resolve(NOTHING_REACHED)),
-    ContinueChats: (pids: unknown): Promise<PauseReport> => (isPidList(pids) ? continueChats(pids) : Promise.resolve(NOTHING_REACHED)),
+    ContinueChats: (targets: unknown): Promise<PauseReport> => (isContinueTargets(targets) ? continueChats(targets) : Promise.resolve(NOTHING_REACHED)),
     AnswerQuestion: (sessionId: unknown, fingerprint: unknown, answer: unknown): Promise<ActionResult> =>
       answerQuestion(radar, sessionId, fingerprint, answer),
     SubmitAnswers: (sessionId: unknown, fingerprint: unknown): Promise<ActionResult> => submitAnswers(radar, sessionId, fingerprint),

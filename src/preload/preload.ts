@@ -14,6 +14,7 @@ import type {
   SettingResult,
   PauseReport,
   PauseTarget,
+  ContinueTarget,
   AttachmentBlob,
   AttachmentUpload,
   ChatPermissions,
@@ -83,7 +84,7 @@ const api: RadarApi = {
   answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerApproval, pid, answer),
   interruptChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptChat, pid),
   pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.PauseChats, targets),
-  continueChats: (pids: readonly number[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, pids),
+  continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, targets),
   openChatWindow: (sessionId: string): Promise<void> => ipcRenderer.invoke(IpcChannel.OpenChatWindow, sessionId),
   getQuestionPicker: (sessionId: string): Promise<QuestionPicker | null> => ipcRenderer.invoke(IpcChannel.GetQuestionPicker, sessionId),
   answerQuestion: (sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult> =>

@@ -7,6 +7,18 @@ export const PAUSE_MESSAGE: string =
 
 export const CONTINUE_MESSAGE: string = 'Continue: you can resume the work you paused. Restart anything you stopped if it is still needed.';
 
+// Sent with Continue to a chat whose emulator "Pause all chats" closed, even one that was resting: the emulator is part
+// of where it left off.
+export function reopenEmulatorMessage(avd: string): string {
+  return `Orbit closed your Android emulator (${avd}) while pausing. Open it again with its Metro running, `
+    + 'and leave the app on the screen where it was.';
+}
+
+export function continueMessage(resumesWork: boolean, emulator: string | null): string {
+  const parts: string[] = [...(resumesWork ? [CONTINUE_MESSAGE] : []), ...(emulator === null ? [] : [reopenEmulatorMessage(emulator)])];
+  return parts.join(' ');
+}
+
 // Sent to a chat Orbit restarted (to load new skills, MCP servers and settings) while it had work running.
 export const RESTART_CONTINUE_MESSAGE: string =
   'Continue: you were restarted to load new skills, MCP servers and settings, which cut off your turn and any running agent or background shell. '

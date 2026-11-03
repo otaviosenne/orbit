@@ -1,5 +1,5 @@
-import type { PauseReport, PauseTarget } from '../shared/types';
-import { CONTINUE_MESSAGE, PAUSE_MESSAGE } from '../shared/pause-messages';
+import type { ContinueTarget, PauseReport, PauseTarget } from '../shared/types';
+import { continueMessage, PAUSE_MESSAGE } from '../shared/pause-messages';
 import { interruptChat } from './chat-interrupt';
 import { hasKittySocket } from './kitty-remote';
 import { delay } from './run-command';
@@ -14,8 +14,13 @@ export async function pauseChats(targets: readonly PauseTarget[]): Promise<Pause
   return eachChat(targets.map((target: PauseTarget) => target.pid), (pid: number): Promise<boolean> => pauseOne(pid, interruptsFirst(targets, pid)));
 }
 
-export async function continueChats(pids: readonly number[]): Promise<PauseReport> {
-  return eachChat(pids, (pid: number): Promise<boolean> => say(pid, CONTINUE_MESSAGE));
+export async function continueChats(targets: readonly ContinueTarget[]): Promise<PauseReport> {
+  return eachChat(targets.map((target: ContinueTarget) => target.pid), (pid: number): Promise<boolean> => say(pid, messageFor(targets, pid)));
+}
+
+function messageFor(targets: readonly ContinueTarget[], pid: number): string {
+  const target: ContinueTarget | undefined = targets.find((candidate: ContinueTarget) => candidate.pid === pid);
+  return continueMessage(target?.resumesWork ?? true, target?.emulator ?? null);
 }
 
 function interruptsFirst(targets: readonly PauseTarget[], pid: number): boolean {

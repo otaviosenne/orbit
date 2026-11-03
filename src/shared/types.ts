@@ -14,6 +14,14 @@ export interface PauseTarget {
   readonly interrupt: boolean;
 }
 
+// A chat Continue reaches: resumesWork when it was paused mid-work; emulator is the AVD Orbit closed under it while
+// pausing (null when none), which it is asked to open again.
+export interface ContinueTarget {
+  readonly pid: number;
+  readonly resumesWork: boolean;
+  readonly emulator: string | null;
+}
+
 // Chats without remote control are skipped, not typed into: typing would steal the focus and mix keystrokes between windows.
 export interface PauseReport {
   readonly reached: readonly number[];
@@ -484,8 +492,8 @@ export interface RadarApi {
   interruptChat(pid: number): Promise<ActionResult>;
   // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.
   pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;
-  // Tells the paused chats to carry on.
-  continueChats(pids: readonly number[]): Promise<PauseReport>;
+  // Tells the paused chats to carry on, and the ones whose emulator was closed to open it again.
+  continueChats(targets: readonly ContinueTarget[]): Promise<PauseReport>;
   // Pops the chat out into its own window, or brings back the one it already has.
   openChatWindow(sessionId: string): Promise<void>;
   // The question picker on the chat's terminal right now; null when none is showing.
