@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { recentSamples, withSample } from '../src/core/usage-history-log';
-import { buildPaceModel, paceGap, readingAt } from '../src/renderer/usage/pace-model';
+import { buildPaceModel, momentAt, paceGap, readingAt } from '../src/renderer/usage/pace-model';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src/renderer/usage/work-schedule';
 import { GRID_PERCENTS } from '../src/renderer/usage/pace-chart';
 import { segmentsFor, usedSegments } from '../src/renderer/usage/pace-scale';
@@ -140,5 +140,16 @@ describe('pace scales', () => {
     expect(model.days.map((day) => day.label)).toHaveLength(2);
     expect(model.actualNow).toBe(12);
     expect(buildPaceModel(RESETS_AT, samples, at(24, 12)).showsPace).toBe(true);
+  });
+});
+
+describe('the moment under the pointer', () => {
+  it('walks the axis back to the clock, skipping nights and weekends on the work scale', () => {
+    const model = buildPaceModel(RESETS_AT, [], at(22, 12));
+    // Tuesday 09:00 to 18:00 is the first working day; a quarter of five working days is one and a quarter days in.
+    expect(momentAt(model, 0)).toBe(at(20, 9));
+    expect(momentAt(model, 1 / 5 / 2)).toBe(at(20, 13.5));
+    expect(momentAt(model, 1 / 4)).toBe(at(21, 11.25));
+    expect(readingAt(model, 1 / 5 / 2).moment).toMatch(/13:30/);
   });
 });

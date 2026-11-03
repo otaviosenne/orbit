@@ -29,6 +29,8 @@ export interface PaceModel {
   readonly showsPace: boolean;
   // The time the x axis spans, in milliseconds.
   readonly spanMs: number;
+  // The stretches of time the x axis is made of, to tell the moment at any point of it.
+  readonly segments: readonly WorkSegment[];
 }
 
 // The week's chart: the straight line of an even pace against what was really used, both over the scale's time.
@@ -47,6 +49,7 @@ export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[]
     isPast: now > resetsAt,
     showsPace: scale !== 'used',
     spanMs: total,
+    segments,
   };
 }
 
@@ -76,6 +79,8 @@ export interface PaceReading {
   // Null where no reading was taken: before the first one or after the last.
   readonly actual: number | null;
   readonly day: string | null;
+  // The moment at that point of the axis ("Tue 14:30"), as the clock read it.
+  readonly moment: string | null;
 }
 
 // What both lines say at a point of the week: the even pace and the usage the readings draw there.
@@ -84,7 +89,22 @@ export function readingAt(model: PaceModel, fraction: number): PaceReading {
     expected: fraction * FULL_PERCENT,
     actual: usageAt(model.actual, fraction),
     day: model.days.find((day: PaceDay) => fraction >= day.start && fraction <= day.end)?.label ?? null,
+    moment: momentLabel(model, fraction),
   };
+}
+
+// Walks the axis back to the clock: the segment holding that much elapsed time, and how far into it.
+export function momentAt(model: PaceModel, fraction: number): number | null {
+  const elapsed: number = fraction * model.spanMs;
+  const segment: WorkSegment | undefined = model.segments.find((candidate: WorkSegment) => elapsed <= candidate.offset + (candidate.end - candidate.start));
+  return segment === undefined ? null : segment.start + Math.max(elapsed - segment.offset, 0);
+}
+
+function momentLabel(model: PaceModel, fraction: number): string | null {
+  const at: number | null = momentAt(model, fraction);
+  if (at === null) return null;
+  const moment: Date = new Date(at);
+  return `${moment.toLocaleDateString([], { weekday: 'short' })} ${moment.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}`;
 }
 
 function usageAt(points: readonly PacePoint[], fraction: number): number | null {

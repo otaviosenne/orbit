@@ -28,14 +28,16 @@ export function renderPaceChart(resetsAt: number, samples: readonly UsageSample[
     const model: PaceModel = buildPaceModel(windowEnd, samples, now, scale);
     const hasEarlier: boolean = samples.some((sample: UsageSample) => sample.at < windowEnd - WEEK_MS);
     box.replaceChildren(
-      renderWeekNav(windowEnd, hasEarlier, (change: number): void => {
-        weeksBack += change;
-        draw();
-      }),
-      renderPaceScaleToggle(scale, (chosen: PaceScale): void => {
-        scale = chosen;
-        draw();
-      }),
+      renderHead(
+        renderWeekNav(windowEnd, hasEarlier, (change: number): void => {
+          weeksBack += change;
+          draw();
+        }),
+        renderPaceScaleToggle(scale, (chosen: PaceScale): void => {
+          scale = chosen;
+          draw();
+        }),
+      ),
       element('p', `pace-summary ${paceClass(model)}`, summary(model)),
       renderSvg(model),
     );
@@ -43,6 +45,13 @@ export function renderPaceChart(resetsAt: number, samples: readonly UsageSample[
   };
   draw();
   return box;
+}
+
+// The week on the left and the span on the right, on one row while they fit.
+function renderHead(nav: HTMLElement, toggle: HTMLElement): HTMLElement {
+  const head: HTMLDivElement = element('div', 'pace-head');
+  head.append(nav, toggle);
+  return head;
 }
 
 function renderWeekNav(windowEnd: number, hasEarlier: boolean, step: (change: number) => void): HTMLElement {

@@ -49,8 +49,9 @@ function place(guide: SVGElement, expectedDot: SVGElement, actualDot: SVGElement
 function show(tip: HTMLElement, box: HTMLElement, event: PointerEvent, reading: PaceReading, showsPace: boolean): void {
   const rect: DOMRect = box.getBoundingClientRect();
   const x: number = event.clientX - rect.left;
+  const when: string | null = reading.moment ?? reading.day;
   tip.replaceChildren(
-    ...(reading.day === null ? [] : [element('span', 'pace-tip-day', reading.day)]),
+    ...(when === null ? [] : [element('span', 'pace-tip-day', when)]),
     element('span', 'pace-tip-row', `Used ${reading.actual === null ? 'no reading' : `${Math.round(reading.actual)}%`}`),
     ...(showsPace ? [element('span', 'pace-tip-row', `Even pace ${Math.round(reading.expected)}%`)] : []),
   );
