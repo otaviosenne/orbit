@@ -3,6 +3,7 @@ import { recentSamples, withSample } from '../src/core/usage-history-log';
 import { buildPaceModel, paceGap, readingAt } from '../src/renderer/usage/pace-model';
 import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from '../src/renderer/usage/work-schedule';
 import { GRID_PERCENTS } from '../src/renderer/usage/pace-chart';
+import { segmentsFor, usedSegments } from '../src/renderer/usage/pace-scale';
 
 const HOUR: number = 3_600_000;
 // A week that resets Monday 26 Oct 2026 at 20:00, after the working day ends at 18:00; it runs Tuesday to the next
@@ -104,5 +105,40 @@ describe('usage history log', () => {
 describe('the chart grid', () => {
   it('has a line for every working day, 20% apart', () => {
     expect(GRID_PERCENTS).toEqual([0, 20, 40, 60, 80, 100]);
+  });
+});
+
+describe('pace scales', () => {
+  // Readings rising at 21:10 and 21:40 on Tuesday night, flat at 22:20, rising at 23:05, and on Saturday at 10:30.
+  const samples = [
+    { at: at(20, 21 + 10 / 60), percent: 4 },
+    { at: at(20, 21 + 40 / 60), percent: 6 },
+    { at: at(20, 22 + 20 / 60), percent: 6 },
+    { at: at(20, 23 + 5 / 60), percent: 9 },
+    { at: at(24, 10.5), percent: 12 },
+  ];
+
+  it('spans every hour of the week on the whole-week scale', () => {
+    const segments: WorkSegment[] = segmentsFor('all', WINDOW_START, RESETS_AT, samples);
+    expect(totalWorkMs(segments)).toBe(7 * 24 * HOUR);
+  });
+
+  it('keeps only the hours usage went up, joining hours in a row', () => {
+    const segments: WorkSegment[] = usedSegments(WINDOW_START, RESETS_AT, samples);
+    expect(segments.map((segment: WorkSegment) => [segment.start, segment.end])).toEqual([
+      [at(20, 21), at(20, 22)],
+      [at(20, 23), at(21, 0)],
+      [at(24, 10), at(24, 11)],
+    ]);
+    expect(totalWorkMs(segments)).toBe(3 * HOUR);
+  });
+
+  it('draws no even pace over the hours of use and names each day once', () => {
+    const model = buildPaceModel(RESETS_AT, samples, at(24, 12), 'used');
+    expect(model.showsPace).toBe(false);
+    expect(model.spanMs).toBe(3 * HOUR);
+    expect(model.days.map((day) => day.label)).toHaveLength(2);
+    expect(model.actualNow).toBe(12);
+    expect(buildPaceModel(RESETS_AT, samples, at(24, 12)).showsPace).toBe(true);
   });
 });

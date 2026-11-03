@@ -12,14 +12,25 @@ export interface WorkSegment {
 }
 
 export function workSegments(windowStart: number, windowEnd: number): WorkSegment[] {
+  return dailySegments(windowStart, windowEnd, { startHour: WORK_START_HOUR, endHour: WORK_END_HOUR, weekdays: WORK_WEEKDAYS });
+}
+
+// The same hours on the chosen weekdays, one segment per day, clipped to the window.
+export interface DailyHours {
+  readonly startHour: number;
+  readonly endHour: number;
+  readonly weekdays: ReadonlySet<number>;
+}
+
+export function dailySegments(windowStart: number, windowEnd: number, hours: DailyHours): WorkSegment[] {
   const segments: WorkSegment[] = [];
   let offset: number = 0;
   const day: Date = new Date(windowStart);
   day.setHours(0, 0, 0, 0);
   while (day.getTime() < windowEnd) {
-    const start: number = Math.max(atHour(day, WORK_START_HOUR), windowStart);
-    const end: number = Math.min(atHour(day, WORK_END_HOUR), windowEnd);
-    if (WORK_WEEKDAYS.has(day.getDay()) && end > start) {
+    const start: number = Math.max(atHour(day, hours.startHour), windowStart);
+    const end: number = Math.min(atHour(day, hours.endHour), windowEnd);
+    if (hours.weekdays.has(day.getDay()) && end > start) {
       segments.push({ start, end, offset });
       offset += end - start;
     }
@@ -31,6 +42,16 @@ export function workSegments(windowStart: number, windowEnd: number): WorkSegmen
 export function totalWorkMs(segments: readonly WorkSegment[]): number {
   const last: WorkSegment | undefined = segments[segments.length - 1];
   return last === undefined ? 0 : last.offset + (last.end - last.start);
+}
+
+// Segments laid end to end, each one's offset the time of the ones before it.
+export function withOffsets(stretches: readonly { readonly start: number; readonly end: number }[]): WorkSegment[] {
+  let offset: number = 0;
+  return stretches.map((stretch: { readonly start: number; readonly end: number }): WorkSegment => {
+    const segment: WorkSegment = { start: stretch.start, end: stretch.end, offset };
+    offset += stretch.end - stretch.start;
+    return segment;
+  });
 }
 
 // How much working time had passed at this moment. Outside working hours the moment counts as the closest edge

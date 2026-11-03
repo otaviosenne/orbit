@@ -31,8 +31,9 @@ export function attachPaceHover(box: HTMLElement, model: PaceModel, actualClass:
     const reading: PaceReading = readingAt(model, fraction);
     place(guide, expectedDot, actualDot, fraction, reading);
     marks.forEach((mark: SVGElement): void => mark.setAttribute('visibility', 'visible'));
+    expectedDot.setAttribute('visibility', model.showsPace ? 'visible' : 'hidden');
     actualDot.setAttribute('visibility', reading.actual === null ? 'hidden' : 'visible');
-    show(tip, box, event, reading);
+    show(tip, box, event, reading, model.showsPace);
   });
 }
 
@@ -45,13 +46,13 @@ function place(guide: SVGElement, expectedDot: SVGElement, actualDot: SVGElement
   actualDot.setAttribute('cy', String(yOf(reading.actual ?? 0)));
 }
 
-function show(tip: HTMLElement, box: HTMLElement, event: PointerEvent, reading: PaceReading): void {
+function show(tip: HTMLElement, box: HTMLElement, event: PointerEvent, reading: PaceReading, showsPace: boolean): void {
   const rect: DOMRect = box.getBoundingClientRect();
   const x: number = event.clientX - rect.left;
   tip.replaceChildren(
     ...(reading.day === null ? [] : [element('span', 'pace-tip-day', reading.day)]),
     element('span', 'pace-tip-row', `Used ${reading.actual === null ? 'no reading' : `${Math.round(reading.actual)}%`}`),
-    element('span', 'pace-tip-row', `Even pace ${Math.round(reading.expected)}%`),
+    ...(showsPace ? [element('span', 'pace-tip-row', `Even pace ${Math.round(reading.expected)}%`)] : []),
   );
   tip.hidden = false;
   const isRight: boolean = x > rect.width * FLIP_SHARE;

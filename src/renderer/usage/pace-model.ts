@@ -1,5 +1,6 @@
 import type { UsageSample } from '../../shared/types';
-import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from './work-schedule';
+import { segmentsFor, type PaceScale } from './pace-scale';
+import { totalWorkMs, workElapsed, type WorkSegment } from './work-schedule';
 
 export const WEEK_MS: number = 7 * 24 * 60 * 60_000;
 const FULL_PERCENT: number = 100;
@@ -24,27 +25,45 @@ export interface PaceModel {
   readonly actualNow: number | null;
   // A week that is over: its line is whatever it ended at, not a reading to act on.
   readonly isPast: boolean;
+  // The even-pace line means something only over a fixed span of time; over the hours of use alone it does not.
+  readonly showsPace: boolean;
+  // The time the x axis spans, in milliseconds.
+  readonly spanMs: number;
 }
 
-// The week's chart: the straight line of an even pace against what was really used, both over working time.
-export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[], now: number): PaceModel {
+// The week's chart: the straight line of an even pace against what was really used, both over the scale's time.
+export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[], now: number, scale: PaceScale = 'work'): PaceModel {
   const windowStart: number = resetsAt - WEEK_MS;
-  const segments: readonly WorkSegment[] = workSegments(windowStart, resetsAt);
+  const segments: readonly WorkSegment[] = segmentsFor(scale, windowStart, resetsAt, samples);
   const total: number = totalWorkMs(segments);
   const position = (at: number): number => (total === 0 ? 0 : workElapsed(segments, at) / total);
   const inWindow: UsageSample[] = samples.filter((sample: UsageSample) => sample.at >= windowStart && sample.at <= resetsAt);
   const last: UsageSample | undefined = inWindow[inWindow.length - 1];
   return {
-    days: segments.map((segment: WorkSegment): PaceDay => ({
-      label: new Date(segment.start).toLocaleDateString([], { weekday: 'short' }),
-      start: total === 0 ? 0 : segment.offset / total,
-      end: total === 0 ? 0 : (segment.offset + segment.end - segment.start) / total,
-    })),
+    days: daysOf(segments, total),
     actual: inWindow.map((sample: UsageSample): PacePoint => ({ x: position(sample.at), percent: sample.percent })),
     expectedNow: position(Math.min(now, resetsAt)) * FULL_PERCENT,
     actualNow: last === undefined ? null : last.percent,
     isPast: now > resetsAt,
+    showsPace: scale !== 'used',
+    spanMs: total,
   };
+}
+
+// One stretch per calendar day, however many segments it has (the hours of use come in pieces).
+function daysOf(segments: readonly WorkSegment[], total: number): PaceDay[] {
+  const days: PaceDay[] = [];
+  let lastKey: string | null = null;
+  for (const segment of segments) {
+    const start: number = total === 0 ? 0 : segment.offset / total;
+    const end: number = total === 0 ? 0 : (segment.offset + segment.end - segment.start) / total;
+    const key: string = new Date(segment.start).toDateString();
+    const last: PaceDay | undefined = days[days.length - 1];
+    if (last !== undefined && key === lastKey) days[days.length - 1] = { ...last, end };
+    else days.push({ label: new Date(segment.start).toLocaleDateString([], { weekday: 'short' }), start, end });
+    lastKey = key;
+  }
+  return days;
 }
 
 // Positive when more has been used than an even pace allows.
