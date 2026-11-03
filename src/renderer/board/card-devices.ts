@@ -1,7 +1,8 @@
-import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink } from '../../shared/types';
+import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink, ServerLink } from '../../shared/types';
 import { element } from '../dom';
 import { isWebHost } from '../host';
-import { ANDROID_ICON, BROWSER_ICON } from '../icons';
+import { ANDROID_ICON, BROWSER_ICON, SERVERS_ICON } from '../icons';
+import { serverLines } from '../servers/server-address';
 import { browserLines, emulatorLines } from '../sheet/device-links';
 import { setTip } from '../tooltip';
 
@@ -13,6 +14,9 @@ export interface DeviceRecheck {
 
 const CARD_DEVICE_ATTRIBUTE: string = 'cardDevice';
 const CARD_DEVICE_SELECTOR: string = '[data-card-device]';
+const CARD_SERVERS_ATTRIBUTE: string = 'cardServers';
+const CARD_SERVERS_SELECTOR: string = '[data-card-servers]';
+const SERVERS_LABEL: string = "Copy the address of one of this chat's servers";
 const BROWSER_LABEL: string = 'Open browser tab';
 const BROWSER_COPY_LABEL: string = 'Copy the page address';
 const EMULATOR_COPY_LABEL: string = 'Copy the Metro address';
@@ -28,7 +32,23 @@ export function renderCardDevices(devices: ChatDevices): HTMLButtonElement[] {
   const buttons: HTMLButtonElement[] = [];
   if (devices.emulator !== null) buttons.push(emulatorButton(devices.emulator));
   if (devices.browser !== null) buttons.push(browserButton(devices.browser));
+  if (devices.servers.length > 0) buttons.push(serversButton(devices.servers));
   return buttons;
+}
+
+// The servers icon under a press, which opens the list of the chat's ports instead of opening the card.
+export function cardServersAt(target: EventTarget | null): HTMLElement | null {
+  return (target as HTMLElement).closest<HTMLElement>(CARD_SERVERS_SELECTOR);
+}
+
+function serversButton(servers: readonly ServerLink[]): HTMLButtonElement {
+  const button: HTMLButtonElement = element('button', 'card-device is-servers');
+  button.type = 'button';
+  button.dataset[CARD_SERVERS_ATTRIBUTE] = '';
+  button.setAttribute('aria-label', SERVERS_LABEL);
+  button.innerHTML = SERVERS_ICON;
+  setTip(button, { title: servers.length === 1 ? 'Server' : `${servers.length} servers`, lines: serverLines(servers) });
+  return button;
 }
 
 // The board acts on press, like the card itself, so the press is read here before it could open the card.

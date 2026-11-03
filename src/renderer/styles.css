@@ -415,6 +415,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 }
 .card-device.is-emulator { --device-tint: var(--tag-green); }
 .card-device.is-browser { --device-tint: var(--tag-purple); }
+.card-device.is-servers { --device-tint: var(--tag-orange); }
 .card-device:hover { background: color-mix(in srgb, var(--device-tint) 26%, transparent); }
 .card-device svg { width: 14px; height: 14px; fill: currentColor; }
 .card-time { display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -467,6 +468,12 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left;
 }
 .card-menu-item[hidden] { display: none; }
+.server-menu { max-width: 360px; }
+.server-menu-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.server-menu-text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.server-menu-name { font-weight: 550; }
+.server-menu-url { color: var(--secondary); font-family: var(--mono); font-size: 11px; }
+.server-menu-item:hover .server-menu-url { color: inherit; }
 .card-menu-item svg { width: 14px; height: 14px; fill: currentColor; }
 .card-menu-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-menu-item.is-destructive { color: var(--danger); }
@@ -829,6 +836,7 @@ div.shell-details-label { margin: 6px 0 3px; }
 /* Their own colors (Android green, a browser violet) instead of New window's accent blue */
 #action-emulator { --device-tint: var(--tag-green); }
 #action-browser { --device-tint: var(--tag-purple); }
+#action-servers { --device-tint: var(--tag-orange); }
 .device-link { background: color-mix(in srgb, var(--device-tint) 14%, transparent); color: var(--device-tint); }
 .device-link:hover { background: color-mix(in srgb, var(--device-tint) 24%, transparent); }
 .device-link svg { width: 12px; height: 12px; }

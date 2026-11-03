@@ -24,7 +24,8 @@ import { moveInOrder } from './board/reorder-target';
 import { RestingPins } from './board/resting-pins';
 import { BoardDevices } from './board/board-devices';
 import type { CardDeviceKind } from './board/card-devices';
-import { cardDeviceAt, focusCardDevice } from './board/card-devices';
+import { cardDeviceAt, cardServersAt, focusCardDevice } from './board/card-devices';
+import { serverMenu } from './servers/server-menu';
 import { copyDeviceAddress } from './board/device-copy';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
@@ -689,6 +690,9 @@ viewRoot.addEventListener('pointerdown', (event: PointerEvent): void => {
   if (modeChoice !== undefined && isTimelineMode(modeChoice)) return setTimelineMode(modeChoice);
   if (cardRename.isActive) return;
   // Checked before the card's own press, which would otherwise open or start dragging the card under the icon.
+  const servers: HTMLElement | null = cardServersAt(event.target);
+  const serversSession: string | undefined = servers === null ? undefined : cardSessionAt(event.target);
+  if (servers !== null && serversSession !== undefined) return serverMenu().open(boardDevices.devicesOf(serversSession).servers, servers);
   const device: CardDeviceKind | null = cardDeviceAt(event.target);
   const deviceSession: string | undefined = device === null ? undefined : cardSessionAt(event.target);
   // Orbit Web copies on the click below: a phone allows copying only at the end of a tap, not when it starts.

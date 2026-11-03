@@ -42,6 +42,7 @@ import moon from '@phosphor-icons/core/assets/regular/moon.svg';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg';
 import arrowsClockwise from '@phosphor-icons/core/assets/regular/arrows-clockwise.svg';
 import warning from '@phosphor-icons/core/assets/fill/warning-fill.svg';
+import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg';
 import orbitO from '../../assets/orbit-o.svg';
 import orbitSpark from '../../assets/orbit-spark.svg';
 
@@ -91,6 +92,7 @@ export const CONTINUE_ICON: string = playCircle;
 export const REOPEN_ICON: string = arrowCounterClockwise;
 export const RESTART_ICON: string = arrowsClockwise;
 export const WARNING_ICON: string = warning;
+export const SERVERS_ICON: string = plugsConnected;
 // The app's own wordmark pieces, drawn for this project from the chosen concept.
 export const ORBIT_O: string = orbitO;
 export const ORBIT_SPARK: string = orbitSpark;

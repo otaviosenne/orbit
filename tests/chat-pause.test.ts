@@ -155,9 +155,9 @@ describe('ChatPause settling', () => {
     const pause: ChatPause = new ChatPause(() => chats, calls, () => now, emulators);
     await pause.pauseAll();
     const devices: Record<string, ChatDevices> = {
-      a: { emulator: { label: 'Pixel_6a_mux:5566', metroPort: 8081, metroApp: 'mux', publicUrl: null }, browser: null },
-      b: { emulator: { label: 'Pixel_6a_stories:5580', metroPort: null, metroApp: null, publicUrl: null }, browser: null },
-      c: { emulator: null, browser: null },
+      a: { emulator: { label: 'Pixel_6a_mux:5566', metroPort: 8081, metroApp: 'mux', publicUrl: null }, browser: null, servers: [] },
+      b: { emulator: { label: 'Pixel_6a_stories:5580', metroPort: null, metroApp: null, publicUrl: null }, browser: null, servers: [] },
+      c: { emulator: null, browser: null, servers: [] },
     };
     await emulators.rememberOpen(chats, (sessionId: string) => Promise.resolve(devices[sessionId] as ChatDevices));
     expect(pause.pausedCount).toBe(2);
@@ -175,7 +175,7 @@ describe('ChatPause settling', () => {
     let now: number = 0;
     const emulators: ClosedEmulators = new ClosedEmulators(() => now);
     const chats: ChatSnapshot[] = [chat('b', 2, 'idle')];
-    await emulators.rememberOpen(chats, () => Promise.resolve({ emulator: { label: 'Pixel:5554', metroPort: null, metroApp: null, publicUrl: null }, browser: null }));
+    await emulators.rememberOpen(chats, () => Promise.resolve({ emulator: { label: 'Pixel:5554', metroPort: null, metroApp: null, publicUrl: null }, browser: null, servers: [] }));
     now = 60_000;
     emulators.settle((sessionId: string) => sessionId === 'b', now);
     expect(new ChatPause(() => chats, api(), () => now, emulators).pausedCount).toBe(0);

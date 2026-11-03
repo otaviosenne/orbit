@@ -458,9 +458,18 @@ export interface BrowserLink {
 }
 
 // What the panel's Emulator and Browser buttons and the cards' device icons lead to; null hides that button.
+// A port one of the chat's commands listens on (a dev server, an API, Metro): name says what runs and for which
+// worktree ("Vite · scout-me-e2e"); publicUrl is the tunnel address a phone opens (null when the port is not published).
+export interface ServerLink {
+  readonly port: number;
+  readonly name: string;
+  readonly publicUrl: string | null;
+}
+
 export interface ChatDevices {
   readonly emulator: EmulatorLink | null;
   readonly browser: BrowserLink | null;
+  readonly servers: readonly ServerLink[];
 }
 
 // 'exact': the emulator or the very tab is in front now. 'window': only a Chrome window could be focused,

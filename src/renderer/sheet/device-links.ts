@@ -3,12 +3,14 @@ import type { CardDeviceKind } from '../board/card-devices';
 import { copyDeviceAddress } from '../board/device-copy';
 import { requireElement } from '../dom';
 import { isWebHost } from '../host';
-import { ANDROID_ICON, BROWSER_ICON } from '../icons';
+import { ANDROID_ICON, BROWSER_ICON, SERVERS_ICON } from '../icons';
+import { serverLines } from '../servers/server-address';
+import { serverMenu } from '../servers/server-menu';
 import { setTip } from '../tooltip';
 
 export type StatusReport = (text: string, isError: boolean) => void;
 
-const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
+const NO_DEVICES: ChatDevices = { emulator: null, browser: null, servers: [] };
 // The panel re-renders on every poll and on each optimistic edit; devices are asked about at most this often.
 const MIN_REFRESH_MS: number = 1500;
 
@@ -18,6 +20,7 @@ export class DeviceLinks {
   private readonly root: HTMLElement = requireElement('#sheet-devices');
   private readonly emulator: HTMLButtonElement = requireElement('#action-emulator');
   private readonly browser: HTMLButtonElement = requireElement('#action-browser');
+  private readonly servers: HTMLButtonElement = requireElement('#action-servers');
   private sessionId: string | null = null;
   private requestedAt: number = 0;
   private pendingFor: string | null = null;
@@ -26,6 +29,8 @@ export class DeviceLinks {
   constructor(private readonly report: StatusReport) {
     this.emulator.insertAdjacentHTML('afterbegin', ANDROID_ICON);
     this.browser.insertAdjacentHTML('afterbegin', BROWSER_ICON);
+    this.servers.insertAdjacentHTML('afterbegin', SERVERS_ICON);
+    this.servers.addEventListener('click', (): void => serverMenu().open(this.devices.servers, this.servers));
     this.emulator.addEventListener('click', (): void => this.press('emulator', (sessionId: string) => window.radar.focusChatEmulator(sessionId), EMULATOR_OUTCOMES));
     this.browser.addEventListener('click', (): void => this.press('browser', (sessionId: string) => window.radar.focusChatBrowser(sessionId), BROWSER_OUTCOMES));
   }
@@ -62,7 +67,9 @@ export class DeviceLinks {
     this.devices = devices;
     this.emulator.hidden = devices.emulator === null;
     this.browser.hidden = devices.browser === null;
-    this.root.hidden = devices.emulator === null && devices.browser === null;
+    this.servers.hidden = devices.servers.length === 0;
+    this.root.hidden = devices.emulator === null && devices.browser === null && devices.servers.length === 0;
+    if (devices.servers.length > 0) setTip(this.servers, { title: "Copy the address of one of this chat's servers", lines: serverLines(devices.servers) });
     const isWeb: boolean = isWebHost();
     if (devices.emulator !== null) setTip(this.emulator, { title: isWeb ? "Copy the Metro address of this chat's emulator" : "Go to this chat's emulator", lines: emulatorLines(devices.emulator) });
     if (devices.browser !== null) setTip(this.browser, { title: isWeb ? "Copy the address of this chat's Chrome tab" : "Go to this chat's Chrome tab", lines: browserLines(devices.browser) });

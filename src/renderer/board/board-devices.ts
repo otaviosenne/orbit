@@ -1,8 +1,9 @@
+import { sameServers } from '../servers/server-address';
 import type { ChatDevices } from '../../shared/types';
 
 export type DeviceAsk = (sessionId: string) => Promise<ChatDevices>;
 
-export const NO_DEVICES: ChatDevices = { emulator: null, browser: null };
+export const NO_DEVICES: ChatDevices = { emulator: null, browser: null, servers: [] };
 // The main process keeps the window list this long; asking more often would only re-read the same list.
 const REFRESH_MS: number = 3000;
 
@@ -73,6 +74,7 @@ export function sameDevices(a: ChatDevices, b: ChatDevices): boolean {
     a.emulator?.publicUrl === b.emulator?.publicUrl &&
     a.browser?.title === b.browser?.title &&
     a.browser?.url === b.browser?.url &&
-    a.browser?.publicUrl === b.browser?.publicUrl
+    a.browser?.publicUrl === b.browser?.publicUrl &&
+    sameServers(a.servers, b.servers)
   );
 }
