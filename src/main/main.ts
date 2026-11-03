@@ -23,6 +23,7 @@ import { createRadarWindow } from './window';
 import { isDemoMode } from '../demo/demo-mode';
 import { startDemo } from '../demo/start-demo';
 import { startAutoApprover } from './approvals/auto-approver';
+import { useSpellcheckLanguages } from './spellcheck-languages';
 
 // Becomes the Wayland app_id that the Hyprland window rule matches.
 const APP_ID: string = 'claude-radar';
@@ -37,6 +38,7 @@ async function start(): Promise<void> {
   if (isDemoMode()) return startDemo();
   if (!(await claimSingleInstance())) return app.quit();
   await app.whenReady();
+  useSpellcheckLanguages();
   const radar: ChatRadar = new ChatRadar({
     activeWindowPid,
     windowPidOf: findTerminalWindowPid,
