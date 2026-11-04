@@ -46,8 +46,12 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   .sheet-dot { margin: 0 6px; }
   .agent-strip-stop { opacity: 0.6; width: 32px; height: 32px; }
   .attachment-remove { opacity: 1; width: 24px; height: 24px; }
-  /* A long press opens the card's menu (touch-taps.ts), so the system's text callout must stay away */
-  .card, .lane, .pinned-cards { -webkit-touch-callout: none; user-select: none; }
+  /* A long press on any chat (card, list row, timeline lane) opens its menu (touch-taps.ts), so neither the system's
+     callout nor a text selection may start under the finger first. Safari only honors the prefixed user-select. The
+     Panel's tiles keep their text selectable: a long press there is not the menu */
+  .card, .lane, .pinned-cards, [data-session]:not(.grid-view [data-session]) {
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+  }
   /* 16px stops iOS from zooming the page when the composer gets focus */
   .composer-input, .resume-search, .rename-input, .remote-input { font-size: 16px; }
 }
