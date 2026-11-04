@@ -1,3 +1,4 @@
+import type { ShutdownPlanState } from '../../shared/shutdown-plan';
 import { transcriptLimit } from '../../core/transcript-limit';
 import type { RemoteChannel } from '../../shared/remote-access';
 import { REMOTE_ACCESS } from '../../shared/remote-access';
@@ -19,7 +20,7 @@ type ReadChannel = { [K in RemoteChannel]: (typeof REMOTE_ACCESS)[K] extends 're
 type SettingsRead = 'GetChatSettings' | 'ListSkills' | 'ListMcpServers' | 'GetChatPermissions';
 
 // Session ids are searched for as file names, so anything but a real one gets an empty answer.
-export function readRoutes({ radar, usage, pastChats, timelineHistory, resources, boardState, computer, devices }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
+export function readRoutes({ radar, usage, pastChats, timelineHistory, resources, boardState, computer, devices, shutdown }: RouteServices): Readonly<Record<Exclude<ReadChannel, SettingsRead>, Route>> {
   return {
     GetChats: (): Promise<ChatSnapshot[]> => radar.chats(),
     GetTranscript: (sessionId: unknown, limit: unknown): Promise<TranscriptItem[]> =>
@@ -42,6 +43,7 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetChatResources: (): Promise<ResourceSnapshot> => resources.snapshot(),
     GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => boardState.get(knownVersion),
     GetComputerStatus: (): Promise<ComputerStatus> => computer.status(),
+    GetShutdownPlan: (): Promise<ShutdownPlanState> => shutdown.state(),
     GetChatDevices: (sessionId: unknown): Promise<ChatDevices> =>
       isSessionId(sessionId) ? devices.devicesOf(sessionId) : Promise.resolve(NO_DEVICES),
   };

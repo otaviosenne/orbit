@@ -85,6 +85,12 @@ export const REMOTE_ACCESS = {
   // Power (shutdown, reboot, suspend, lock), screens off/on, volume, brightness, notifications, media and the status
   // menu's shortcuts: the route accepts only those, checks every value, and never runs text through a shell.
   RunComputerAction: 'action',
+  // A planned shutdown: at a time, once no chat is working, or whichever comes first; Cancel stops it until power-off.
+  GetShutdownPlan: 'read',
+  SetShutdownPlan: 'action',
+  CancelShutdownPlan: 'action',
+  // Pauses the working chats, waits a minute at most for them to stop, then shuts down.
+  ShutDownSafely: 'action',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',

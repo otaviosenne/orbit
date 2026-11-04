@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isMidWork, pauseTargets } from '../src/renderer/pause/pause-targets';
+import { isMidWork, pauseTargets } from '../src/shared/pause-targets';
 import type { AgentSnapshot, ChatSnapshot, ShellSnapshot } from '../src/shared/types';
 
 function chat(sessionId: string, pid: number, status: ChatSnapshot['status'], extra: Partial<ChatSnapshot> = {}): ChatSnapshot {

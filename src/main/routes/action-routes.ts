@@ -44,6 +44,9 @@ type ActionChannel =
   | 'RestartChat'
   | 'AnswerApproval'
   | 'RunComputerAction'
+  | 'SetShutdownPlan'
+  | 'CancelShutdownPlan'
+  | 'ShutDownSafely'
   | 'FocusChat'
   | 'OpenChatWindow';
 
@@ -52,12 +55,15 @@ const NOTHING_REACHED: PauseReport = { reached: [], skipped: [] };
 const NOT_IMAGES: ActionResult = failure('Attachments must be images');
 const NOT_AN_ANSWER: ActionResult = failure('Unknown answer');
 
-export function actionRoutes({ radar, pastChats, boardState, chatWindows, computer }: RouteServices): Readonly<Record<ActionChannel, Route>> {
+export function actionRoutes({ radar, pastChats, boardState, chatWindows, computer, shutdown }: RouteServices): Readonly<Record<ActionChannel, Route>> {
   return {
     OpenLauncher: (name: unknown): Promise<ActionResult> => openLauncher(textArg(name)),
     OpenSignIn: (): Promise<ActionResult> => openSignIn(),
     SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => boardState.set(key, value),
     RunComputerAction: (action: unknown): Promise<ActionResult> => computer.run(action),
+    SetShutdownPlan: (plan: unknown): Promise<ActionResult> => shutdown.set(plan),
+    CancelShutdownPlan: (): Promise<ActionResult> => shutdown.cancel(),
+    ShutDownSafely: (): Promise<ActionResult> => shutdown.shutDownSafely(),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
     RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(radar, pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
@@ -67,7 +73,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     OpenChatWindow: (sessionId: unknown): void => {
       if (isSessionId(sessionId)) chatWindows.open(sessionId);
     },
-    ResumeChat: (sessionId: unknown, afterCut: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId, afterCut === true),
+    ResumeChat: (sessionId: unknown, afterCut: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId, afterCut === true, shutdown.pausedChats),
     RenameChat: (pid: unknown, name: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => renameChat(chat, textArg(name))),
     RecolorChat: (pid: unknown, color: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => recolorChat(chat, textArg(color))),
     SendMessage: (pid: unknown, text: unknown, uploads: unknown): Promise<ActionResult> =>

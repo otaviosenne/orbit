@@ -24,6 +24,11 @@ export const RESTART_CONTINUE_MESSAGE: string =
   'Continue: you were restarted to load new skills, MCP servers and settings, which cut off your turn and any running agent or background shell. '
   + 'Carry on with what you were doing, and restart anything you still need.';
 
+// Sent once it is reopened to a chat a safe shutdown paused: the same go-ahead as Continue, with why it was closed.
+export const SHUTDOWN_CONTINUE_MESSAGE: string =
+  'Continue: you were paused so the computer could shut down, and it has been turned back on. Resume the work you paused, '
+  + 'and restart anything you stopped (agents, background shells, dev servers) if it is still needed.';
+
 // Sent to a chat that was working when the machine went down, once it is reopened.
 export const CUT_MESSAGE: string =
   'The computer was shut down while you were working, so your turn and every agent and background shell were cut off midway. '

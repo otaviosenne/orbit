@@ -24,10 +24,15 @@ import { isDemoMode } from '../demo/demo-mode';
 import { startDemo } from '../demo/start-demo';
 import { startAutoApprover } from './approvals/auto-approver';
 import { useSpellcheckLanguages } from './spellcheck-languages';
+import { ShutdownPausedChats } from './shutdown/shutdown-paused-chats';
+import { ShutdownPlanStore } from './shutdown/shutdown-plan-store';
+import { ShutdownScheduler } from './shutdown/shutdown-scheduler';
 
 // Becomes the Wayland app_id that the Hyprland window rule matches.
 const APP_ID: string = 'claude-radar';
 const BOARD_STATE_FILE: string = 'board-state.json';
+const SHUTDOWN_PLAN_FILE: string = 'shutdown-plan.json';
+const SHUTDOWN_PAUSED_FILE: string = 'shutdown-paused-chats.json';
 
 app.setName(APP_ID);
 app.setDesktopName(`${APP_ID}.desktop`);
@@ -46,7 +51,13 @@ async function start(): Promise<void> {
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);
   const boardState: BoardStateStore = new BoardStateStore(join(app.getPath('userData'), BOARD_STATE_FILE));
-  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), computer: new Computer(), devices: new ChatDeviceService(radar), pastChats, timelineHistory, resources: new ResourceSampler(), boardState };
+  const shutdown: ShutdownScheduler = new ShutdownScheduler({
+    radar,
+    store: new ShutdownPlanStore(join(app.getPath('userData'), SHUTDOWN_PLAN_FILE)),
+    pausedChats: new ShutdownPausedChats(join(app.getPath('userData'), SHUTDOWN_PAUSED_FILE)),
+  });
+  await shutdown.start();
+  const services: RadarServices = { radar, usage: new UsageService(), dictation, chatWindows: new ChatWindows(), computer: new Computer(), devices: new ChatDeviceService(radar), pastChats, timelineHistory, resources: new ResourceSampler(), boardState, shutdown };
   // One table answers the desktop window over IPC and Orbit Web over HTTP.
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);

@@ -4,25 +4,26 @@ import { element } from '../../dom';
 import type { ComputerControls } from './computer-controls';
 import { actionButton, group, row, subheading } from './computer-controls';
 
-const POWER_LABELS: Readonly<Record<PowerAction, string>> = { lock: 'Lock', suspend: 'Suspend', reboot: 'Restart', shutdown: 'Shut down' };
+const POWER_LABELS: Readonly<Record<PowerAction, string>> = { lock: 'Lock', suspend: 'Suspend', reboot: 'Restart', shutdown: 'Shut down now' };
+const SAFE_SHUTDOWN_KEY: string = 'safe-shutdown';
 const CONFIRM_LABELS: Readonly<Record<PowerAction, string>> = {
   lock: 'Tap again to lock',
   suspend: 'Tap again to suspend',
   reboot: 'Tap again to restart',
-  shutdown: 'Tap again to shut down',
+  shutdown: 'Tap again: shut down now',
 };
 // A sleeping or powered-off machine cannot be reached from here, so the page says so before it happens.
-const POWER_NOTE: string = 'After Suspend or Shut down, Orbit Web cannot reach this computer until it is woken by hand.';
+const POWER_NOTE: string = 'Shut down safely pauses the working chats first and waits up to a minute for them to stop; reopened after the restart, they are told to carry on. Shut down now cuts them off. After Suspend or Shut down, Orbit Web cannot reach this computer until it is woken by hand.';
 
 // Screens off (and back on, since no key can be pressed from here) and the power menu, each risky one armed first.
-export function renderPowerGroup(controls: ComputerControls): HTMLElement[] {
+export function renderPowerGroup(controls: ComputerControls, shutDownSafely: () => void): HTMLElement[] {
   const screens: HTMLElement = row(
     'computer-buttons',
     element('span', 'computer-row-label', 'Screens'),
     actionButton('Turn off', (): void => controls.act({ kind: 'screens', on: false })),
     actionButton('Turn on', (): void => controls.act({ kind: 'screens', on: true })),
   );
-  const power: HTMLElement = row('computer-buttons computer-power', ...POWER_ACTIONS.map((action: PowerAction) => powerButton(action, controls)));
+  const power: HTMLElement = row('computer-buttons computer-power', ...POWER_ACTIONS.map((action: PowerAction) => powerButton(action, controls)), safeShutdownButton(controls, shutDownSafely));
   return [subheading('Power'), group(screens, power), element('p', 'settings-note', POWER_NOTE)];
 }
 
@@ -33,4 +34,12 @@ function powerButton(action: PowerAction, controls: ComputerControls): HTMLButto
     else controls.arm(action);
   }, `button${armed ? ' is-armed' : ''}`);
   return button;
+}
+
+function safeShutdownButton(controls: ComputerControls, shutDownSafely: () => void): HTMLButtonElement {
+  const armed: boolean = controls.armed === SAFE_SHUTDOWN_KEY;
+  return actionButton(armed ? 'Tap again: shut down safely' : 'Shut down safely', (): void => {
+    if (controls.armed === SAFE_SHUTDOWN_KEY) shutDownSafely();
+    else controls.arm(SAFE_SHUTDOWN_KEY);
+  }, `button${armed ? ' is-armed' : ''}`);
 }

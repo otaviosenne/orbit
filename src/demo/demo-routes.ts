@@ -1,3 +1,5 @@
+import { demoShutdown } from './demo-shutdown';
+import type { ShutdownPlanState } from '../shared/shutdown-plan';
 import type {
   ActionResult,
   PauseReport,
@@ -112,6 +114,11 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetComputerStatus: (): ComputerStatus => DEMO_COMPUTER,
   // Shutting down or muting the real machine from a demo would be a surprise.
   RunComputerAction: (): ActionResult => DONE,
+  GetShutdownPlan: (): ShutdownPlanState => demoShutdown.state(),
+  SetShutdownPlan: (plan: unknown): ActionResult => demoShutdown.set(plan),
+  CancelShutdownPlan: (): ActionResult => demoShutdown.cancel(),
+  // Shutting down the real machine from a demo would be a surprise.
+  ShutDownSafely: (): ActionResult => DONE,
   // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
   GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
   SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),

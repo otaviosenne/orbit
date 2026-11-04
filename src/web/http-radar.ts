@@ -1,3 +1,4 @@
+import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { ComputerAction, ComputerStatus } from '../shared/computer';
 import type { BoardState } from '../shared/board-state';
@@ -118,6 +119,10 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     focusChatBrowser: (): Promise<DeviceFocus> => Promise.resolve('missing'),
     getChatResources: (): Promise<ResourceSnapshot> => call('GetChatResources', []),
     getComputerStatus: (): Promise<ComputerStatus> => call('GetComputerStatus', []),
+    getShutdownPlan: (): Promise<ShutdownPlanState> => call('GetShutdownPlan', []),
+    setShutdownPlan: (plan: ShutdownPlan): Promise<ActionResult> => call('SetShutdownPlan', [plan]),
+    cancelShutdownPlan: (): Promise<ActionResult> => call('CancelShutdownPlan', []),
+    shutDownSafely: (): Promise<ActionResult> => call('ShutDownSafely', []),
     runComputerAction: (action: ComputerAction): Promise<ActionResult> => call('RunComputerAction', [action]),
     getBoardState: (knownVersion: number | null): Promise<BoardState | null> => call('GetBoardState', [knownVersion]),
     setBoardState: (key: string, value: string): Promise<ActionResult> => call('SetBoardState', [key, value]),

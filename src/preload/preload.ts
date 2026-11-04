@@ -1,3 +1,4 @@
+import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { ComputerAction, ComputerStatus } from '../shared/computer';
 import type { BoardState } from '../shared/board-state';
@@ -116,6 +117,10 @@ const api: RadarApi = {
   getChatResources: (): Promise<ResourceSnapshot> => ipcRenderer.invoke(IpcChannel.GetChatResources),
   getComputerStatus: (): Promise<ComputerStatus> => ipcRenderer.invoke(IpcChannel.GetComputerStatus),
   runComputerAction: (action: ComputerAction): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.RunComputerAction, action),
+  getShutdownPlan: (): Promise<ShutdownPlanState> => ipcRenderer.invoke(IpcChannel.GetShutdownPlan),
+  setShutdownPlan: (plan: ShutdownPlan): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetShutdownPlan, plan),
+  cancelShutdownPlan: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CancelShutdownPlan),
+  shutDownSafely: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ShutDownSafely),
   getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
   setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),
   getRemoteSettings: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.GetRemoteSettings),

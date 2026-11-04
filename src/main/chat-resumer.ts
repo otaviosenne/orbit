@@ -2,16 +2,18 @@ import { access } from 'node:fs/promises';
 import type { PastChatCatalog, PastChatEntry } from '../core/past-chats/past-chat-catalog';
 import { liveSessionIds } from '../core/session-registry';
 import { isSessionId } from '../shared/session-id';
-import { CUT_MESSAGE } from '../shared/pause-messages';
+import { CUT_MESSAGE, SHUTDOWN_CONTINUE_MESSAGE } from '../shared/pause-messages';
 import type { ActionResult } from '../shared/types';
 import { launchChatInBackground } from './chat-workspace';
 import { buildResumeCommand } from './resume-command';
 import { sendAfterResume } from './resumed-chat-message';
+import type { ShutdownPausedChats } from './shutdown/shutdown-paused-chats';
 import { failure } from './terminal-input';
 
 // Reopens a closed chat in a new kitty window, in the folder it was started in.
-// afterCut: the chat was working when the machine went down; it is told so as its first message.
-export async function resumeChat(catalog: PastChatCatalog, sessionId: unknown, afterCut: boolean): Promise<ActionResult> {
+// afterCut: the chat was working when the machine went down; it is told so as its first message. A chat a safe
+// shutdown paused is told to continue instead, as Continue does after Pause all chats.
+export async function resumeChat(catalog: PastChatCatalog, sessionId: unknown, afterCut: boolean, pausedByShutdown: ShutdownPausedChats): Promise<ActionResult> {
   if (!isSessionId(sessionId)) return failure('Not a session id');
   const entry: PastChatEntry | null = await catalog.find(sessionId);
   if (entry === null) return failure('Unknown chat');
@@ -20,9 +22,11 @@ export async function resumeChat(catalog: PastChatCatalog, sessionId: unknown, a
   if (!(await exists(entry.cwd))) return failure(`Its folder no longer exists: ${entry.cwd}`);
   try {
     await launchChatInBackground(buildResumeCommand(entry.cwd, sessionId));
+    const wasPaused: boolean = await pausedByShutdown.take(sessionId, Date.now());
+    const message: string | null = wasPaused ? SHUTDOWN_CONTINUE_MESSAGE : afterCut ? CUT_MESSAGE : null;
     // Not waited for: the reopened chat is told while the user goes on; a failure is only logged.
-    if (afterCut) void sendAfterResume(sessionId, CUT_MESSAGE).then((result: ActionResult): void => {
-      if (!result.ok) console.error(`Telling ${sessionId} it was cut off failed: ${result.error ?? 'unknown'}`);
+    if (message !== null) void sendAfterResume(sessionId, message).then((result: ActionResult): void => {
+      if (!result.ok) console.error(`Telling reopened chat ${sessionId} to carry on failed: ${result.error ?? 'unknown'}`);
     });
     return { ok: true, method: null, error: null };
   } catch (error: unknown) {

@@ -6,6 +6,10 @@ import type { ComputerControls } from './computer-controls';
 import { renderDevicesGroup } from './devices-group';
 import { renderMediaGroup, renderNotificationsGroup } from './notifications-group';
 import { renderPowerGroup } from './power-group';
+import type { ShutdownDraft } from './shutdown-group';
+import { renderShutdownGroup } from './shutdown-group';
+import { suggestedTime } from './shutdown-time';
+import type { ShutdownPlan, ShutdownPlanState } from '../../../shared/shutdown-plan';
 import { renderShortcutsGroup } from './shortcuts-group';
 import { renderSystemGroup } from './system-group';
 
@@ -20,6 +24,9 @@ const LEAD: string = 'This computer from wherever Orbit is open: power, screens,
 export class ComputerSection {
   readonly root: HTMLElement = element('section', 'settings-section computer-section');
   private status: ComputerStatus | null = null;
+  private shutdown: ShutdownPlanState | null = null;
+  // The form outlives the redraws on every poll, so a half-made plan is not lost.
+  private shutdownDraft: ShutdownDraft = { whenIdle: true, useTime: false, time: suggestedTime(new Date()) };
   private problem: string | null = null;
   private armed: string | null = null;
   private armedTimer: number | null = null;
@@ -42,7 +49,8 @@ export class ComputerSection {
   // A slider under the finger, or an output picker open: redrawing (here or the whole settings view) would drop it.
   get isHolding(): boolean {
     const focused: Element | null = document.activeElement;
-    return this.holding || Date.now() < this.holdUntil || (focused instanceof HTMLSelectElement && this.root.contains(focused));
+    const isPicking: boolean = (focused instanceof HTMLSelectElement || (focused instanceof HTMLInputElement && focused.type === 'time')) && this.root.contains(focused);
+    return this.holding || Date.now() < this.holdUntil || isPicking;
   }
 
   setActive(active: boolean): void {
@@ -71,7 +79,7 @@ export class ComputerSection {
     if (this.refreshing) return;
     this.refreshing = true;
     try {
-      this.status = await window.radar.getComputerStatus();
+      [this.status, this.shutdown] = await Promise.all([window.radar.getComputerStatus(), window.radar.getShutdownPlan().catch((): null => null)]);
       if (this.problem?.startsWith(LOAD_PROBLEM) === true) this.problem = null;
     } catch (error: unknown) {
       this.problem = `${LOAD_PROBLEM}${error instanceof Error ? error.message : String(error)}`;
@@ -84,6 +92,13 @@ export class ComputerSection {
   private async act(action: ComputerAction): Promise<void> {
     this.disarm();
     const result: ActionResult = await window.radar.runComputerAction(action);
+    this.problem = result.ok ? null : `Failed: ${result.error ?? 'unknown error'}`;
+    await this.refresh();
+    this.render();
+  }
+
+  private async planShutdown(request: () => Promise<ActionResult>): Promise<void> {
+    const result: ActionResult = await request();
     this.problem = result.ok ? null : `Failed: ${result.error ?? 'unknown error'}`;
     await this.refresh();
     this.render();
@@ -119,7 +134,19 @@ export class ComputerSection {
       arm: (key: string): void => this.arm(key),
     };
     return [
-      ...renderPowerGroup(controls),
+      ...renderPowerGroup(controls, (): void => {
+        this.disarm();
+        void this.planShutdown((): Promise<ActionResult> => window.radar.shutDownSafely());
+      }),
+      ...renderShutdownGroup(this.shutdown, {
+        draft: this.shutdownDraft,
+        change: (draft: ShutdownDraft): void => {
+          this.shutdownDraft = draft;
+          this.render();
+        },
+        schedule: (plan: ShutdownPlan): void => void this.planShutdown((): Promise<ActionResult> => window.radar.setShutdownPlan(plan)),
+        cancel: (): void => void this.planShutdown((): Promise<ActionResult> => window.radar.cancelShutdownPlan()),
+      }),
       ...renderSystemGroup(status),
       ...renderAudioGroup(status.audio, status.apps, controls),
       ...renderMediaGroup(status.media, controls),

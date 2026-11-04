@@ -1,6 +1,6 @@
 import type { ChatSnapshot, ContinueTarget, PauseReport, PauseTarget } from '../../shared/types';
 import { ClosedEmulators } from './closed-emulators';
-import { isMidWork, pauseTargets } from './pause-targets';
+import { isMidWork, pauseTargets } from '../../shared/pause-targets';
 
 const STORAGE_KEY: string = 'orbit.paused-chats';
 // A paused chat is busy for a moment answering the pause itself; only what happens after that means the user sent it back to work.

@@ -1,6 +1,6 @@
 import type { ChatSnapshot } from '../../shared/types';
 import { toClosedChatInfo, type ClosedChatInfo } from '../board/closed-chat-info';
-import { isMidWork } from '../pause/pause-targets';
+import { isMidWork } from '../../shared/pause-targets';
 import type { ColumnKey } from '../views/board-columns';
 
 const STORAGE_KEY: string = 'orbit.open-chats';

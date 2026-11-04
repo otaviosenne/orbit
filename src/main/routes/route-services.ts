@@ -7,6 +7,7 @@ import type { ResourceSampler } from '../../core/resources/resource-sampler';
 import type { PastChatCatalog } from '../../core/past-chats/past-chat-catalog';
 import type { TimelineHistory } from '../../core/timeline-history/timeline-history';
 import type { UsageService } from '../../core/usage-service';
+import type { ShutdownScheduler } from '../shutdown/shutdown-scheduler';
 
 // What the routes shared by the desktop window and Orbit Web read from and act through.
 export interface RouteServices {
@@ -19,4 +20,5 @@ export interface RouteServices {
   readonly chatWindows: ChatWindows;
   readonly computer: Computer;
   readonly devices: ChatDeviceService;
+  readonly shutdown: ShutdownScheduler;
 }

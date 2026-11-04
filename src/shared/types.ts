@@ -1,3 +1,4 @@
+import type { ShutdownPlan, ShutdownPlanState } from './shutdown-plan';
 import type { ApprovalAnswer, ApprovalRequest } from './approval';
 import type { LocalCiRun } from './local-ci';
 import type { ComputerAction, ComputerStatus } from './computer';
@@ -575,6 +576,10 @@ export interface RadarApi {
   // The desktop for the Computer page, and the one thing on it to change.
   getComputerStatus(): Promise<ComputerStatus>;
   runComputerAction(action: ComputerAction): Promise<ActionResult>;
+  getShutdownPlan(): Promise<ShutdownPlanState>;
+  setShutdownPlan(plan: ShutdownPlan): Promise<ActionResult>;
+  cancelShutdownPlan(): Promise<ActionResult>;
+  shutDownSafely(): Promise<ActionResult>;
   // Pins and suspended chats every Orbit window shares; null when knownVersion is still current.
   getBoardState(knownVersion: number | null): Promise<BoardState | null>;
   setBoardState(key: string, value: string): Promise<ActionResult>;

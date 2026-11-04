@@ -1561,6 +1561,13 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 /* Dark modules on a white tile in both themes: scanners expect dark-on-light */
 .remote-qr { flex: none; width: 168px; height: 168px; padding: 6px; border-radius: 10px; background: #ffffff; color: #000000; }
 .remote-qr svg { display: block; width: 100%; height: 100%; }
+.shutdown-option { display: flex; align-items: center; gap: 8px; }
+.shutdown-check { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.shutdown-time { margin-left: auto; padding: 4px 8px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
+.shutdown-time:disabled { opacity: 0.45; }
+.shutdown-summary { display: flex; flex-direction: column; gap: 2px; white-space: normal; }
+.shutdown-working { color: var(--secondary); font-size: 11.5px; }
+.shutdown-actions { justify-content: flex-end; }
 .pairing-body { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
 .pairing-body .dialog-note { margin: 0; text-align: center; }
 .pairing-qr { width: 200px; height: 200px; }
