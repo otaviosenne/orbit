@@ -60,6 +60,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     onOpenChatRequest: (): void => undefined,
     getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => call('GetTurnProgress', [sessionId]),
     getStreamingReply: (sessionId: string): Promise<string | null> => call('GetStreamingReply', [sessionId]),
+    getPromptHistory: (sessionId: string): Promise<string[]> => call('GetPromptHistory', [sessionId]),
     getChatColor: (sessionId: string): Promise<string | null> => call('GetChatColor', [sessionId]),
     listLaunchers: (): Promise<LauncherEntry[]> => call('ListLaunchers', []),
     openLauncher: (name: string): Promise<ActionResult> => call('OpenLauncher', [name]),

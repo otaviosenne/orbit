@@ -1061,6 +1061,13 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
   box-shadow: 0 0 0 0.5px var(--control-border), 0 6px 20px rgb(0 0 0 / 0.08);
 }
 .composer .composer-box:focus-within { box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 0.5px var(--accent); }
+/* A prompt from the history (Up/Down) shows: outlined yellow with "n of m" until it is edited */
+.composer .composer-box.is-browsing-history,
+.composer .composer-box.is-browsing-history:focus-within { box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--tag-yellow) 45%, transparent), 0 0 0 0.5px var(--tag-yellow); }
+.composer-history-count {
+  position: absolute; top: -20px; right: 12px; padding: 1px 7px; border-radius: 8px;
+  background: color-mix(in srgb, var(--tag-yellow) 85%, transparent); color: #1c1c1e; font-size: 11px; font-variant-numeric: tabular-nums; pointer-events: none;
+}
 .composer .composer-input, .composer .composer-input:focus { background: transparent; box-shadow: none; }
 .composer[data-dictation='listening'] .composer-input { box-shadow: none; }
 
@@ -1367,6 +1374,7 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
   box-shadow: 0 0 0 0.5px var(--control-border), inset 0 0.5px 1px rgb(0 0 0 / 0.06);
 }
 .tile-composer-input:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent), 0 0 0 0.5px var(--accent); }
+.tile-composer-box.is-browsing-history .tile-composer-input { box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-yellow) 45%, transparent), 0 0 0 0.5px var(--tag-yellow); }
 .tile-composer .button { padding: 5px 13px; border-radius: 15px; }
 /* A step smaller than the side panel's mic, centred on the field's single line */
 .tile-composer-mic { right: 4px; bottom: 4px; width: 22px; height: 22px; padding: 4px; }

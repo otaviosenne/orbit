@@ -10,6 +10,8 @@ import type { SendingDraft } from './sending-draft';
 import { sendingDraft } from './sending-draft';
 import { AttachmentMarkers } from './attachment-markers';
 import { wireAttachmentInput } from './attachment-input';
+import type { PromptHistoryApi } from './prompt-history-browser';
+import { PromptHistoryBrowser } from './prompt-history-browser';
 import { returnKeyAction, showNewLineReturnKey } from './return-key';
 import { keepingThreadEnd } from './thread-end';
 import { DictationDisplay } from './voice/dictation-display';
@@ -44,6 +46,7 @@ export class Composer {
   private readonly display: DictationDisplay;
   private readonly field: VoiceField;
   private readonly voice: FieldVoice;
+  private history: PromptHistoryBrowser | null = null;
 
   constructor(
     private readonly onSubmit: MessageSubmitted,
@@ -94,6 +97,11 @@ export class Composer {
     this.input.focus();
   }
 
+  // Up and Down walk the prompts typed in the open chat's folder.
+  browseHistory(sessionId: () => string | null, api: PromptHistoryApi): void {
+    this.history = new PromptHistoryBrowser(this.input, requireElement('#composer-box'), sessionId, api);
+  }
+
   // Dictation from outside the field: the caret goes to the end of the draft, where the words will land.
   startDictation(): void {
     if (document.activeElement !== this.input) {
@@ -142,6 +150,7 @@ export class Composer {
 
   // The images go with the draft, since their markers in it say where each one belongs.
   reset(): void {
+    this.history?.stop();
     this.hub.cancel(this.voice);
     this.input.value = '';
     this.tray.clear();

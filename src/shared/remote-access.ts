@@ -19,6 +19,7 @@ export const REMOTE_ACCESS = {
   NotifyNeedsYou: 'desktop',
   GetTurnProgress: 'read',
   GetStreamingReply: 'read',
+  GetPromptHistory: 'read',
   GetChatColor: 'read',
   GetUsage: 'read',
   ListLaunchers: 'read',

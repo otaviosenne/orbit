@@ -1,4 +1,6 @@
 import type { ActionResult, AttachmentUpload } from '../../../shared/types';
+import type { PromptHistoryApi } from '../../sheet/prompt-history-browser';
+import { PromptHistoryBrowser } from '../../sheet/prompt-history-browser';
 import { element } from '../../dom';
 import { CHAT_ICON } from '../../icons';
 import type { Lightbox } from '../../lightbox';
@@ -42,6 +44,7 @@ export class TileComposer {
   private isSending: boolean = false;
   private isExpanded: boolean = false;
   private isAlwaysOpen: boolean = true;
+  private history: PromptHistoryBrowser | null = null;
 
   constructor(private readonly onSend: TileSend, private readonly hub: VoiceHub, lightbox: Lightbox) {
     this.input.rows = TEXT_ROWS;
@@ -101,6 +104,11 @@ export class TileComposer {
   focus(): void {
     this.becomeTarget();
     this.input.focus();
+  }
+
+  // Up and Down walk the prompts typed in the tile's chat folder, as in the side panel.
+  browseHistory(sessionId: () => string | null, api: PromptHistoryApi): void {
+    this.history = new PromptHistoryBrowser(this.input, this.field.box, sessionId, api);
   }
 
   dictationPlace(sessionId: string): DictationPlace {
@@ -207,6 +215,7 @@ export class TileComposer {
     if (!this.hasSomethingToSend() || !this.isReady || this.isSending) return;
     this.hub.messageSent(this.voice);
     const draft: SendingDraft = await sendingDraft(this.input.value, this.tray);
+    this.history?.stop();
     this.input.value = '';
     this.tray.clear();
     setText(this.problem, '');

@@ -43,6 +43,7 @@ export class GridTile {
       voice,
       lightbox,
     );
+    this.composer.browseHistory((): string | null => this.chat.sessionId, window.radar);
     this.header = new TileHeader({
       remove: (): void => handlers.remove(this.chat.sessionId),
       openDevice: (kind: CardDeviceKind): void => handlers.openDevice(kind, this.chat.sessionId),

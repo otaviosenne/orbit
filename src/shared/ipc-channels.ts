@@ -9,6 +9,7 @@ export const IpcChannel = {
   OpenChatRequest: 'radar:open-chat-request',
   GetTurnProgress: 'radar:get-turn-progress',
   GetStreamingReply: 'radar:get-streaming-reply',
+  GetPromptHistory: 'radar:get-prompt-history',
   GetChatColor: 'radar:get-chat-color',
   GetUsage: 'radar:get-usage',
   ListLaunchers: 'radar:list-launchers',
