@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { generateToken } from '../../src/main/remote/access-token';
+import { PairingCodes } from '../../src/main/remote/pairing-codes';
 import { FailureLimiter } from '../../src/main/remote/failure-limiter';
 import type { RemoteRoutes } from '../../src/main/remote/remote-context';
 import { closeServer, createRemoteServer, listenLocally } from '../../src/main/remote/remote-server';
@@ -76,6 +77,7 @@ beforeAll(async () => {
     webRoot,
     credentials: () => ({ token: TOKEN, trusted: trustedOrigins(port, '') }),
     limiter: new FailureLimiter({ maxFailures: LOCKOUT_FAILURES, windowMs: 60_000, lockoutMs: 60_000 }),
+    pairing: new PairingCodes(),
     dictation: () => new DemoDictationEngine(),
     now: (): number => Date.now(),
     log: (line: string): void => void logLines.push(line),
@@ -129,6 +131,22 @@ describe('Orbit Web server', () => {
     expect(setCookie).not.toContain(TOKEN);
     cookie = setCookie.split(';')[0] ?? '';
     expect((await call({ method: 'GET', path: '/api/session', headers: { cookie } })).status).toBe(204);
+  });
+
+  it('lets a signed-in device make a one-time code another device signs in with', async () => {
+    const pairingPath: string = '/api/pairing-code';
+    expect((await call({ method: 'POST', path: pairingPath, headers: { origin: origin() } })).status).toBe(401);
+    const reply: Reply = await call({ method: 'POST', path: pairingPath, headers: { origin: origin(), cookie } });
+    expect(reply.status).toBe(200);
+    const offer: { code: string; link: string; qrSvg: string } = JSON.parse(reply.body) as { code: string; link: string; qrSvg: string };
+    expect(offer.code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+    expect(offer.link).toBe(`http://127.0.0.1:${port}/#token=${offer.code}`);
+    expect(offer.qrSvg).toContain('<svg');
+    expect(reply.body).not.toContain(TOKEN);
+    const signedIn: Reply = await signIn(offer.code.toLowerCase().replace('-', ' '));
+    expect(signedIn.status).toBe(204);
+    expect(signedIn.headers['set-cookie']?.[0]?.split(';')[0]).toBe(cookie);
+    expect((await signIn(offer.code)).status).toBe(401);
   });
 
   it('answers a signed-in call with the route’s result', async () => {

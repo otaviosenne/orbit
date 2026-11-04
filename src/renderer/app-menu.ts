@@ -37,10 +37,11 @@ const LINKS: readonly AppMenuLink[] = [
 
 // Clicking the wordmark drops down Help and links about Orbit itself; the links open in the browser (the
 // window sends every link outside).
-export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null, pause: AppMenuPause): void {
+// connectDevice: Orbit Web only, lets another device sign in from this one.
+export function attachAppMenu(trigger: HTMLElement, openHelp: () => void, web: AppMenuWeb | null, pause: AppMenuPause, connectDevice: (() => void) | null): void {
   const menu: HTMLDivElement = element('div', 'card-menu app-menu');
   const continueItem: HTMLButtonElement = renderAction(CONTINUE_ICON, 'Continue paused chats', pause.continueAll);
-  menu.append(renderHelpItem(openHelp), renderAction(PAUSE_ICON, 'Pause all chats', pause.pauseAll), continueItem, renderAction(RESTART_ICON, 'Restart idle chats', pause.restartIdle), ...(web === null ? [] : renderWebItems(web)), ...LINKS.map(renderLink));
+  menu.append(renderHelpItem(openHelp), renderAction(PAUSE_ICON, 'Pause all chats', pause.pauseAll), continueItem, renderAction(RESTART_ICON, 'Restart idle chats', pause.restartIdle), ...(web === null ? [] : renderWebItems(web)), ...(connectDevice === null ? [] : [renderAction(PHONE_ICON, 'Connect another device', connectDevice)]), ...LINKS.map(renderLink));
   document.body.append(menu);
   trigger.classList.add('has-menu');
   trigger.addEventListener('click', (): void => {

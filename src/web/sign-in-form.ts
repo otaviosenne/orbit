@@ -4,7 +4,7 @@ import type { SignInOutcome } from './session';
 import { signIn, takePairingToken } from './session';
 
 const OUTCOME_MESSAGES: Readonly<Record<Exclude<SignInOutcome, 'ok'>, string>> = {
-  wrong: 'That token is not right. Copy it again from Orbit’s Settings on your computer.',
+  wrong: 'That token or code is not right. Codes work once and expire after 5 minutes; make a new one if needed.',
   locked: 'Too many wrong tokens. Sign-in is paused for a while.',
   unreachable: 'Orbit is not answering. Is the computer on, with Orbit Web enabled?',
 };
@@ -19,13 +19,13 @@ export function showSignInForm(): Promise<void> {
     const input: HTMLInputElement = element('input', 'web-sign-in-input');
     input.type = 'password';
     input.autocomplete = 'current-password';
-    input.placeholder = 'Access token';
-    input.setAttribute('aria-label', 'Access token');
+    input.placeholder = 'Access token or pairing code';
+    input.setAttribute('aria-label', 'Access token or pairing code');
     const submit: HTMLButtonElement = element('button', 'button button-primary web-sign-in-submit', 'Sign in');
     submit.type = 'submit';
     const problem: HTMLParagraphElement = element('p', 'web-sign-in-problem');
     problem.setAttribute('role', 'alert');
-    const hint: string = 'Paste the access token from Orbit → Settings → Orbit Web, or scan its QR code.';
+    const hint: string = 'Paste the access token from Orbit → Settings → Orbit Web, or scan its QR code. Signed in on another device? Its Orbit menu → Connect another device gives a code.';
     form.append(title, element('p', 'web-sign-in-hint', hint), input, submit, problem);
     overlay.append(form);
     document.body.append(overlay);

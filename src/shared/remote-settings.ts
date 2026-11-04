@@ -20,3 +20,13 @@ export const REMOTE_API_PREFIX: string = '/api/call/';
 export const REMOTE_SESSION_PATH: string = '/api/session';
 // The phone reads the token from here once, then drops it from the address bar.
 export const PAIRING_HASH_KEY: string = 'token';
+export const REMOTE_PAIRING_PATH: string = '/api/pairing-code';
+
+// A one-time code a signed-in device made for another one: typed at sign-in, or carried by the link and its QR code.
+export interface PairingOffer {
+  readonly code: string;
+  readonly expiresAt: number;
+  readonly link: string;
+  // Drawn by the server from the link alone.
+  readonly qrSvg: string;
+}

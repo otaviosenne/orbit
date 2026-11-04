@@ -6,6 +6,7 @@ import { generateToken, sessionValueFor } from '../../src/main/remote/access-tok
 import { contentSecurityPolicy } from '../../src/main/remote/content-security';
 import { DICTATION_LIMITS } from '../../src/main/remote/dictation/dictation-limits';
 import { CLOSE_POLICY_VIOLATION, CLOSE_UNSUPPORTED_DATA } from '../../src/main/remote/dictation/close-codes';
+import { PairingCodes } from '../../src/main/remote/pairing-codes';
 import { FailureLimiter, SIGN_IN_POLICY } from '../../src/main/remote/failure-limiter';
 import { closeServer, createRemoteServer, listenLocally } from '../../src/main/remote/remote-server';
 import { trustedOrigins } from '../../src/main/remote/trusted-origins';
@@ -78,6 +79,7 @@ beforeAll(async () => {
     webRoot: '/nonexistent',
     credentials: () => ({ token, trusted: trustedOrigins(port, '') }),
     limiter: new FailureLimiter(SIGN_IN_POLICY),
+    pairing: new PairingCodes(),
     dictation: (): RecordingEngine => {
       const engine: RecordingEngine = new RecordingEngine();
       engines.push(engine);
@@ -170,6 +172,7 @@ describe('Orbit Web dictation socket', () => {
       webRoot: '/nonexistent',
       credentials: () => ({ token, trusted: trustedOrigins(port, '') }),
       limiter: new FailureLimiter(SIGN_IN_POLICY),
+      pairing: new PairingCodes(),
       dictation: (): RecordingEngine => new RecordingEngine(),
       now: (): number => Date.now(),
       log: (): void => undefined,

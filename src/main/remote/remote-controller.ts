@@ -5,6 +5,7 @@ import { generateToken } from './access-token';
 import type { DictationEngineFactory } from './dictation/dictation-engine';
 import { normalizeExternalUrl } from './external-url';
 import { FailureLimiter, SIGN_IN_POLICY } from './failure-limiter';
+import { PairingCodes } from './pairing-codes';
 import { pairingQrSvg } from './pairing-qr';
 import type { RemoteConfig, RemoteConfigStore } from './remote-config';
 import { DEFAULT_REMOTE_CONFIG, isUserPort } from './remote-config';
@@ -27,6 +28,8 @@ export class RemoteController {
   private error: string | null = null;
   // Kept across restarts of the server, so turning it off and on does not reset a lockout.
   private readonly limiter: FailureLimiter = new FailureLimiter(SIGN_IN_POLICY);
+  // Kept across server restarts, so turning Orbit Web off and on does not matter to a code just made.
+  private readonly pairing: PairingCodes = new PairingCodes();
   // Changes run one at a time: an "off" arriving while "on" still binds the port must wait for it, or the server
   // would end up listening with the setting off.
   private queue: Promise<unknown> = Promise.resolve();
@@ -141,6 +144,7 @@ export class RemoteController {
       webRoot: this.options.webRoot,
       credentials: (): RemoteCredentials => this.credentials(),
       limiter: this.limiter,
+      pairing: this.pairing,
       dictation: this.options.dictation,
       now: (): number => Date.now(),
       log: this.options.log,

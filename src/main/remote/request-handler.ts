@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { REMOTE_API_PREFIX, REMOTE_SESSION_PATH } from '../../shared/remote-settings';
+import { REMOTE_API_PREFIX, REMOTE_PAIRING_PATH, REMOTE_SESSION_PATH } from '../../shared/remote-settings';
 import { handleApiCall } from './api-call';
 import { applySecurityHeaders, sendError } from './http-io';
 import type { RemoteContext, RemoteCredentials } from './remote-context';
+import { handlePairingOffer } from './pairing-offer';
 import { handleSession } from './sign-in';
 import { serveStatic } from './static-files';
 import { isTrustedHost, isTrustedOrigin } from './trusted-origins';
@@ -25,6 +26,7 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
   if (!isAllowedOrigin(request, credentials)) return sendError(response, 403, 'Cross-origin request refused');
   const path: string = requestPath(request);
   if (path === REMOTE_SESSION_PATH) return handleSession(request, response, context);
+  if (path === REMOTE_PAIRING_PATH) return handlePairingOffer(request, response, context);
   if (path.startsWith(REMOTE_API_PREFIX)) return handleApiCall(request, response, path, context);
   if (path.startsWith(API_ROOT)) return sendError(response, 404, 'Not found');
   if (!READ_METHODS.includes(request.method ?? '')) return sendError(response, 405, 'Method not allowed');

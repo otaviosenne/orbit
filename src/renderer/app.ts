@@ -36,6 +36,7 @@ import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
 import { ChatPause } from './pause/chat-pause';
 import { ClosedEmulators } from './pause/closed-emulators';
+import { ConnectDeviceDialog } from './pairing/connect-device-dialog';
 import type { EmulatorApi } from './pause/pause-flow';
 import { EmulatorPrompt } from './pause/emulator-prompt';
 import { pauseEverything } from './pause/pause-flow';
@@ -782,7 +783,14 @@ attachAppMenu(requireElement('#app-title .wordmark'), (): void => help.open(), r
   continueAll: (): void => void chatPause.continueAll(),
   pausedCount: (): number => chatPause.pausedCount,
   restartIdle: (): void => void restartIdleChats(chats, (pid: number) => window.radar.restartChat(pid)).then(showRestartReport),
-});
+}, isWebHost() ? connectAnotherDevice : null);
+
+// Made on first use: the desktop never needs it, it pairs with the access token's QR code in Settings.
+let connectDialog: ConnectDeviceDialog | null = null;
+function connectAnotherDevice(): void {
+  connectDialog ??= new ConnectDeviceDialog();
+  void connectDialog.open();
+}
 // The failure is kept on the badge's tooltip, where the user is already looking.
 function signIn(): void {
   openSignIn((problem: string): void => {

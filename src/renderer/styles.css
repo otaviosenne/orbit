@@ -1561,6 +1561,10 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 /* Dark modules on a white tile in both themes: scanners expect dark-on-light */
 .remote-qr { flex: none; width: 168px; height: 168px; padding: 6px; border-radius: 10px; background: #ffffff; color: #000000; }
 .remote-qr svg { display: block; width: 100%; height: 100%; }
+.pairing-body { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
+.pairing-body .dialog-note { margin: 0; text-align: center; }
+.pairing-qr { width: 200px; height: 200px; }
+.pairing-code { margin: 0; font-family: var(--mono); font-size: 22px; font-weight: 650; letter-spacing: 2px; user-select: all; }
 
 /* ---------- Hands-free dictation indicator ---------- */
 /* Beside the wordmark, always: it breathes with your voice while on, dims while paused, and sits faded with no

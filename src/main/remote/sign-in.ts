@@ -37,7 +37,8 @@ export async function handleSession(request: IncomingMessage, response: ServerRe
     return sendError(response, 413, 'Request body too large');
   }
   const token: string | null = parseToken(body);
-  if (token !== null && secretsMatch(token, credentials.token)) {
+  // The access token, or a one-time code another signed-in device made: either signs this device in for good.
+  if (token !== null && (secretsMatch(token, credentials.token) || context.pairing.redeem(token, now))) {
     return sendEmpty(response, 204, { 'Set-Cookie': sessionCookieHeader(sessionValueFor(credentials.token)) });
   }
   context.limiter.recordFailure(now);
