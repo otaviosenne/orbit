@@ -17,8 +17,12 @@ const COUNTDOWN: RegExp = / in \d+:\d{2}(?=,)/;
 const CHAT_ABOUT_THIS: string = 'Chat about this';
 const FIRST_OPTION: number = 1;
 const MIN_OPTIONS: number = 2;
-// Claude Code indents the prompt's text by one space.
+// Claude Code indents the prompt's text by one space; a row indented deeper is the previous row wrapped by a narrow
+// window.
 const PROMPT_INDENT: RegExp = /^ /;
+const WRAPPED_ROW: RegExp = /^ {2,}\S/;
+// A narrow window draws the command behind a "│" gutter instead of plain.
+const COMMAND_GUTTER: RegExp = /^\s*│ ?/;
 
 // Reads Claude Code's tool permission prompt off a plain `kitty @ get-text` capture; null when none is showing.
 export function parsePermission(screen: string): PickerPermissionView | null {
@@ -37,9 +41,10 @@ export function parsePermission(screen: string): PickerPermissionView | null {
   return { kind: 'permission', fingerprint, ...head, question: questionText, options };
 }
 
-// The question sits right above the first option, blank lines aside.
+// The question sits right above the first option, blank lines aside. The option is searched up from the footer: the
+// history above the prompt can hold a numbered list of the chat's own, whose "1." is not the prompt's.
 function questionRow(lines: readonly string[], footer: number): number {
-  const firstOption: number = lines.findIndex((line: string, index: number) => index < footer && OPTION_ROW.exec(line)?.[1] === String(FIRST_OPTION));
+  const firstOption: number = lastIndex(lines, footer, (line: string) => OPTION_ROW.exec(line)?.[1] === String(FIRST_OPTION));
   if (firstOption === -1) return -1;
   for (let index: number = firstOption - 1; index >= 0; index--) {
     const line: string = lines[index] ?? '';
@@ -76,8 +81,8 @@ function readHead(body: readonly string[], hasTop: boolean): PromptHead {
   const isOpenCut: boolean = !hasTop && fences.length === 1;
   const open: number | undefined = isOpenCut ? -1 : fences[0];
   const close: number | undefined = isOpenCut ? fences[0] : fences[1];
-  const intro: string[] = nonBlank(open === undefined ? (hasTop ? body : []) : body.slice(0, Math.max(open, 0)));
-  const detailLines: string[] = open === undefined ? [] : body.slice(open + 1, close ?? body.length).map((line: string) => line.replace(PROMPT_INDENT, ''));
+  const intro: string[] = nonBlank(joinWrapped(open === undefined ? (hasTop ? body : []) : body.slice(0, Math.max(open, 0))));
+  const detailLines: string[] = withoutGutter(open === undefined ? [] : body.slice(open + 1, close ?? body.length).map((line: string) => line.replace(PROMPT_INDENT, '')));
   const after: readonly string[] = close === undefined ? (open === undefined && !hasTop ? body : []) : body.slice(close + 1);
   return {
     title: hasTop ? (intro[0] ?? null) : null,
@@ -106,6 +111,22 @@ function readWarnings(rows: readonly string[]): string[] {
     kind = rowKind ?? 'notice';
   }
   return warnings.map((warning: string) => warning.replace(COUNTDOWN, ''));
+}
+
+function joinWrapped(rows: readonly string[]): string[] {
+  const joined: string[] = [];
+  for (const row of rows) {
+    const last: number = joined.length - 1;
+    if (last >= 0 && (joined[last] ?? '').trim().length > 0 && WRAPPED_ROW.test(row)) joined[last] = `${joined[last] ?? ''} ${row.trim()}`;
+    else joined.push(row);
+  }
+  return joined;
+}
+
+function withoutGutter(lines: readonly string[]): string[] {
+  const filled: readonly string[] = lines.filter((line: string) => line.trim().length > 0);
+  const hasGutter: boolean = filled.length > 0 && filled.every((line: string) => COMMAND_GUTTER.test(line));
+  return hasGutter ? lines.map((line: string) => line.replace(COMMAND_GUTTER, '')) : [...lines];
 }
 
 function nonBlank(lines: readonly string[]): string[] {

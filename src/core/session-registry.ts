@@ -12,6 +12,8 @@ export interface SessionRecord {
   readonly name: string;
   readonly status: string;
   readonly statusUpdatedAt: number;
+  // Why a waiting chat waits: "permission prompt", "input needed" (a question), "dialog open"...
+  readonly waitingFor?: string;
   readonly kind?: string;
 }
 

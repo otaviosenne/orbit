@@ -27,6 +27,33 @@ const FULL_PROMPT: string = [
   ' Esc to cancel · Tab to amend',
 ].join('\n');
 
+// A narrow window (Claude Code 2.1.317): the title wraps, the command sits behind a gutter, and the chat's own
+// numbered list is still in the scrollback above the prompt.
+const NARROW_PROMPT: string = [
+  '  Two things are left:',
+  '',
+  '  1. Popup ao fechar: o escurecido some num',
+  '  2. Aviso de elegibilidade',
+  '',
+  '────────────────────────────────────────────',
+  ' Bash command · from the general-purpose',
+  '              agent',
+  ' Save room load evidence and inspect room UI',
+  '╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌',
+  ' │ S=/tmp/crop; rm -f $S/*; for',
+  ' │ i in 076 077; do magick f_$i.png; done',
+  '╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌',
+  ' │ Dangerous rm operation on possibly-empty variable path:',
+  ' │ $S/* in `rm -f $S/*` (rewrite it as "${S:?}"/* or use a',
+  ' │ literal path)',
+  '',
+  ' Do you want to proceed?',
+  ' ❯ 1. Yes',
+  '   2. No',
+  '',
+  ' Esc to cancel · Tab to amend · ctrl+x ctrl+k twice to stop …',
+].join('\n');
+
 describe('permission prompt', () => {
   it('reads the tool, the command, the warnings and the answers', () => {
     const view: PickerPermissionView | null = parsePermission(FULL_PROMPT);
@@ -39,6 +66,17 @@ describe('permission prompt', () => {
         'Dangerous rm operation on possibly-empty variable path: $V/*.mp4 in `rm -rf $V/*.mp4` (rewrite it as "${V:?}"/*.mp4 or use a literal path)',
         'Claude Code will automatically block this request, to avoid holding up an unattended session',
       ],
+      question: 'Do you want to proceed?',
+      options: [{ number: 1, label: 'Yes' }, { number: 2, label: 'No' }],
+    });
+  });
+
+  it('reads a prompt in a narrow window under a numbered list of the chat', () => {
+    expect(parsePermission(NARROW_PROMPT)).toMatchObject({
+      title: 'Bash command · from the general-purpose agent',
+      description: 'Save room load evidence and inspect room UI',
+      detail: 'S=/tmp/crop; rm -f $S/*; for\ni in 076 077; do magick f_$i.png; done',
+      warnings: ['Dangerous rm operation on possibly-empty variable path: $S/* in `rm -f $S/*` (rewrite it as "${S:?}"/* or use a literal path)'],
       question: 'Do you want to proceed?',
       options: [{ number: 1, label: 'Yes' }, { number: 2, label: 'No' }],
     });

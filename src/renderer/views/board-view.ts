@@ -1,4 +1,5 @@
-import { renderUnseenDot, showsDot } from '../unseen-dot';
+import { dotKindOf, renderUnseenDot } from '../unseen-dot';
+import type { DotKind } from '../unseen-dot';
 import { statusAge } from '../../shared/chat-time';
 import type { ChatDevices, ChatSnapshot } from '../../shared/types';
 import { renderCardDevices } from '../board/card-devices';
@@ -132,7 +133,8 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   card.style.setProperty('--on-chat', textOnChatColor(chat.color));
   const top: HTMLDivElement = element('div', 'card-top');
   const time: HTMLSpanElement = element('span', 'card-time', formatDuration(statusAge(chat, now)));
-  if (showsDot(chat.status, hasUnread)) time.prepend(renderUnseenDot(chat.status === 'waiting'));
+  const dot: DotKind | null = dotKindOf(chat, hasUnread);
+  if (dot !== null) time.prepend(renderUnseenDot(dot));
   const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(chat));
   if (spinner !== null) time.prepend(spinner);
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());

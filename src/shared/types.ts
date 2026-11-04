@@ -81,6 +81,8 @@ export interface ChatSnapshot {
   readonly startedAt: number;
   readonly status: ChatStatus;
   readonly statusSince: number;
+  // Waiting on an allow-or-deny prompt (a tool's permission) rather than on a question; absent means no.
+  readonly asksPermission?: boolean;
   // When Claude last wrote in this chat (null before its first reply); survives a resume, unlike statusSince.
   readonly lastReplyAt: number | null;
   readonly agents: readonly AgentSnapshot[];

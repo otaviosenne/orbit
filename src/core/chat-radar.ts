@@ -11,7 +11,7 @@ import { AGENT_READ_BYTES, TRANSCRIPT_ITEM_LIMIT } from './config';
 import { FileMemo } from './file-memo';
 import { readTail } from './file-reader';
 import { isConversationLine, parseRecords } from './jsonl';
-import { normalizeStatus } from './chat-status';
+import { asksPermission, normalizeStatus } from './chat-status';
 import { LastReplyTracker } from './last-reply-tracker';
 import { ColorTracker } from './color-tracker';
 import { RepositoryResolver } from './repository-resolver';
@@ -177,6 +177,7 @@ export class ChatRadar {
       startedAt: session.startedAt,
       status: normalizeStatus(session.status),
       statusSince: session.statusUpdatedAt,
+      asksPermission: asksPermission(session.status, session.waitingFor),
       lastReplyAt: transcript === null ? null : await this.replies.lastReplyAt(transcript),
       agents,
       shells,

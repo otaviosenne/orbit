@@ -433,6 +433,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   width: 10px; height: 10px; background: var(--unseen-color);
   animation: unseen-pulse-waiting 1s ease-out infinite;
 }
+.unseen-dot.is-permission { --unseen-color: var(--tag-red); }
 @keyframes unseen-pulse-waiting {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 90%, transparent), 0 0 0 0 color-mix(in srgb, var(--unseen-color) 60%, transparent); transform: scale(1); }
   25% { transform: scale(1.3); }
@@ -447,7 +448,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .unseen-dot { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-green) 22%, transparent); }
-  .unseen-dot.is-waiting { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-blue) 35%, transparent); }
+  .unseen-dot.is-waiting { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--unseen-color) 35%, transparent); }
 }
 .card.is-unseen .card-name { font-weight: 700; }
 .card-pin { display: grid; place-items: center; width: 14px; height: 14px; color: var(--chat); }

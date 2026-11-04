@@ -1,18 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { showsDot } from '../src/renderer/unseen-dot';
+import { asksPermission } from '../src/core/chat-status';
+import { dotKindOf } from '../src/renderer/unseen-dot';
+import type { ChatSnapshot } from '../src/shared/types';
+
+const chat = (status: ChatSnapshot['status'], isPermission: boolean = false): ChatSnapshot => ({
+  sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince: 0,
+  asksPermission: isPermission, agents: [], shells: [], lastReplyAt: 0, isFocused: false, approval: null, localCi: null,
+});
 
 describe('when a chat shows its dot', () => {
   it('keeps the dot on a question that was seen but not answered', () => {
-    expect(showsDot('waiting', false)).toBe(true);
-    expect(showsDot('waiting', true)).toBe(true);
+    expect(dotKindOf(chat('waiting'), false)).toBe('question');
+    expect(dotKindOf(chat('waiting'), true)).toBe('question');
+  });
+
+  it('marks an allow-or-deny permission prompt apart from a question', () => {
+    expect(dotKindOf(chat('waiting', true), false)).toBe('permission');
   });
 
   it('shows an unread reply until it is opened, then drops it', () => {
-    expect(showsDot('idle', true)).toBe(true);
-    expect(showsDot('idle', false)).toBe(false);
+    expect(dotKindOf(chat('idle'), true)).toBe('unread');
+    expect(dotKindOf(chat('idle'), false)).toBeNull();
   });
 
   it('shows nothing for a working chat that has nothing unread', () => {
-    expect(showsDot('busy', false)).toBe(false);
+    expect(dotKindOf(chat('busy'), false)).toBeNull();
+  });
+});
+
+describe('which waits are permission prompts', () => {
+  it('reads the reason Claude Code writes in the session file', () => {
+    expect(asksPermission('waiting', 'permission prompt')).toBe(true);
+    expect(asksPermission('waiting', 'sandbox request')).toBe(true);
+    expect(asksPermission('waiting', 'input needed')).toBe(false);
+    expect(asksPermission('waiting', undefined)).toBe(false);
+    expect(asksPermission('idle', 'permission prompt')).toBe(false);
   });
 });
