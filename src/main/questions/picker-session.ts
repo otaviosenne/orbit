@@ -21,6 +21,7 @@ export async function exclusively(source: QuestionSource, sessionId: unknown, wo
     const access: PickerAccess = await pickerAccess(source, sessionId);
     if (!access.ok) return failure(access.error);
     const terminal: PickerTerminal = access.terminal;
+    await terminal.scrollToEnd();
     // A chat window tiled small shows only part of the picker; it gets room for as long as the answer takes.
     return await withPickerRoom(terminal.target, (): Promise<ActionResult> => work(terminal, sessionId));
   } catch (error: unknown) {

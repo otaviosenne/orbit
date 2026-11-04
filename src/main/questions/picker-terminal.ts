@@ -20,6 +20,12 @@ export class PickerTerminal {
     }
   }
 
+  // A window scrolled up into its history shows old output where the picker should be, and keys still reach the
+  // picker; back at the bottom, what is read is what the keys act on. It only moves the view.
+  async scrollToEnd(): Promise<void> {
+    await runCommand('kitty', [...this.target, 'scroll-window', 'end']);
+  }
+
   // With colors, so the parser can tell which tab is the one on screen.
   screen(): Promise<string> {
     return runCommand('kitty', [...this.target, 'get-text', '--ansi']);
