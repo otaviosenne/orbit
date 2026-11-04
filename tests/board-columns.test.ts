@@ -88,11 +88,11 @@ describe('a chat with only a background shell running', () => {
   });
 });
 
-describe('the time in Active after reading', () => {
+describe('the time in Active after reading a new reply', () => {
   const never = (): boolean => false;
   const noPin = (): null => null;
 
-  it('restarts when the chat is read, so one read long after it finished lands in Active', () => {
+  it('restarts when a new reply is read, so one read long after it came lands in Active', () => {
     const old: ChatSnapshot = chat('old', 'idle', 3 * ACTIVE_WINDOW_MS);
     const readJustNow = (): number => NOW - 1;
     expect(names(toBoardColumns([old], never, NOW, noPin, readJustNow))).toEqual([[], [], ['old'], []]);
@@ -104,7 +104,7 @@ describe('the time in Active after reading', () => {
     expect(names(toBoardColumns([old], never, NOW, noPin, readLongAgo))).toEqual([[], [], [], ['old']]);
   });
 
-  it('keeps a chat being read in Active', () => {
+  it('keeps a chat whose new reply is being read in Active', () => {
     const old: ChatSnapshot = chat('old', 'idle', 3 * ACTIVE_WINDOW_MS);
     const beingRead = (_chat: ChatSnapshot, now: number): number => now;
     expect(names(toBoardColumns([old], never, NOW, noPin, beingRead))).toEqual([[], [], ['old'], []]);

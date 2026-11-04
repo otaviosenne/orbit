@@ -14,11 +14,11 @@ export interface BoardColumn {
 
 export type UnseenCheck = (chat: ChatSnapshot) => boolean;
 
-// A finished chat you have already seen stays "Active" this long after its last reply or the last time you read it,
-// whichever came later, then drops to "Idle".
+// A finished chat you have already seen stays "Active" this long after its last reply or the last time you read a
+// new reply of it, whichever came later, then drops to "Idle".
 export const ACTIVE_WINDOW_MS: number = 20 * 60_000;
 
-// When the user last read the chat (now while they are reading it), or null if never.
+// When the user last read a reply of the chat they had not seen yet (now while reading it), or null if never.
 export type ReadCheck = (chat: ChatSnapshot, now: number) => number | null;
 const NEVER_READ: ReadCheck = (): null => null;
 
@@ -44,7 +44,8 @@ function isResting(chat: ChatSnapshot, isUnseen: UnseenCheck): boolean {
   return !isWorking(chat) && !needsUser(chat, isUnseen);
 }
 
-// Reading a chat restarts its time in Active, so one read long after it finished does not drop straight to Idle.
+// Reading a new reply restarts the chat's time in Active, so a reply read long after it came does not drop straight to
+// Idle; opening a chat whose reply was already read leaves it where it is.
 function restingColumn(chat: ChatSnapshot, now: number, pin: RestingPin, lastRead: ReadCheck): RestingColumn {
   const activeSince: number = Math.max(restingSince(chat), lastRead(chat, now) ?? 0);
   return pin(chat) ?? (now - activeSince < ACTIVE_WINDOW_MS ? 'active' : 'idle');

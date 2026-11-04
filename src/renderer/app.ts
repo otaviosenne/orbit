@@ -284,7 +284,7 @@ function boardColumnsOf(list: readonly ChatSnapshot[], now: number): BoardColumn
     (chat: ChatSnapshot): boolean => seen.isUnseen(chat),
     now,
     (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
-    (chat: ChatSnapshot, at: number): number | null => seen.lastReadAt(chat.sessionId, at),
+    (chat: ChatSnapshot, at: number): number | null => seen.lastReplyReadAt(chat.sessionId, at),
   );
 }
 
@@ -426,7 +426,7 @@ function boardMarks(): BoardMarks {
     suspended: suspension.snapshots(),
     isSuspendedCollapsed: suspension.isCollapsed,
     restingPin: (chat: ChatSnapshot): RestingColumn | null => restingPins.pinOf(chat),
-    lastRead: (chat: ChatSnapshot, now: number): number | null => seen.lastReadAt(chat.sessionId, now),
+    lastRead: (chat: ChatSnapshot, now: number): number | null => seen.lastReplyReadAt(chat.sessionId, now),
     devicesOf: (sessionId: string): ChatDevices => boardDevices.devicesOf(sessionId),
   };
 }
@@ -619,9 +619,7 @@ function closeSheet(): void {
 // A chat is being looked at while its panel is open here or its terminal window has focus;
 // leaving it (another chat, closing the panel, focusing elsewhere) is what marks it seen.
 function trackViewing(now: number): void {
-  const viewing: Set<string> = new Set(
-    chats.filter((chat: ChatSnapshot) => chat.isFocused || chat.sessionId === sheet.sessionId).map((chat: ChatSnapshot) => chat.sessionId),
-  );
+  const viewing: ChatSnapshot[] = chats.filter((chat: ChatSnapshot) => chat.isFocused || chat.sessionId === sheet.sessionId);
   seen.updateViewing(viewing, now);
 }
 

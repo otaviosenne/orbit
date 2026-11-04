@@ -19,27 +19,45 @@ describe('SeenTracker', () => {
     expect(seen.isUnseen(chat('idle', 2000))).toBe(false);
   });
 
-  it('reports when the chat was last read: now while it is open, then when it was left', () => {
+  it('reports when a new reply was last read: now while it is open, then when it was left', () => {
     const seen: SeenTracker = new SeenTracker(1000);
-    expect(seen.lastReadAt('s1', 2000)).toBeNull();
-    seen.updateViewing(new Set(['s1']), 3000);
-    expect(seen.lastReadAt('s1', 3500)).toBe(3500);
-    seen.updateViewing(new Set(), 4000);
-    expect(seen.lastReadAt('s1', 9000)).toBe(4000);
+    expect(seen.lastReplyReadAt('s1', 2000)).toBeNull();
+    seen.updateViewing([chat('idle', 2000)], 3000);
+    expect(seen.lastReplyReadAt('s1', 3500)).toBe(3500);
+    seen.updateViewing([], 4000);
+    expect(seen.lastReplyReadAt('s1', 9000)).toBe(4000);
+  });
+
+  it('does not count opening a chat whose reply was already read', () => {
+    const seen: SeenTracker = new SeenTracker(1000);
+    seen.markSeen('s1', 2500);
+    seen.updateViewing([chat('idle', 2000)], 3000);
+    expect(seen.lastReplyReadAt('s1', 3500)).toBeNull();
+    seen.updateViewing([], 4000);
+    expect(seen.lastReplyReadAt('s1', 9000)).toBeNull();
+  });
+
+  it('counts a reply that arrives while the chat is open', () => {
+    const seen: SeenTracker = new SeenTracker(1000);
+    seen.markSeen('s1', 2500);
+    seen.updateViewing([chat('busy', 2000)], 3000);
+    seen.updateViewing([chat('idle', 3200)], 3300);
+    seen.updateViewing([], 4000);
+    expect(seen.lastReplyReadAt('s1', 9000)).toBe(4000);
   });
 
   it('marks a chat seen only once the user leaves it', () => {
     const seen: SeenTracker = new SeenTracker(1000);
-    seen.updateViewing(new Set(['s1']), 3000);
+    seen.updateViewing([chat('idle', 2000)], 3000);
     expect(seen.isUnseen(chat('idle', 2000))).toBe(true);
-    seen.updateViewing(new Set(['other']), 4000);
+    seen.updateViewing([{ ...chat('idle', 2000), sessionId: 'other' }], 4000);
     expect(seen.isUnseen(chat('idle', 2000))).toBe(false);
   });
 
   it('drops the unread dot while the chat is open but keeps it unseen until it is left', () => {
     const seen: SeenTracker = new SeenTracker(1000);
     expect(seen.hasUnreadReply(chat('idle', 2000))).toBe(true);
-    seen.updateViewing(new Set(['s1']), 3000);
+    seen.updateViewing([chat('idle', 2000)], 3000);
     expect(seen.hasUnreadReply(chat('idle', 2000))).toBe(false);
     expect(seen.isUnseen(chat('idle', 2000))).toBe(true);
   });
