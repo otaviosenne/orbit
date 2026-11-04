@@ -82,6 +82,13 @@ describe('permission prompt', () => {
     });
   });
 
+  it('keeps the same fingerprint when a wider window unwraps the prompt', () => {
+    const wide: string = NARROW_PROMPT.replace(' Bash command · from the general-purpose\n              agent', ' Bash command · from the general-purpose agent')
+      .replace(' │ S=/tmp/crop; rm -f $S/*; for\n │ i in 076 077; do magick f_$i.png; done', ' │ S=/tmp/crop; rm -f $S/*; for i in 076 077; do magick f_$i.png; done');
+    expect(wide).not.toBe(NARROW_PROMPT);
+    expect(parsePermission(wide)?.fingerprint).toBe(parsePermission(NARROW_PROMPT)?.fingerprint);
+  });
+
   it('keeps the same fingerprint while the countdown runs', () => {
     const later: string = FULL_PROMPT.replace('in 1:36', 'in 0:52');
     expect(parsePermission(later)?.fingerprint).toBe(parsePermission(FULL_PROMPT)?.fingerprint);

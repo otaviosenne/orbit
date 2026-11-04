@@ -2,7 +2,7 @@ import type { ActionResult, ChatSnapshot, QuestionAnswer, QuestionItem, Question
 import type { PickerActions } from './picker-card';
 import { QuestionCards, pickerKey } from './question-cards';
 
-export type QuestionPickerApi = Pick<RadarApi, 'getQuestionPicker' | 'answerQuestion' | 'submitAnswers' | 'answerQuestionSet' | 'declineQuestion' | 'answerPermission' | 'getChats' | 'focusChat'>;
+export type QuestionPickerApi = Pick<RadarApi, 'getQuestionPicker' | 'answerQuestion' | 'submitAnswers' | 'answerQuestionSet' | 'declineQuestion' | 'answerPermission' | 'alwaysAllowPermission' | 'getChats' | 'focusChat'>;
 
 // The question picker showing in a chat's terminal, kept in step with each poll of the thread.
 export class LivePicker {
@@ -75,6 +75,7 @@ export class LivePicker {
       answerSet: (questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult> => this.api.answerQuestionSet(sessionId, questionId, answers),
       decline: (): Promise<ActionResult> => this.api.declineQuestion(sessionId),
       answerPermission: (fingerprint: string, option: number): Promise<ActionResult> => this.api.answerPermission(sessionId, fingerprint, option),
+      alwaysAllowPermission: (fingerprint: string): Promise<ActionResult> => this.api.alwaysAllowPermission(sessionId, fingerprint),
       moved: (): void => void this.sync(sessionId, true),
       goToChat: (): void => void this.goToChat(sessionId),
     };

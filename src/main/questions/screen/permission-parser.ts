@@ -37,7 +37,8 @@ export function parsePermission(screen: string): PickerPermissionView | null {
   const top: number = lastIndex(lines, question, (line: string) => SOLID_RULE.test(line.trim()));
   const head: PromptHead = readHead(lines.slice(top + 1, question), top !== -1);
   const questionText: string = (QUESTION_ROW.exec(lines[question] ?? '')?.[1] ?? '').trim();
-  const fingerprint: string = ['permission', head.title ?? '', head.detail ?? '', questionText, ...options.map((option: PermissionOption) => option.label)].join('\n');
+  // Squeezed, so the same prompt keeps its fingerprint when the window rewraps it: answering shrinks the font first.
+  const fingerprint: string = ['permission', head.detail ?? '', questionText, ...options.map((option: PermissionOption) => option.label)].map(squeeze).join('\n');
   return { kind: 'permission', fingerprint, ...head, question: questionText, options };
 }
 

@@ -100,6 +100,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
       call('AnswerQuestionSet', [sessionId, questionId, answers]),
     declineQuestion: (sessionId: string): Promise<ActionResult> => call('DeclineQuestion', [sessionId]),
     answerPermission: (sessionId: string, fingerprint: string, option: number): Promise<ActionResult> => call('AnswerPermission', [sessionId, fingerprint, option]),
+    alwaysAllowPermission: (sessionId: string, fingerprint: string): Promise<ActionResult> => call('AlwaysAllowPermission', [sessionId, fingerprint]),
     pullQueue: (sessionId: string): Promise<QueuePull> => call('PullQueue', [sessionId]),
     releaseQueue: (sessionId: string, texts: readonly string[] | null): Promise<ActionResult> => call('ReleaseQueue', [sessionId, texts]),
     stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => call('StopAgent', [sessionId, agentId]),

@@ -44,6 +44,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.answerQuestionSet(SESSION, 'q', []), 'AnswerQuestionSet', [SESSION, 'q', []]],
   [(radar) => radar.declineQuestion(SESSION), 'DeclineQuestion', [SESSION]],
   [(radar) => radar.answerPermission(SESSION, 'f', 2), 'AnswerPermission', [SESSION, 'f', 2]],
+  [(radar) => radar.alwaysAllowPermission(SESSION, 'f'), 'AlwaysAllowPermission', [SESSION, 'f']],
   [(radar) => radar.pullQueue(SESSION), 'PullQueue', [SESSION]],
   [(radar) => radar.releaseQueue(SESSION, ['new text']), 'ReleaseQueue', [SESSION, ['new text']]],
   [(radar) => radar.stopAgent(SESSION, 'a1'), 'StopAgent', [SESSION, 'a1']],

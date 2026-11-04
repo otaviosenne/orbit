@@ -28,6 +28,6 @@ export function pickerKey(picker: QuestionPicker | null): string {
 
 // A whole set (known from the transcript) steps through every question; otherwise the card mirrors the screen.
 function buildCard(picker: QuestionPicker, actions: PickerActions): HTMLElement {
-  if (picker.kind === 'permission') return new PermissionCard(picker, { answer: actions.answerPermission, moved: actions.moved, goToChat: actions.goToChat }).root;
+  if (picker.kind === 'permission') return new PermissionCard(picker, { answer: actions.answerPermission, alwaysAllow: actions.alwaysAllowPermission, moved: actions.moved, goToChat: actions.goToChat }).root;
   return picker.kind === 'set' ? new QuestionSetCard(picker, actions).root : new PickerCard(picker, actions).root;
 }

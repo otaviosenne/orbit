@@ -97,6 +97,8 @@ const api: RadarApi = {
   declineQuestion: (sessionId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.DeclineQuestion, sessionId),
   answerPermission: (sessionId: string, fingerprint: string, option: number): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.AnswerPermission, sessionId, fingerprint, option),
+  alwaysAllowPermission: (sessionId: string, fingerprint: string): Promise<ActionResult> =>
+    ipcRenderer.invoke(IpcChannel.AlwaysAllowPermission, sessionId, fingerprint),
   pullQueue: (sessionId: string): Promise<QueuePull> => ipcRenderer.invoke(IpcChannel.PullQueue, sessionId),
   releaseQueue: (sessionId: string, texts: readonly string[] | null): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.ReleaseQueue, sessionId, texts),

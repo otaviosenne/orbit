@@ -23,6 +23,7 @@ import { createRadarWindow } from './window';
 import { isDemoMode } from '../demo/demo-mode';
 import { startDemo } from '../demo/start-demo';
 import { startAutoApprover } from './approvals/auto-approver';
+import { startPermissionAutoAllower } from './questions/permission-auto-allower';
 import { useSpellcheckLanguages } from './spellcheck-languages';
 import { ShutdownPausedChats } from './shutdown/shutdown-paused-chats';
 import { ShutdownPlanStore } from './shutdown/shutdown-plan-store';
@@ -64,6 +65,7 @@ async function start(): Promise<void> {
   // Each Orbit Web browser gets its own service, so its dictation never touches the desktop window's or another's.
   await startRemoteAccess(routes, (): DictationEngine => new DictationService(), false);
   startAutoApprover();
+  startPermissionAutoAllower(radar);
   createRadarWindow();
   void pruneOldAttachments(Date.now());
 }

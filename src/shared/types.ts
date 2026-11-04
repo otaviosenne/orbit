@@ -545,6 +545,8 @@ export interface RadarApi {
   answerQuestion(sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   // Picks a numbered answer of the permission prompt on screen (matched by fingerprint); resolves once it went away.
   answerPermission(sessionId: string, fingerprint: string, option: number): Promise<ActionResult>;
+  // Answers the prompt's plain Yes and has Orbit answer every later permission prompt of the chat the same way.
+  alwaysAllowPermission(sessionId: string, fingerprint: string): Promise<ActionResult>;
   // Pulls the chat's queued messages into its input to edit them, out of its reach; releaseQueue types them back,
   // as edited (an emptied one is left out) or, with null, as they were.
   pullQueue(sessionId: string): Promise<QueuePull>;

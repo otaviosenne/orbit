@@ -12,8 +12,9 @@ export type PickerWork = (terminal: PickerTerminal, sessionId: string) => Promis
 // Chats whose picker is being driven; a second click would interleave keys into the same picker.
 const inFlight: Set<string> = new Set();
 
-// Runs one answer against a waiting chat's terminal, never two at once for the same chat.
-export async function exclusively(source: QuestionSource, sessionId: unknown, work: PickerWork): Promise<ActionResult> {
+// Runs one answer against a waiting chat's terminal, never two at once for the same chat. needsRoom: the answer reads
+// the whole picker, which a small window shows only part of; a permission prompt is answered by its number alone.
+export async function exclusively(source: QuestionSource, sessionId: unknown, work: PickerWork, needsRoom: boolean = true): Promise<ActionResult> {
   if (typeof sessionId !== 'string') return failure('Unknown chat');
   if (inFlight.has(sessionId)) return failure('An answer is already being sent to this chat');
   inFlight.add(sessionId);
@@ -22,6 +23,7 @@ export async function exclusively(source: QuestionSource, sessionId: unknown, wo
     if (!access.ok) return failure(access.error);
     const terminal: PickerTerminal = access.terminal;
     await terminal.scrollToEnd();
+    if (!needsRoom) return await work(terminal, sessionId);
     // A chat window tiled small shows only part of the picker; it gets room for as long as the answer takes.
     return await withPickerRoom(terminal.target, (): Promise<ActionResult> => work(terminal, sessionId));
   } catch (error: unknown) {

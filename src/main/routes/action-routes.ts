@@ -11,7 +11,7 @@ import { openLauncher } from '../launcher';
 import { answerQuestion, submitAnswers } from '../questions/question-answerer';
 import { answerQuestionSet } from '../questions/set-answerer';
 import { declineQuestion } from '../questions/question-decliner';
-import { answerPermission } from '../questions/permission-answerer';
+import { alwaysAllowPermission, answerPermission } from '../questions/permission-answerer';
 import { pullQueue, releaseQueue } from '../queue/queue-hold';
 import { failure } from '../terminal-input';
 import { closeChat } from '../chat-closer';
@@ -38,6 +38,7 @@ type ActionChannel =
   | 'AnswerQuestionSet'
   | 'DeclineQuestion'
   | 'AnswerPermission'
+  | 'AlwaysAllowPermission'
   | 'PullQueue'
   | 'ReleaseQueue'
   | 'StopAgent'
@@ -92,6 +93,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     DeclineQuestion: (sessionId: unknown): Promise<ActionResult> => declineQuestion(radar, sessionId),
     AnswerPermission: (sessionId: unknown, fingerprint: unknown, option: unknown): Promise<ActionResult> =>
       answerPermission(radar, sessionId, fingerprint, option),
+    AlwaysAllowPermission: (sessionId: unknown, fingerprint: unknown): Promise<ActionResult> => alwaysAllowPermission(radar, sessionId, fingerprint),
     PullQueue: (sessionId: unknown): Promise<QueuePull> => pullQueue(radar, sessionId),
     ReleaseQueue: (sessionId: unknown, texts: unknown): Promise<ActionResult> => releaseQueue(sessionId, texts),
     StopAgent: (sessionId: unknown, agentId: unknown): Promise<ActionResult> => stopAgent(radar, sessionId, agentId),

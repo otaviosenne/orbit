@@ -54,6 +54,7 @@ export const REMOTE_ACCESS = {
   AnswerQuestionSet: 'action',
   DeclineQuestion: 'action',
   AnswerPermission: 'action',
+  AlwaysAllowPermission: 'action',
   // Move the queue of a chat the route finds open by its session id into its input and back, for editing.
   PullQueue: 'action',
   ReleaseQueue: 'action',
