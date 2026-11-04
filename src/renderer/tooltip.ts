@@ -11,6 +11,10 @@ const TIP_ATTRIBUTE: string = 'tip';
 const POINTER_OFFSET_PX: number = 14;
 const EDGE_MARGIN_PX: number = 8;
 
+// The tip of the element last clicked: it stays away until the pointer leaves it, so what the click opened is not
+// covered by an explanation of the button that opened it. Kept as the tip's text, since views are rebuilt every poll.
+let clickedTip: string | null = null;
+
 export function setTip(target: HTMLElement, tip: Tip): void {
   target.dataset[TIP_ATTRIBUTE] = JSON.stringify(tip);
 }
@@ -22,6 +26,7 @@ export function installTooltips(): void {
   tooltip.hidden = true;
   document.body.append(tooltip);
   document.addEventListener('pointermove', (event: PointerEvent): void => follow(tooltip, event));
+  document.addEventListener('pointerdown', (event: PointerEvent): void => dismiss(tooltip, event), true);
   document.addEventListener('scroll', (): void => void (tooltip.hidden = true), true);
   window.addEventListener('blur', (): void => void (tooltip.hidden = true));
 }
@@ -34,11 +39,22 @@ function adoptTitle(element: HTMLElement): void {
   if (title !== null && title.trim().length > 0) setTip(element, { title, lines: [] });
 }
 
+function dismiss(tooltip: HTMLElement, event: PointerEvent): void {
+  clickedTip = tipSource(event.target)?.dataset[TIP_ATTRIBUTE] ?? null;
+  tooltip.hidden = true;
+}
+
+function tipSource(target: EventTarget | null): HTMLElement | null {
+  return target instanceof Element ? target.closest<HTMLElement>('[data-tip]') : null;
+}
+
 function follow(tooltip: HTMLElement, event: PointerEvent): void {
   const titled: HTMLElement | null = event.target instanceof Element ? event.target.closest<HTMLElement>('[title]') : null;
   if (titled !== null) adoptTitle(titled);
-  const source: HTMLElement | null = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-tip]') : null;
-  const tip: Tip | null = source === null ? null : readTip(source);
+  const source: HTMLElement | null = tipSource(event.target);
+  const key: string | null = source?.dataset[TIP_ATTRIBUTE] ?? null;
+  if (key !== clickedTip) clickedTip = null;
+  const tip: Tip | null = source === null || key === clickedTip ? null : readTip(source);
   if (tip === null) {
     tooltip.hidden = true;
     return;

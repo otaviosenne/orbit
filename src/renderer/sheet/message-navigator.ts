@@ -40,7 +40,11 @@ export class MessageNavigator {
 
   private setUp(button: HTMLButtonElement, direction: Direction, icon: string): void {
     button.innerHTML = icon;
-    button.addEventListener('click', (): void => void this.jump(direction));
+    // A click jumps there, so the preview of where it leads has done its job; it comes back on the next hover.
+    button.addEventListener('click', (): void => {
+      this.hidePreview();
+      void this.jump(direction);
+    });
     button.addEventListener('mouseenter', (): void => this.schedulePreview(direction));
     button.addEventListener('mouseleave', (): void => this.hidePreview());
   }

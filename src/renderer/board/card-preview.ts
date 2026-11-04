@@ -26,6 +26,8 @@ export class CardPreview {
   private timer: number | null = null;
   // Bumped on every change of hover, so a transcript that arrives late is not shown for a card already left.
   private generation: number = 0;
+  // A card just clicked shows no preview again until the pointer leaves it: what the click opened is what matters.
+  private clickedCard: string | null = null;
 
   constructor(private readonly board: HTMLElement) {
     this.root.hidden = true;
@@ -41,16 +43,18 @@ export class CardPreview {
     });
     for (const type of ['pointerdown', 'wheel', 'keydown'] as const) {
       document.addEventListener(type, (event: Event): void => {
-        if (!this.root.contains(event.target as Node)) this.leave();
+        if (this.root.contains(event.target as Node)) return;
+        if (type === 'pointerdown') this.clickedCard = this.cardSessionOf(event.target);
+        this.leave();
       }, true);
     }
   }
 
   private track(event: PointerEvent): void {
     if (event.pointerType !== 'mouse') return;
-    const card: HTMLElement | null = (event.target as HTMLElement).closest<HTMLElement>(CARD_SELECTOR);
-    const sessionId: string | null = card?.dataset['session'] ?? null;
-    if (sessionId === null) return this.leave();
+    const sessionId: string | null = this.cardSessionOf(event.target);
+    if (sessionId !== this.clickedCard) this.clickedCard = null;
+    if (sessionId === null || sessionId === this.clickedCard) return this.leave();
     // Once open, the preview stays while the pointer wanders over the same card.
     if (sessionId === this.hovered && !this.root.hidden) return;
     // Until then any movement restarts the wait: the preview is for a pointer that has come to rest.
@@ -60,6 +64,11 @@ export class CardPreview {
     this.hide();
     if (this.timer !== null) window.clearTimeout(this.timer);
     this.timer = window.setTimeout((): void => void this.show(sessionId), HOVER_DELAY_MS);
+  }
+
+  private cardSessionOf(target: EventTarget | null): string | null {
+    const card: HTMLElement | null = target instanceof Element ? target.closest<HTMLElement>(CARD_SELECTOR) : null;
+    return card?.dataset['session'] ?? null;
   }
 
   private isOwnCard(target: EventTarget | null): boolean {
