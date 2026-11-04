@@ -8,6 +8,7 @@ import type { AttachmentBlob, ChatDevices, ChatSnapshot, ClosedChatActivity, Lau
 import { readAttachment } from '../attachment-reader';
 import { listLaunchers } from '../launcher';
 import { readQuestionPicker } from '../questions/chat-picker';
+import { readStreamingReply } from '../streaming/streaming-reply';
 import type { ResourceSnapshot } from '../../shared/chat-resources';
 import type { BoardState } from '../../shared/board-state';
 import type { ComputerStatus } from '../../shared/computer';
@@ -32,6 +33,8 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetAttachment: (path: unknown): Promise<AttachmentBlob | null> => readAttachment(path),
     GetTurnProgress: (sessionId: unknown): Promise<TurnProgress | null> =>
       isSessionId(sessionId) ? radar.turnProgress(sessionId) : Promise.resolve(null),
+    GetStreamingReply: (sessionId: unknown): Promise<string | null> =>
+      isSessionId(sessionId) ? readStreamingReply(radar, sessionId) : Promise.resolve(null),
     GetChatColor: (sessionId: unknown): Promise<string | null> => (isSessionId(sessionId) ? radar.colorOf(sessionId) : Promise.resolve(null)),
     GetUsage: (): Promise<UsageSnapshot> => usage.current(),
     ListLaunchers: (): Promise<LauncherEntry[]> => listLaunchers(),

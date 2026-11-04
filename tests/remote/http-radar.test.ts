@@ -24,6 +24,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.getImage(SESSION, 'k'), 'GetImage', [SESSION, 'k']],
   [(radar) => radar.getAttachment('/home/u/.cache/orbit/attachments/a.pdf'), 'GetAttachment', ['/home/u/.cache/orbit/attachments/a.pdf']],
   [(radar) => radar.getTurnProgress(SESSION), 'GetTurnProgress', [SESSION]],
+  [(radar) => radar.getStreamingReply(SESSION), 'GetStreamingReply', [SESSION]],
   [(radar) => radar.getChatColor(SESSION), 'GetChatColor', [SESSION]],
   [(radar) => radar.getUsage(), 'GetUsage', []],
   [(radar) => radar.listLaunchers(), 'ListLaunchers', []],

@@ -13,6 +13,9 @@ import { ThreadImages } from './thread-images';
 import { renderMessage, renderPendingMessage } from './transcript/message-bubble';
 import type { QueueEditApi } from './transcript/queued-edits';
 import { QueuedEdits } from './transcript/queued-edits';
+import type { StreamingApi } from './transcript/streaming-draft';
+import { StreamingDraft } from './transcript/streaming-draft';
+import { isAlreadyWritten } from '../../shared/written-check';
 import { renderNotice, renderTurn } from './transcript/notice-row';
 import { renderPeer } from './transcript/peer-card';
 import { renderToolGroup } from './transcript/tool-group';
@@ -40,6 +43,7 @@ export class TranscriptList {
   // Without a picker API (an agent's own view), a question waiting in the terminal is not shown.
   private readonly picker: LivePicker | null;
   private readonly queueEdits: QueuedEdits | null;
+  private readonly draft: StreamingDraft | null;
   private readonly entries: ElementCache<TranscriptEntry> = new ElementCache(
     {
       id: (entry: TranscriptEntry): string => entry.id,
@@ -49,9 +53,10 @@ export class TranscriptList {
   );
 
   // Without an API (an agent's own view), a question waiting in the terminal is not shown and no queue is edited.
-  constructor(private readonly root: HTMLElement, lightbox: Lightbox, api: (QuestionPickerApi & QueueEditApi) | null = null) {
+  constructor(private readonly root: HTMLElement, lightbox: Lightbox, api: (QuestionPickerApi & QueueEditApi & StreamingApi) | null = null) {
     this.picker = api === null ? null : new LivePicker(api, (): void => this.render(false, true));
     this.queueEdits = api === null ? null : new QueuedEdits(root, api, (): string | null => this.sessionId, (): void => this.render(false, true));
+    this.draft = api === null ? null : new StreamingDraft(api, (): void => this.render(false), (): boolean => root.isConnected && root.offsetParent !== null);
     // 'toggle' does not bubble, so listen in the capture phase.
     root.addEventListener('toggle', (event: Event): void => this.rememberToggle(event.target), true);
     this.images = new ThreadImages(root, lightbox, (): string | null => this.sessionId);
@@ -64,6 +69,7 @@ export class TranscriptList {
     if (isNewThread) this.entries.clear();
     if (sessionId !== this.sessionId) {
       this.queueEdits?.release(null);
+      this.draft?.stop();
       this.openKeys.clear();
       this.images.release(this.pending.clear());
       this.images.clear();
@@ -98,14 +104,15 @@ export class TranscriptList {
     // Messages sent from the panel belong to the chat's own thread, not to its agents'.
     const waiting: PendingMessage[] = this.thread === this.sessionId ? this.reconcilePending() : [];
     const asked: QuestionItem | null = this.pendingQuestion();
-    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key(asked) ?? ''}|${this.queueEdits?.key() ?? ''}`;
+    const draft: StreamingDraft | null = this.shownDraft();
+    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key(asked) ?? ''}|${this.queueEdits?.key() ?? ''}|${draft?.key() ?? ''}`;
     if (key === this.renderedKey) return;
     const keepsEnd: boolean = isNewChat || scrollToEnd || this.isFollowing();
     const anchor: ScrollAnchor | null = keepsEnd ? null : captureScrollAnchor(this.root);
     this.renderedKey = key;
     // Unchanged entries keep their element (and its markdown, thumbnails and open rows); only the rest is built.
     syncChildren(this.root, [
-      ...this.entries.build(groupTools(this.items)),
+      ...withDraft(this.entries.build(groupTools(this.items)), draft?.render() ?? [], queuedCount(this.items)),
       ...waiting.map((message: PendingMessage) => renderPendingMessage(message)),
       ...(this.thread === this.sessionId ? (this.queueEdits?.render() ?? []) : []),
       ...(this.thread === this.sessionId ? (this.picker?.render(asked) ?? []) : []),
@@ -123,6 +130,7 @@ export class TranscriptList {
 
   clear(): void {
     this.queueEdits?.release(null);
+    this.draft?.stop();
     this.root.replaceChildren();
     this.entries.clear();
     this.renderedKey = '';
@@ -157,6 +165,18 @@ export class TranscriptList {
   // The newest question the transcript shows as still waiting, which the card can answer from its own copy.
   private pendingQuestion(): QuestionItem | null {
     return this.thread === this.sessionId ? (this.items.filter(isPendingQuestion).at(-1) ?? null) : null;
+  }
+
+  // The reply the chat is still writing, polled only while it works and only in the chat's own thread (an agent's text
+  // never reaches the chat's terminal).
+  syncStreaming(isBusy: boolean): void {
+    this.draft?.sync(this.thread === this.sessionId ? this.sessionId : null, isBusy);
+  }
+
+  // The draft once its block is written goes in the same render that brings the written message, not a poll later.
+  private shownDraft(): StreamingDraft | null {
+    const text: string | null = this.draft?.currentText ?? null;
+    return text === null || isAlreadyWritten(text, this.items) ? null : this.draft;
   }
 
   // Claude Code writes a question into the transcript only once answered, so a waiting one is read off the terminal.
@@ -196,4 +216,20 @@ function itemVersion(item: TranscriptItem): string {
 // Delivery changes how a waiting message looks, so it is part of the render key.
 function pendingVersion(message: PendingMessage): string {
   return message.delivered ? `${message.id}+` : message.id;
+}
+
+// Prompts still in the chat's queue come after the reply being written, as in the terminal.
+function withDraft(entries: readonly HTMLElement[], draft: readonly HTMLElement[], queued: number): HTMLElement[] {
+  const cut: number = entries.length - queued;
+  return [...entries.slice(0, cut), ...draft, ...entries.slice(cut)];
+}
+
+function queuedCount(items: readonly TranscriptItem[]): number {
+  let count: number = 0;
+  for (let index: number = items.length - 1; index >= 0; index--) {
+    const item: TranscriptItem | undefined = items[index];
+    if (item?.kind !== 'message' || item.isQueued !== true) break;
+    count++;
+  }
+  return count;
 }

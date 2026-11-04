@@ -51,6 +51,7 @@ const api: RadarApi = {
     ipcRenderer.on(IpcChannel.OpenChatRequest, (_event: IpcRendererEvent, sessionId: string): void => listener(sessionId));
   },
   getTurnProgress: (sessionId: string): Promise<TurnProgress | null> => ipcRenderer.invoke(IpcChannel.GetTurnProgress, sessionId),
+  getStreamingReply: (sessionId: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetStreamingReply, sessionId),
   getChatColor: (sessionId: string): Promise<string | null> => ipcRenderer.invoke(IpcChannel.GetChatColor, sessionId),
   listLaunchers: (): Promise<LauncherEntry[]> => ipcRenderer.invoke(IpcChannel.ListLaunchers),
   openLauncher: (name: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.OpenLauncher, name),

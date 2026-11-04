@@ -69,6 +69,7 @@ export class GridTile {
       const sessionId: string = this.chat.sessionId;
       await this.feed.refresh(sessionId, sessionId, (limit: number): Promise<TranscriptItem[]> => window.radar.getTranscript(sessionId, limit));
       await this.transcript.syncPicker(this.chat.status === 'waiting');
+      this.transcript.syncStreaming(this.chat.status === 'busy');
       this.composer.setReady(true);
     } catch (error: unknown) {
       console.error(`Could not load the transcript of ${this.chat.name}:`, error);
@@ -106,6 +107,7 @@ export class GridTile {
 
   // Taken out of the grid for good.
   dispose(): void {
+    this.transcript.syncStreaming(false);
     this.composer.dispose();
   }
 

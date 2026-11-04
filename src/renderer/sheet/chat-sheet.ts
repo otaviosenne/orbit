@@ -308,6 +308,7 @@ export class ChatSheet {
     if (sessionId !== this.chat?.sessionId) return;
     this.placeholder.clear();
     void this.messages.syncPicker(this.chat.status === 'waiting');
+    this.messages.syncStreaming(this.chat.status === 'busy' && agentId === null);
   }
 
   // Voice: after "chat N" opens the panel, the words that follow go to this composer.
@@ -321,6 +322,7 @@ export class ChatSheet {
     this.keepDraft();
     this.root.classList.remove('is-open');
     this.working.hide();
+    this.messages.syncStreaming(false);
     document.body.classList.remove(PANEL_OPEN_CLASS);
     this.chat = null;
     this.agentView.reset();

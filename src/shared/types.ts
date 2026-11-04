@@ -495,6 +495,8 @@ export interface RadarApi {
   // Shows the file in the desktop's file manager.
   revealFile(path: string): Promise<void>;
   getTurnProgress(sessionId: string): Promise<TurnProgress | null>;
+  // The reply a working chat is still writing, read off its terminal before the transcript has it; plain text.
+  getStreamingReply(sessionId: string): Promise<string | null>;
   // The chat's last /color, open or closed; null when it never set one.
   getChatColor(sessionId: string): Promise<string | null>;
   listLaunchers(): Promise<LauncherEntry[]>;

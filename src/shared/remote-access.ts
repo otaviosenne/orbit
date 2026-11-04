@@ -18,6 +18,7 @@ export const REMOTE_ACCESS = {
   // Desktop notifications; the clicked one opens the chat in the desktop window.
   NotifyNeedsYou: 'desktop',
   GetTurnProgress: 'read',
+  GetStreamingReply: 'read',
   GetChatColor: 'read',
   GetUsage: 'read',
   ListLaunchers: 'read',
