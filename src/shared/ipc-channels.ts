@@ -39,6 +39,7 @@ export const IpcChannel = {
   AlwaysAllowPermission: 'radar:always-allow-permission',
   PullQueue: 'radar:pull-queue',
   ReleaseQueue: 'radar:release-queue',
+  SendQueueNow: 'radar:send-queue-now',
   StopAgent: 'radar:stop-agent',
   GetShellOutput: 'radar:get-shell-output',
   InterruptShell: 'radar:interrupt-shell',

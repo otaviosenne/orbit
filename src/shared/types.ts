@@ -553,6 +553,8 @@ export interface RadarApi {
   // as edited (an emptied one is left out) or, with null, as they were.
   pullQueue(sessionId: string): Promise<QueuePull>;
   releaseQueue(sessionId: string, texts: readonly string[] | null): Promise<ActionResult>;
+  // Ctrl+Enter in the chat window: stops the reply being written and sends every queued message at once.
+  sendQueueNow(sessionId: string): Promise<ActionResult>;
   // Answers every question of a set (PickerSetView) in the terminal and submits; resolves once the chat recorded it.
   answerQuestionSet(sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
   // Dismisses the waiting question without an answer, as Esc does in the chat's terminal.

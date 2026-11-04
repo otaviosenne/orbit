@@ -9,7 +9,7 @@ import type { MessageFiles } from './message-files';
 import { pendingFiles, transcriptFiles } from './message-files';
 import type { ImageLookup, ThumbnailSource } from './message-thumbnails';
 import { IMAGE_KEY_ATTRIBUTE, renderThumbnails, transcriptThumbnails } from './message-thumbnails';
-import { queuedEditButton } from './queued-edits';
+import { queuedEditButton, queuedSendNowButton } from './queued-edits';
 
 const ROLE_LABELS: Readonly<Record<MessageRole, string>> = { user: 'You', assistant: 'Claude' };
 
@@ -82,6 +82,6 @@ export function renderMessage(message: MessageItem, lookup: ImageLookup): HTMLEl
 // A queued message waits in the chat's queue, as Claude Code shows it dimmed, and can still be edited.
 function messageMeta(message: MessageItem, isQueued: boolean): HTMLElement {
   const meta: HTMLSpanElement = element('span', 'message-meta', `${isQueued ? 'Queued' : ROLE_LABELS[message.role]} · ${formatClock(message.timestamp)}`);
-  if (isQueued) meta.append(queuedEditButton(message));
+  if (isQueued) meta.append(queuedEditButton(message), queuedSendNowButton());
   return meta;
 }

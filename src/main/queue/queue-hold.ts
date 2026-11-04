@@ -29,6 +29,9 @@ const RECALLED_LINES: number = 200;
 // An edit left open this long (a closed window, a lost phone) puts the prompts back as they were.
 const HOLD_LIMIT_MS: number = 15 * 60_000;
 const ALREADY_SENT: string = 'The chat already took the message in';
+// How long the chat gets to take its queue in after Ctrl+Enter.
+const SEND_NOW_TIMEOUT_MS: number = 5000;
+const SEND_NOW_POLL_MS: number = 200;
 
 // A chat's queue pulled into its input for editing: there the chat cannot take it in until it is typed back.
 interface Hold {
@@ -78,6 +81,28 @@ export function releaseQueue(sessionId: unknown, texts: unknown): Promise<Action
     for (const prompt of finalPrompts(held.popped, texts)) await submitThroughKitty(held.windowPid, prompt, { asPaste: true, attachments: [] });
     return success('socket');
   }, failure);
+}
+
+// Ctrl+Enter in the chat window: the reply being written stops and every queued prompt goes in at once.
+export function sendQueueNow(source: QueueSource, sessionId: unknown): Promise<ActionResult> {
+  return exclusively(sessionId, async (session: string): Promise<ActionResult> => {
+    if (holds.has(session)) return failure('Save or cancel the queued messages being edited first');
+    const queue: LiveQueue | null = await source.liveQueue(session);
+    if (queue === null || queue.prompts.length === 0) return failure(ALREADY_SENT);
+    const windowPid: number | null = await findTerminalWindowPid(queue.chatPid);
+    if (windowPid === null || !(await hasKittySocket(windowPid))) return failure('Sending now needs a chat opened with kitty remote control');
+    await kitty(windowPid, ['send-key', 'ctrl+enter']);
+    return (await waitForEmptyQueue(source, session)) ? success('socket') : failure('The chat did not take the queue in; check its window');
+  }, failure);
+}
+
+async function waitForEmptyQueue(source: QueueSource, sessionId: string): Promise<boolean> {
+  const deadline: number = Date.now() + SEND_NOW_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    if (((await source.liveQueue(sessionId))?.prompts.length ?? 0) === 0) return true;
+    await delay(SEND_NOW_POLL_MS);
+  }
+  return false;
 }
 
 // The prompts to type back: the edited texts when they line up with what was pulled, otherwise the originals.

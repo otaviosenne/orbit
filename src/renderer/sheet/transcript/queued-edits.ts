@@ -3,9 +3,11 @@ import { element } from '../../dom';
 import { PENCIL_ICON } from '../../icons';
 import { showToast } from '../../toast';
 
-export type QueueEditApi = Pick<RadarApi, 'pullQueue' | 'releaseQueue'>;
+export type QueueEditApi = Pick<RadarApi, 'pullQueue' | 'releaseQueue' | 'sendQueueNow'>;
 
 const EDIT_CLASS: string = 'queued-edit';
+const SEND_NOW_CLASS: string = 'queued-send-now';
+const SEND_NOW_LABEL: string = 'Send now';
 
 // The Edit button of a message still waiting in the chat's queue; its text rides on it, to focus that one.
 export function queuedEditButton(message: MessageItem): HTMLButtonElement {
@@ -15,6 +17,15 @@ export function queuedEditButton(message: MessageItem): HTMLButtonElement {
   button.setAttribute('aria-label', 'Edit queued message');
   button.innerHTML = PENCIL_ICON;
   button.dataset['queuedText'] = message.text;
+  return button;
+}
+
+// Ctrl+Enter's button: every queued message carries one, and only the last shows it (styles.css), since it sends them
+// all; the reply being written stops, as in the chat window.
+export function queuedSendNowButton(): HTMLButtonElement {
+  const button: HTMLButtonElement = element('button', SEND_NOW_CLASS, SEND_NOW_LABEL);
+  button.type = 'button';
+  button.title = 'Stop the reply being written and send the queued messages now';
   return button;
 }
 
@@ -62,10 +73,21 @@ export class QueuedEdits {
   }
 
   private onClick(event: MouseEvent): void {
+    const sendNow: HTMLButtonElement | null = event.target instanceof Element ? event.target.closest<HTMLButtonElement>(`.${SEND_NOW_CLASS}`) : null;
+    if (sendNow !== null) return void this.sendNow(sendNow);
     const button: HTMLElement | null = event.target instanceof Element ? event.target.closest<HTMLElement>(`.${EDIT_CLASS}`) : null;
     const sessionId: string | null = this.sessionId();
     if (button === null || sessionId === null || this.isPulling || this.held !== null) return;
     void this.pull(sessionId, button.dataset['queuedText'] ?? '');
+  }
+
+  private async sendNow(button: HTMLButtonElement): Promise<void> {
+    const sessionId: string | null = this.sessionId();
+    if (sessionId === null || button.disabled || this.held !== null) return;
+    button.disabled = true;
+    const result: ActionResult = await this.api.sendQueueNow(sessionId).catch((error: unknown): ActionResult => ({ ok: false, method: null, error: String(error) }));
+    button.disabled = false;
+    this.report(result, 'Could not send the queued messages');
   }
 
   private async pull(sessionId: string, clickedText: string): Promise<void> {

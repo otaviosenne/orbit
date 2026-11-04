@@ -93,6 +93,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   AlwaysAllowPermission: (): ActionResult => DONE,
   PullQueue: (): QueuePull => ({ ok: false, prompts: [], error: 'Demo chats have no queue' }),
   ReleaseQueue: (): ActionResult => DONE,
+  SendQueueNow: (): ActionResult => DONE,
   DeclineQuestion: (): ActionResult => DONE,
   StopAgent: (): ActionResult => DONE,
   GetShellOutput: (): null => null,

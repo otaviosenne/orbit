@@ -103,6 +103,7 @@ const api: RadarApi = {
   pullQueue: (sessionId: string): Promise<QueuePull> => ipcRenderer.invoke(IpcChannel.PullQueue, sessionId),
   releaseQueue: (sessionId: string, texts: readonly string[] | null): Promise<ActionResult> =>
     ipcRenderer.invoke(IpcChannel.ReleaseQueue, sessionId, texts),
+  sendQueueNow: (sessionId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SendQueueNow, sessionId),
   stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.StopAgent, sessionId, agentId),
   getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => ipcRenderer.invoke(IpcChannel.GetShellOutput, sessionId, taskId),
   interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptShell, sessionId, taskId),

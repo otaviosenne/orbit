@@ -937,6 +937,14 @@ div.shell-details-label { margin: 6px 0 3px; }
 }
 .queued-edit:hover { background: var(--segment-track); color: var(--text); }
 .queued-edit svg { width: 13px; height: 13px; }
+/* Send now (Ctrl+Enter in the chat window): a small text button, shown only on the last queued message since it sends
+   them all */
+.queued-send-now {
+  padding: 1px 6px; border: 0; border-radius: 5px; background: none; color: var(--accent); font: inherit; font-size: 11px; cursor: pointer;
+}
+.queued-send-now:hover { background: var(--segment-track); }
+.queued-send-now:disabled { opacity: 0.5; cursor: default; }
+.message.is-queued:has(~ .message.is-queued) .queued-send-now { display: none; }
 .message.is-editing { align-self: stretch; }
 .queued-edit-form { display: flex; flex-direction: column; gap: 6px; }
 .queued-edit-field {

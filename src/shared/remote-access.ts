@@ -59,6 +59,7 @@ export const REMOTE_ACCESS = {
   // Move the queue of a chat the route finds open by its session id into its input and back, for editing.
   PullQueue: 'action',
   ReleaseQueue: 'action',
+  SendQueueNow: 'action',
   StopAgent: 'action',
   GetShellOutput: 'read',
   // The route finds the command's processes itself, from the session and task ids, under that chat only.

@@ -104,6 +104,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     alwaysAllowPermission: (sessionId: string, fingerprint: string): Promise<ActionResult> => call('AlwaysAllowPermission', [sessionId, fingerprint]),
     pullQueue: (sessionId: string): Promise<QueuePull> => call('PullQueue', [sessionId]),
     releaseQueue: (sessionId: string, texts: readonly string[] | null): Promise<ActionResult> => call('ReleaseQueue', [sessionId, texts]),
+    sendQueueNow: (sessionId: string): Promise<ActionResult> => call('SendQueueNow', [sessionId]),
     stopAgent: (sessionId: string, agentId: string): Promise<ActionResult> => call('StopAgent', [sessionId, agentId]),
     getShellOutput: (sessionId: string, taskId: string): Promise<ShellOutput | null> => call('GetShellOutput', [sessionId, taskId]),
     interruptShell: (sessionId: string, taskId: string): Promise<ActionResult> => call('InterruptShell', [sessionId, taskId]),
