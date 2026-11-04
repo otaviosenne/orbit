@@ -103,6 +103,12 @@ body { -webkit-tap-highlight-color: transparent; padding-left: env(safe-area-ins
   .web-sheet-back svg { width: 18px; height: 18px; }
   .sheet.is-agent .web-sheet-back { display: none; }
   .sheet-name { font-size: 17px; }
+  /* The model line ("Opus 5.5 · High") sat under the settings button and made that column as wide as itself, which
+     squeezed the chat's name. It gets a line of its own at the right, and the name the room it had */
+  .sheet-head { flex-wrap: wrap; row-gap: 0; }
+  .sheet-side { display: contents; }
+  .sheet-head::before { content: ''; order: 9; flex-basis: 100%; height: 0; }
+  .model-summary { order: 10; margin-left: auto; }
   /* Emulator and Browser as finger-sized icons side by side: their words would squeeze the chat's name */
   .sheet-devices { flex: 0 0 auto; flex-direction: row; gap: 6px; min-width: 0; padding-top: 0; }
   .device-link { min-width: 0; width: 36px; height: 36px; padding: 0; font-size: 0; border-radius: 10px; }
