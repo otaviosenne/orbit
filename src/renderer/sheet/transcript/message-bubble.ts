@@ -9,6 +9,7 @@ import type { MessageFiles } from './message-files';
 import { pendingFiles, transcriptFiles } from './message-files';
 import type { ImageLookup, ThumbnailSource } from './message-thumbnails';
 import { IMAGE_KEY_ATTRIBUTE, renderThumbnails, transcriptThumbnails } from './message-thumbnails';
+import { queuedEditButton } from './queued-edits';
 
 const ROLE_LABELS: Readonly<Record<MessageRole, string>> = { user: 'You', assistant: 'Claude' };
 
@@ -64,7 +65,8 @@ function imageChip(number: number, images: readonly MessageImage[]): HTMLElement
 }
 
 export function renderMessage(message: MessageItem, lookup: ImageLookup): HTMLElement {
-  const item: HTMLElement = element('div', `message message-${message.role}`);
+  const isQueued: boolean = message.isQueued === true;
+  const item: HTMLElement = element('div', `message message-${message.role}${isQueued ? ' is-queued' : ''}`);
   const body: HTMLDivElement = element('div', 'message-text markdown');
   const isUser: boolean = message.role === 'user';
   // Files sent from the composer reach Claude as paths; the user's own bubble shows them as chips again.
@@ -73,6 +75,13 @@ export function renderMessage(message: MessageItem, lookup: ImageLookup): HTMLEl
   if (isUser) linkImages(body, message.images);
   if (files !== null) linkFileChips(body, files.chips);
   const thumbnails: ThumbnailSource[] = isUser ? transcriptThumbnails(message.images, lookup) : [];
-  item.append(element('span', 'message-meta', `${ROLE_LABELS[message.role]} · ${formatClock(message.timestamp)}`), ...thumbnailRow(thumbnails), body);
+  item.append(messageMeta(message, isQueued), ...thumbnailRow(thumbnails), body);
   return item;
+}
+
+// A queued message waits in the chat's queue, as Claude Code shows it dimmed, and can still be edited.
+function messageMeta(message: MessageItem, isQueued: boolean): HTMLElement {
+  const meta: HTMLSpanElement = element('span', 'message-meta', `${isQueued ? 'Queued' : ROLE_LABELS[message.role]} · ${formatClock(message.timestamp)}`);
+  if (isQueued) meta.append(queuedEditButton(message));
+  return meta;
 }

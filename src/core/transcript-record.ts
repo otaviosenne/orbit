@@ -46,6 +46,9 @@ export interface TranscriptRecord {
   readonly effort?: string;
   // Logged on `permission-mode` records and on the user's prompts.
   readonly permissionMode?: string;
+  // Logged on `queue-operation` records: what happened to the queue, and the prompt it concerns.
+  readonly operation?: string;
+  readonly content?: unknown;
   readonly message?: {
     readonly id?: string;
     readonly model?: string;

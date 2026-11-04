@@ -24,6 +24,8 @@ import { SubagentReader, subagentMetaPath, subagentTranscriptPath } from './suba
 import type { ChatNameResolver } from './transcript-extractor';
 import { TranscriptLocator } from './transcript-locator';
 import { TranscriptReader } from './transcript-reader';
+import { QueuedPromptReader, queuedMessages } from './queue/queued-prompt-reader';
+import type { QueuedPrompt } from './queue/prompt-queue';
 import { extractTurnProgress } from './turn-progress';
 import type { WindowLocator } from './window-locator';
 
@@ -37,6 +39,12 @@ interface LiveTranscript {
   readonly transcript: string;
 }
 
+export interface LiveQueue {
+  readonly chatPid: number;
+  readonly transcript: string;
+  readonly prompts: readonly QueuedPrompt[];
+}
+
 // Facade that turns the files Claude Code writes under ~/.claude into chat snapshots.
 export class ChatRadar {
   private readonly locator: TranscriptLocator = new TranscriptLocator();
@@ -45,6 +53,7 @@ export class ChatRadar {
   private readonly subagents: SubagentReader = new SubagentReader();
   private readonly shells: ChatShells = new ChatShells();
   private readonly transcriptReader: TranscriptReader = new TranscriptReader();
+  private readonly queueReader: QueuedPromptReader = new QueuedPromptReader();
   private readonly repositories: RepositoryResolver = new RepositoryResolver();
   // A chat's window never changes while its process lives, so the lookup is done once per pid.
   private readonly windows: Map<number, Promise<number | null>> = new Map();
@@ -62,10 +71,22 @@ export class ChatRadar {
     return Promise.all(sessions.map((session: SessionRecord) => this.toChat(session, now, activeWindow)));
   }
 
-  // The last `limit` items; fewer than asked means the chat has nothing older.
+  // The last `limit` items, ending with the prompts still queued in a live chat; fewer than asked means the chat has
+  // nothing older.
   async transcript(sessionId: string, limit: number = TRANSCRIPT_ITEM_LIMIT): Promise<TranscriptItem[]> {
     const transcript: string | null = await this.locator.locate(sessionId);
-    return transcript === null ? [] : this.transcriptReader.read(transcript, liveChatNames, 'chat', limit);
+    if (transcript === null) return [];
+    const items: TranscriptItem[] = await this.transcriptReader.read(transcript, liveChatNames, 'chat', limit);
+    const live: LiveTranscript | null = await this.liveTranscript(sessionId);
+    const queued: TranscriptItem[] = live === null ? [] : queuedMessages(await this.queueReader.read(live.transcript, live.session.startedAt));
+    return queued.length === 0 ? items : [...items, ...queued].slice(-limit);
+  }
+
+  // An open chat's queue of prompts sent while it worked, with the transcript that logs it.
+  async liveQueue(sessionId: string): Promise<LiveQueue | null> {
+    const live: LiveTranscript | null = await this.liveTranscript(sessionId);
+    if (live === null) return null;
+    return { chatPid: live.session.pid, transcript: live.transcript, prompts: await this.queueReader.read(live.transcript, live.session.startedAt) };
   }
 
   // The end of a background shell's output, read from the file its own transcript names.

@@ -107,11 +107,20 @@ export interface MessageImage {
   readonly key: string;
 }
 
+// The messages a chat had queued, now held in its input while they are edited.
+export interface QueuePull {
+  readonly ok: boolean;
+  readonly prompts: readonly string[];
+  readonly error: string | null;
+}
+
 export interface MessageItem extends TranscriptItemBase {
   readonly kind: 'message';
   readonly role: MessageRole;
   readonly text: string;
   readonly images: readonly MessageImage[];
+  // Still waiting in the chat's queue: sent while it worked, not yet taken in, and can still be edited.
+  readonly isQueued?: boolean;
 }
 
 // A tool call and, once it arrives, its result; output stays null while the tool is still running.
@@ -534,6 +543,10 @@ export interface RadarApi {
   answerQuestion(sessionId: string, fingerprint: string, answer: QuestionAnswer): Promise<ActionResult>;
   // Picks a numbered answer of the permission prompt on screen (matched by fingerprint); resolves once it went away.
   answerPermission(sessionId: string, fingerprint: string, option: number): Promise<ActionResult>;
+  // Pulls the chat's queued messages into its input to edit them, out of its reach; releaseQueue types them back,
+  // as edited (an emptied one is left out) or, with null, as they were.
+  pullQueue(sessionId: string): Promise<QueuePull>;
+  releaseQueue(sessionId: string, texts: readonly string[] | null): Promise<ActionResult>;
   // Answers every question of a set (PickerSetView) in the terminal and submits; resolves once the chat recorded it.
   answerQuestionSet(sessionId: string, questionId: string, answers: readonly QuestionAnswer[]): Promise<ActionResult>;
   // Dismisses the waiting question without an answer, as Esc does in the chat's terminal.

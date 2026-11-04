@@ -2,6 +2,7 @@ import type { ActionResult, DeliveryMethod } from '../shared/types';
 import { typeIntoWindow } from './keyboard-typer';
 import { hasKittySocket, submitThroughKitty } from './kitty-remote';
 import { findTerminalWindowPid } from './terminal-window';
+import { isInputHeld } from './queue/held-inputs';
 
 export type InputKind = 'command' | 'message';
 
@@ -10,6 +11,7 @@ export type InputKind = 'command' | 'message';
 export async function submitToChat(chatPid: number, text: string, kind: InputKind, attachments: readonly string[] = []): Promise<ActionResult> {
   const windowPid: number | null = await findTerminalWindowPid(chatPid);
   if (windowPid === null) return failure('Terminal window not found');
+  if (isInputHeld(windowPid)) return failure('Save or cancel the queued messages being edited first');
   try {
     return success(await deliver(windowPid, text, kind, attachments));
   } catch (error: unknown) {

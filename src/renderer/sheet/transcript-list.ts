@@ -11,6 +11,8 @@ import type { Lightbox } from '../lightbox';
 import { ThreadFiles } from './thread-files';
 import { ThreadImages } from './thread-images';
 import { renderMessage, renderPendingMessage } from './transcript/message-bubble';
+import type { QueueEditApi } from './transcript/queued-edits';
+import { QueuedEdits } from './transcript/queued-edits';
 import { renderNotice, renderTurn } from './transcript/notice-row';
 import { renderPeer } from './transcript/peer-card';
 import { renderToolGroup } from './transcript/tool-group';
@@ -37,6 +39,7 @@ export class TranscriptList {
   private readonly images: ThreadImages;
   // Without a picker API (an agent's own view), a question waiting in the terminal is not shown.
   private readonly picker: LivePicker | null;
+  private readonly queueEdits: QueuedEdits | null;
   private readonly entries: ElementCache<TranscriptEntry> = new ElementCache(
     {
       id: (entry: TranscriptEntry): string => entry.id,
@@ -45,8 +48,10 @@ export class TranscriptList {
     (entry: TranscriptEntry): HTMLElement => this.renderEntry(entry),
   );
 
-  constructor(private readonly root: HTMLElement, lightbox: Lightbox, pickerApi: QuestionPickerApi | null = null) {
-    this.picker = pickerApi === null ? null : new LivePicker(pickerApi, (): void => this.render(false, true));
+  // Without an API (an agent's own view), a question waiting in the terminal is not shown and no queue is edited.
+  constructor(private readonly root: HTMLElement, lightbox: Lightbox, api: (QuestionPickerApi & QueueEditApi) | null = null) {
+    this.picker = api === null ? null : new LivePicker(api, (): void => this.render(false, true));
+    this.queueEdits = api === null ? null : new QueuedEdits(root, api, (): string | null => this.sessionId, (): void => this.render(false, true));
     // 'toggle' does not bubble, so listen in the capture phase.
     root.addEventListener('toggle', (event: Event): void => this.rememberToggle(event.target), true);
     this.images = new ThreadImages(root, lightbox, (): string | null => this.sessionId);
@@ -58,6 +63,7 @@ export class TranscriptList {
     this.thread = thread;
     if (isNewThread) this.entries.clear();
     if (sessionId !== this.sessionId) {
+      this.queueEdits?.release(null);
       this.openKeys.clear();
       this.images.release(this.pending.clear());
       this.images.clear();
@@ -92,7 +98,7 @@ export class TranscriptList {
     // Messages sent from the panel belong to the chat's own thread, not to its agents'.
     const waiting: PendingMessage[] = this.thread === this.sessionId ? this.reconcilePending() : [];
     const asked: QuestionItem | null = this.pendingQuestion();
-    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key(asked) ?? ''}`;
+    const key: string = `${this.thread}|${this.items.map(itemVersion).join(',')}|${waiting.map(pendingVersion).join(',')}|${this.picker?.key(asked) ?? ''}|${this.queueEdits?.key() ?? ''}`;
     if (key === this.renderedKey) return;
     const keepsEnd: boolean = isNewChat || scrollToEnd || this.isFollowing();
     const anchor: ScrollAnchor | null = keepsEnd ? null : captureScrollAnchor(this.root);
@@ -101,6 +107,7 @@ export class TranscriptList {
     syncChildren(this.root, [
       ...this.entries.build(groupTools(this.items)),
       ...waiting.map((message: PendingMessage) => renderPendingMessage(message)),
+      ...(this.thread === this.sessionId ? (this.queueEdits?.render() ?? []) : []),
       ...(this.thread === this.sessionId ? (this.picker?.render(asked) ?? []) : []),
     ]);
     if (anchor === null) this.root.scrollTop = this.root.scrollHeight;
@@ -115,6 +122,7 @@ export class TranscriptList {
   }
 
   clear(): void {
+    this.queueEdits?.release(null);
     this.root.replaceChildren();
     this.entries.clear();
     this.renderedKey = '';

@@ -1,5 +1,5 @@
 import type { Route } from '../../shared/ipc-routing';
-import type { ActionResult, PauseReport } from '../../shared/types';
+import type { ActionResult, PauseReport, QueuePull } from '../../shared/types';
 import { stopAgent } from '../agent-stop/agent-stopper';
 import { interruptShell } from '../shell-stop/shell-interrupter';
 import { recolorChat, renameChat, sendMessage } from '../chat-actions';
@@ -12,6 +12,7 @@ import { answerQuestion, submitAnswers } from '../questions/question-answerer';
 import { answerQuestionSet } from '../questions/set-answerer';
 import { declineQuestion } from '../questions/question-decliner';
 import { answerPermission } from '../questions/permission-answerer';
+import { pullQueue, releaseQueue } from '../queue/queue-hold';
 import { failure } from '../terminal-input';
 import { closeChat } from '../chat-closer';
 import { restartChat } from '../chat-restarter';
@@ -37,6 +38,8 @@ type ActionChannel =
   | 'AnswerQuestionSet'
   | 'DeclineQuestion'
   | 'AnswerPermission'
+  | 'PullQueue'
+  | 'ReleaseQueue'
   | 'StopAgent'
   | 'InterruptShell'
   | 'SetBoardState'
@@ -89,6 +92,8 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     DeclineQuestion: (sessionId: unknown): Promise<ActionResult> => declineQuestion(radar, sessionId),
     AnswerPermission: (sessionId: unknown, fingerprint: unknown, option: unknown): Promise<ActionResult> =>
       answerPermission(radar, sessionId, fingerprint, option),
+    PullQueue: (sessionId: unknown): Promise<QueuePull> => pullQueue(radar, sessionId),
+    ReleaseQueue: (sessionId: unknown, texts: unknown): Promise<ActionResult> => releaseQueue(sessionId, texts),
     StopAgent: (sessionId: unknown, agentId: unknown): Promise<ActionResult> => stopAgent(radar, sessionId, agentId),
     InterruptShell: (sessionId: unknown, taskId: unknown): Promise<ActionResult> => interruptShell(radar, sessionId, taskId),
   };

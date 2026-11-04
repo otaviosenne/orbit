@@ -35,6 +35,8 @@ export const IpcChannel = {
   AnswerQuestionSet: 'radar:answer-question-set',
   DeclineQuestion: 'radar:decline-question',
   AnswerPermission: 'radar:answer-permission',
+  PullQueue: 'radar:pull-queue',
+  ReleaseQueue: 'radar:release-queue',
   StopAgent: 'radar:stop-agent',
   GetShellOutput: 'radar:get-shell-output',
   InterruptShell: 'radar:interrupt-shell',

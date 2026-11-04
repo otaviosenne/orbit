@@ -926,6 +926,21 @@ div.shell-details-label { margin: 6px 0 3px; }
 /* Your messages take the chat's own color, with text that stays readable on it */
 .message-user .message-text { background: var(--chat); color: var(--on-chat, #ffffff); }
 .message.is-pending { opacity: 0.6; }
+/* Waiting in the chat's queue, dimmed as Claude Code shows it, with a pencil to change it before it is taken in */
+.message.is-queued .message-text { opacity: 0.6; }
+.message.is-queued .message-meta { display: inline-flex; align-items: center; gap: 4px; }
+.queued-edit {
+  display: inline-flex; padding: 2px; border: 0; border-radius: 5px; background: none; color: var(--secondary); cursor: pointer;
+}
+.queued-edit:hover { background: var(--segment-track); color: var(--text); }
+.queued-edit svg { width: 13px; height: 13px; }
+.message.is-editing { align-self: stretch; }
+.queued-edit-form { display: flex; flex-direction: column; gap: 6px; }
+.queued-edit-field {
+  min-height: 72px; padding: 8px 10px; border: 1px solid var(--chat); border-radius: 12px; resize: vertical;
+  background: var(--panel); color: var(--text); font: inherit; font-size: 13px; line-height: 1.38;
+}
+.queued-edit-actions { display: flex; justify-content: flex-end; gap: 6px; }
 
 /* A chat that is still starting: shimmering bubbles over the thread, its actions dimmed until it is live */
 .sheet-pending {
