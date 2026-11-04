@@ -19,7 +19,6 @@ let scale: PaceScale = savedPaceScale();
 // A day narrower than this share of the chart (a single hour of use) keeps its divider but not its name, which would
 // run into the next one.
 const MIN_LABELED_DAY_SHARE: number = 0.05;
-const HOUR_MS: number = 60 * 60_000;
 
 export function renderPaceChart(resetsAt: number, samples: readonly UsageSample[], now: number): HTMLElement {
   const box: HTMLDivElement = element('div', 'pace');
@@ -78,7 +77,7 @@ function weekTitle(windowEnd: number): string {
 }
 
 function paceClass(model: PaceModel): string {
-  if (model.isPast || !model.showsPace) return '';
+  if (model.isPast) return '';
   const gap: number | null = paceGap(model);
   if (gap === null || Math.abs(gap) <= ON_PACE_MARGIN) return '';
   return gap > 0 ? 'is-over' : 'is-under';
@@ -87,16 +86,10 @@ function paceClass(model: PaceModel): string {
 function summary(model: PaceModel): string {
   const gap: number | null = paceGap(model);
   if (gap === null || model.actualNow === null) return model.isPast ? 'No readings were saved for this week.' : 'Collecting readings: the line fills in as Orbit reads your usage.';
-  if (!model.showsPace) return `${Math.round(model.actualNow)}% used over ${hoursOfUse(model.spanMs)} of use${model.isPast ? ' that week' : ''}.`;
   if (model.isPast) return `The week ended at ${Math.round(model.actualNow)}% used.`;
   const used: string = `${Math.round(model.actualNow)}% used, an even pace is ${Math.round(model.expectedNow)}%`;
   if (Math.abs(gap) <= ON_PACE_MARGIN) return `${used}: on pace.`;
   return `${used}: ${Math.round(Math.abs(gap))} points ${gap > 0 ? 'above the line, slow down' : 'below the line, plenty of room'}.`;
-}
-
-function hoursOfUse(spanMs: number): string {
-  const hours: number = Math.round(spanMs / HOUR_MS);
-  return hours === 1 ? '1 hour' : `${hours} hours`;
 }
 
 function renderSvg(model: PaceModel): SVGSVGElement {
@@ -104,10 +97,10 @@ function renderSvg(model: PaceModel): SVGSVGElement {
   svg.setAttribute('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
   svg.setAttribute('class', 'pace-svg');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', model.showsPace ? 'Weekly usage against an even pace' : 'Weekly usage over the hours of use');
+  svg.setAttribute('aria-label', 'Weekly usage against an even pace');
   GRID_PERCENTS.forEach((percent: number): void => svg.append(...gridLine(percent)));
   model.days.forEach((day: PaceDay, index: number): void => svg.append(...dayMarks(day, index)));
-  if (model.showsPace) svg.append(line('pace-expected', [{ x: 0, percent: 0 }, { x: 1, percent: FULL_PERCENT }]));
+  if (model.expected.length > 0) svg.append(line('pace-expected', model.expected));
   if (model.actual.length > 0) svg.append(line(`pace-actual ${paceClass(model)}`, model.actual));
   const last: PacePoint | undefined = model.actual[model.actual.length - 1];
   if (last !== undefined) svg.append(dot(last, paceClass(model)));

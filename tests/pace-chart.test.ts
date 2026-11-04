@@ -119,7 +119,7 @@ describe('pace scales', () => {
   ];
 
   it('spans every hour of the week on the whole-week scale', () => {
-    const segments: WorkSegment[] = segmentsFor('all', WINDOW_START, RESETS_AT, samples);
+    const segments: WorkSegment[] = segmentsFor('all', WINDOW_START, RESETS_AT, samples, RESETS_AT);
     expect(totalWorkMs(segments)).toBe(7 * 24 * HOUR);
   });
 
@@ -133,13 +133,38 @@ describe('pace scales', () => {
     expect(totalWorkMs(segments)).toBe(3 * HOUR);
   });
 
-  it('draws no even pace over the hours of use and names each day once', () => {
+  it('shows the hours of use until now and the working hours still ahead, naming each day once', () => {
     const model = buildPaceModel(RESETS_AT, samples, at(24, 12), 'used');
-    expect(model.showsPace).toBe(false);
-    expect(model.spanMs).toBe(3 * HOUR);
-    expect(model.days.map((day) => day.label)).toHaveLength(2);
+    // Three hours of use, then Monday's nine working hours.
+    expect(model.spanMs).toBe(12 * HOUR);
+    expect(model.days.map((day) => day.label)).toHaveLength(3);
     expect(model.actualNow).toBe(12);
-    expect(buildPaceModel(RESETS_AT, samples, at(24, 12)).showsPace).toBe(true);
+    expect(model.expectedNow).toBe(80);
+  });
+
+  it('keeps the even pace flat over hours of use outside work and steps over the working time skipped', () => {
+    const model = buildPaceModel(RESETS_AT, samples, at(24, 12), 'used');
+    // Tuesday night: the first working day is already granted, and it stays so.
+    expect(readingAt(model, 0).expected).toBe(20);
+    expect(readingAt(model, 1.5 / 12).expected).toBe(20);
+    // Saturday morning: four working days granted; Monday's working hours climb the rest.
+    expect(readingAt(model, 2.5 / 12).expected).toBe(80);
+    expect(readingAt(model, 7.5 / 12).expected).toBe(90);
+  });
+
+  it('bends the even pace on the whole-week scale: rising in working hours, flat at night', () => {
+    const model = buildPaceModel(RESETS_AT, samples, at(24, 12), 'all');
+    const week: number = 7 * 24 * HOUR;
+    const fractionOf = (moment: number): number => (moment - WINDOW_START) / week;
+    expect(readingAt(model, fractionOf(at(20, 13.5))).expected).toBeCloseTo(10);
+    expect(readingAt(model, fractionOf(at(21, 3))).expected).toBeCloseTo(20);
+    expect(readingAt(model, fractionOf(at(25, 12))).expected).toBeCloseTo(80);
+    expect(model.expectedNow).toBe(80);
+  });
+
+  it('keeps the even pace straight on the work scale', () => {
+    const model = buildPaceModel(RESETS_AT, samples, at(24, 12));
+    expect(readingAt(model, 0.3).expected).toBeCloseTo(30);
   });
 });
 

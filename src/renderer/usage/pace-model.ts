@@ -1,12 +1,13 @@
 import type { UsageSample } from '../../shared/types';
 import { segmentsFor, type PaceScale } from './pace-scale';
-import { totalWorkMs, workElapsed, type WorkSegment } from './work-schedule';
+import { evenPaceLine } from './pace-even-line';
+import { totalWorkMs, workElapsed, workSegments, type WorkSegment } from './work-schedule';
 
 export const WEEK_MS: number = 7 * 24 * 60 * 60_000;
 const FULL_PERCENT: number = 100;
 
 export interface PacePoint {
-  // 0 to 1 across the week's working time.
+  // 0 to 1 across the time the scale's x axis spans.
   readonly x: number;
   readonly percent: number;
 }
@@ -20,23 +21,25 @@ export interface PaceDay {
 export interface PaceModel {
   readonly days: readonly PaceDay[];
   readonly actual: readonly PacePoint[];
-  // Where the straight line says usage should be right now, and where it really is.
+  // The even pace over working hours, drawn on the scale's axis: straight on the work scale, bent on the others.
+  readonly expected: readonly PacePoint[];
+  // Where the even pace says usage should be right now, and where it really is.
   readonly expectedNow: number;
   readonly actualNow: number | null;
   // A week that is over: its line is whatever it ended at, not a reading to act on.
   readonly isPast: boolean;
-  // The even-pace line means something only over a fixed span of time; over the hours of use alone it does not.
-  readonly showsPace: boolean;
   // The time the x axis spans, in milliseconds.
   readonly spanMs: number;
   // The stretches of time the x axis is made of, to tell the moment at any point of it.
   readonly segments: readonly WorkSegment[];
 }
 
-// The week's chart: the straight line of an even pace against what was really used, both over the scale's time.
+// The week's chart: the even pace over working hours against what was really used, both over the scale's time.
 export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[], now: number, scale: PaceScale = 'work'): PaceModel {
   const windowStart: number = resetsAt - WEEK_MS;
-  const segments: readonly WorkSegment[] = segmentsFor(scale, windowStart, resetsAt, samples);
+  const segments: readonly WorkSegment[] = segmentsFor(scale, windowStart, resetsAt, samples, now);
+  const work: readonly WorkSegment[] = workSegments(windowStart, resetsAt);
+  const workTotal: number = totalWorkMs(work);
   const total: number = totalWorkMs(segments);
   const position = (at: number): number => (total === 0 ? 0 : workElapsed(segments, at) / total);
   const inWindow: UsageSample[] = samples.filter((sample: UsageSample) => sample.at >= windowStart && sample.at <= resetsAt);
@@ -44,10 +47,10 @@ export function buildPaceModel(resetsAt: number, samples: readonly UsageSample[]
   return {
     days: daysOf(segments, total),
     actual: inWindow.map((sample: UsageSample): PacePoint => ({ x: position(sample.at), percent: sample.percent })),
-    expectedNow: position(Math.min(now, resetsAt)) * FULL_PERCENT,
+    expected: evenPaceLine(segments, work),
+    expectedNow: workTotal === 0 ? 0 : (workElapsed(work, Math.min(now, resetsAt)) / workTotal) * FULL_PERCENT,
     actualNow: last === undefined ? null : last.percent,
     isPast: now > resetsAt,
-    showsPace: scale !== 'used',
     spanMs: total,
     segments,
   };
@@ -86,7 +89,7 @@ export interface PaceReading {
 // What both lines say at a point of the week: the even pace and the usage the readings draw there.
 export function readingAt(model: PaceModel, fraction: number): PaceReading {
   return {
-    expected: fraction * FULL_PERCENT,
+    expected: usageAt(model.expected, fraction) ?? 0,
     actual: usageAt(model.actual, fraction),
     day: model.days.find((day: PaceDay) => fraction >= day.start && fraction <= day.end)?.label ?? null,
     moment: momentLabel(model, fraction),

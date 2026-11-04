@@ -2,7 +2,8 @@ import type { UsageSample } from '../../shared/types';
 import { dailySegments, withOffsets, workSegments, type WorkSegment } from './work-schedule';
 
 // What the chart's x axis spans. work: Monday to Friday, 09:00 to 18:00 (the pace the week is planned on). all: every
-// hour of the week. used: only the hours the readings show usage going up, so nights and weekends of use show too.
+// hour of the week. used: until now, only the hours the readings show usage going up, so nights and weekends of use
+// show too; from now on, the working hours still ahead, since no reading can tell which future hours will be used.
 export type PaceScale = 'work' | 'all' | 'used';
 
 export const PACE_SCALES: readonly PaceScale[] = ['work', 'all', 'used'];
@@ -11,10 +12,15 @@ const HOUR_MS: number = 60 * 60_000;
 const DAY_HOURS: number = 24;
 const EVERY_WEEKDAY: ReadonlySet<number> = new Set([0, 1, 2, 3, 4, 5, 6]);
 
-export function segmentsFor(scale: PaceScale, windowStart: number, windowEnd: number, samples: readonly UsageSample[]): WorkSegment[] {
+export function segmentsFor(scale: PaceScale, windowStart: number, windowEnd: number, samples: readonly UsageSample[], now: number): WorkSegment[] {
   if (scale === 'all') return dailySegments(windowStart, windowEnd, { startHour: 0, endHour: DAY_HOURS, weekdays: EVERY_WEEKDAY });
-  if (scale === 'used') return usedSegments(windowStart, windowEnd, samples);
+  if (scale === 'used') return usedThenPlanned(windowStart, windowEnd, samples, now);
   return workSegments(windowStart, windowEnd);
+}
+
+function usedThenPlanned(windowStart: number, windowEnd: number, samples: readonly UsageSample[], now: number): WorkSegment[] {
+  const cut: number = Math.min(Math.max(now, windowStart), windowEnd);
+  return withOffsets([...usedSegments(windowStart, cut, samples), ...workSegments(cut, windowEnd)]);
 }
 
 // Each hour in which a reading rose over the one before (the week starts from nothing used); hours in a row join
