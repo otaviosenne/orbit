@@ -1,4 +1,4 @@
-import { renderWorkSpinner } from '../../spinner';
+import { SPINNER_TINTS, renderWorkSpinner } from '../../spinner';
 import type { WorkState } from '../../work-state';
 
 // Grid elements live across polls; writing the same text again would still reset a selection inside it.
@@ -14,6 +14,8 @@ export function showSpinner(slot: HTMLElement, state: WorkState): void {
 }
 
 function shownState(slot: HTMLElement): WorkState {
-  if (slot.firstElementChild === null) return 'resting';
-  return slot.firstElementChild.classList.contains('is-shell') ? 'shell-only' : 'working';
+  const spinner: Element | null = slot.firstElementChild;
+  if (spinner === null) return 'resting';
+  if (spinner.classList.contains(SPINNER_TINTS['local-ci'])) return 'local-ci';
+  return spinner.classList.contains(SPINNER_TINTS['shell-only']) ? 'shell-only' : 'working';
 }

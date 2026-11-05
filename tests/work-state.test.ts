@@ -32,8 +32,18 @@ describe('a chat kept busy only by background commands', () => {
 });
 
 describe('a chat running the local CI in the background', () => {
-  it('spins orange, as working, however long the run takes', () => {
+  it('spins green however long the run takes', () => {
     const ci: ChatSnapshot = { ...shellChat([shell(LONG_SHELL_MS + 1)]), localCi: { startedAt: NOW - LONG_SHELL_MS - 1, options: [] } };
-    expect(workStateOf(ci, NOW)).toBe('working');
+    expect(workStateOf(ci, NOW)).toBe('local-ci');
+  });
+
+  it('spins green while Claude waits on the run in the foreground', () => {
+    const ci: ChatSnapshot = { ...shellChat([]), status: 'busy', localCi: { startedAt: NOW, options: [] } };
+    expect(workStateOf(ci, NOW)).toBe('local-ci');
+  });
+
+  it('stops spinning when the chat waits on the user', () => {
+    const ci: ChatSnapshot = { ...shellChat([]), status: 'waiting', localCi: { startedAt: NOW, options: [] } };
+    expect(workStateOf(ci, NOW)).toBe('resting');
   });
 });
