@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeviceRecheck } from '../src/renderer/board/card-devices';
-import { cardIconKinds, openCardDevice } from '../src/renderer/board/card-devices';
-import type { LocalCiRun } from '../src/shared/local-ci';
-import type { ChatDevices, DeviceFocus } from '../src/shared/types';
+import { openCardDevice } from '../src/renderer/board/card-devices';
+import type { DeviceFocus } from '../src/shared/types';
 
 describe('openCardDevice', () => {
   let outcome: DeviceFocus;
@@ -47,22 +46,5 @@ describe('openCardDevice', () => {
     outcome = 'missing';
     await openCardDevice('emulator', 'a', devices);
     expect(rechecked).toEqual(['a']);
-  });
-});
-
-describe('cardIconKinds', () => {
-  const withServer: ChatDevices = { emulator: null, browser: null, servers: [{ port: 5433, name: 'Container', publicUrl: null }] };
-  const run: LocalCiRun = { startedAt: 0, options: [] };
-
-  it('shows the servers when no local CI runs', () => {
-    expect(cardIconKinds(withServer, null)).toEqual(['servers']);
-  });
-
-  it('shows the local CI in place of the servers it started', () => {
-    expect(cardIconKinds(withServer, run)).toEqual(['local-ci']);
-  });
-
-  it('shows the local CI even when the chat lists no server', () => {
-    expect(cardIconKinds({ ...withServer, servers: [] }, run)).toEqual(['local-ci']);
   });
 });

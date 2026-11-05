@@ -1,14 +1,12 @@
-import type { LocalCiRun } from '../../shared/local-ci';
 import type { BrowserLink, ChatDevices, DeviceFocus, EmulatorLink, ServerLink } from '../../shared/types';
 import { element } from '../dom';
 import { isWebHost } from '../host';
-import { ANDROID_ICON, BROWSER_ICON, LOCAL_CI_ICON, SERVERS_ICON } from '../icons';
+import { ANDROID_ICON, BROWSER_ICON, SERVERS_ICON } from '../icons';
 import { serverLines } from '../servers/server-address';
 import { browserLines, emulatorLines } from '../sheet/device-links';
 import { setTip } from '../tooltip';
 
 export type CardDeviceKind = 'emulator' | 'browser';
-export type CardIconKind = CardDeviceKind | 'servers' | 'local-ci';
 
 export interface DeviceRecheck {
   recheck(sessionId: string, now: number): Promise<void>;
@@ -22,7 +20,6 @@ const SERVERS_LABEL: string = "Copy the address of one of this chat's servers";
 const BROWSER_LABEL: string = 'Open browser tab';
 const BROWSER_COPY_LABEL: string = 'Copy the page address';
 const EMULATOR_COPY_LABEL: string = 'Copy the Metro address';
-const LOCAL_CI_LABEL: string = 'Local CI running';
 
 // The same focus the chat panel's Emulator and Browser pills ask for.
 const FOCUS_REQUESTS: Readonly<Record<CardDeviceKind, (sessionId: string) => Promise<DeviceFocus>>> = {
@@ -31,35 +28,12 @@ const FOCUS_REQUESTS: Readonly<Record<CardDeviceKind, (sessionId: string) => Pro
 };
 
 // Icon-only buttons beside a card's name, one per device the chat has open; none when it has neither.
-export function renderCardDevices(devices: ChatDevices, localCi: LocalCiRun | null): HTMLElement[] {
-  return cardIconKinds(devices, localCi).map((kind: CardIconKind): HTMLElement => renderIcon(kind, devices, localCi));
-}
-
-// While the local CI runs, what listens is the database it started for its tests, so its badge takes the servers'
-// place: the chat is busy checking, not serving anything worth copying.
-export function cardIconKinds(devices: ChatDevices, localCi: LocalCiRun | null): CardIconKind[] {
-  const kinds: CardIconKind[] = [];
-  if (devices.emulator !== null) kinds.push('emulator');
-  if (devices.browser !== null) kinds.push('browser');
-  if (localCi !== null) kinds.push('local-ci');
-  else if (devices.servers.length > 0) kinds.push('servers');
-  return kinds;
-}
-
-function renderIcon(kind: CardIconKind, devices: ChatDevices, localCi: LocalCiRun | null): HTMLElement {
-  if (kind === 'emulator' && devices.emulator !== null) return emulatorButton(devices.emulator);
-  if (kind === 'browser' && devices.browser !== null) return browserButton(devices.browser);
-  if (kind === 'local-ci' && localCi !== null) return localCiBadge(localCi);
-  return serversButton(devices.servers);
-}
-
-// Not a button: a press opens the card, whose panel shows the run's green bar with its time.
-function localCiBadge(run: LocalCiRun): HTMLElement {
-  const badge: HTMLSpanElement = element('span', 'card-device is-local-ci');
-  badge.setAttribute('aria-label', LOCAL_CI_LABEL);
-  badge.innerHTML = LOCAL_CI_ICON;
-  setTip(badge, { title: LOCAL_CI_LABEL, lines: run.options.length > 0 ? [run.options.join(' ')] : [] });
-  return badge;
+export function renderCardDevices(devices: ChatDevices): HTMLButtonElement[] {
+  const buttons: HTMLButtonElement[] = [];
+  if (devices.emulator !== null) buttons.push(emulatorButton(devices.emulator));
+  if (devices.browser !== null) buttons.push(browserButton(devices.browser));
+  if (devices.servers.length > 0) buttons.push(serversButton(devices.servers));
+  return buttons;
 }
 
 // The servers icon under a press, which opens the list of the chat's ports instead of opening the card.

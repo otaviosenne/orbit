@@ -38,7 +38,7 @@ export class TileHeader {
   update(chat: ChatSnapshot, now: number, devices: ChatDevices): void {
     showChatNumber(this.number, chat.sessionId);
     setText(this.name, chat.name);
-    this.devices.show(devices, chat.localCi);
+    this.devices.show(devices);
     this.root.title = chat.repository.name;
     showSpinner(this.spinner, workStateOf(chat));
     setText(this.statusLabel, chatStatusLabel(chat.status));

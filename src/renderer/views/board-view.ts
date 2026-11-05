@@ -138,7 +138,7 @@ function renderCard(chat: ChatSnapshot, marks: BoardMarks, now: number): HTMLEle
   const spinner: HTMLElement | null = renderWorkSpinner(workStateOf(chat));
   if (spinner !== null) time.prepend(spinner);
   if (marks.pinnedOrder.includes(chat.sessionId)) time.prepend(renderPinMark());
-  top.append(renderTitle(chat, marks.devicesOf(chat.sessionId)), time);
+  top.append(renderTitle(chat.name, marks.devicesOf(chat.sessionId)), time);
   card.append(top, renderRepository(chat), ...renderAgentRows(chat.agents, now));
   return card;
 }
@@ -152,8 +152,8 @@ function renderRepository(chat: ChatSnapshot): HTMLElement {
 }
 
 // The name with the chat's device icons right after it; the name gives way to them when space runs short.
-function renderTitle(chat: ChatSnapshot, devices: ChatDevices): HTMLElement {
+function renderTitle(name: string, devices: ChatDevices): HTMLElement {
   const title: HTMLDivElement = element('div', 'card-title');
-  title.append(element('span', 'card-name', chat.name), ...renderCardDevices(devices, chat.localCi));
+  title.append(element('span', 'card-name', name), ...renderCardDevices(devices));
   return title;
 }
