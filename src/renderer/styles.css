@@ -416,6 +416,8 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card-device.is-emulator { --device-tint: var(--tag-green); }
 .card-device.is-browser { --device-tint: var(--tag-purple); }
 .card-device.is-servers { --device-tint: var(--tag-orange); }
+/* Green like the panel's local CI bar */
+.card-device.is-local-ci { --device-tint: var(--tag-green); }
 .card-device:hover { background: color-mix(in srgb, var(--device-tint) 26%, transparent); }
 .card-device svg { width: 14px; height: 14px; fill: currentColor; }
 .card-time { display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
