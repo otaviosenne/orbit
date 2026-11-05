@@ -6,7 +6,7 @@ const SPIN_CYCLE_MS: number = 1200;
 // The class that tints each state's spinner; plain working keeps Claude's orange.
 export const SPINNER_TINTS: Readonly<Record<Exclude<WorkState, 'resting'>, string>> = {
   'working': '',
-  'local-ci': 'is-local-ci',
+  'ci': 'is-ci',
   'shell-only': 'is-shell',
 };
 

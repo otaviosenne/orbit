@@ -94,6 +94,8 @@ export interface ChatSnapshot {
   readonly approval: ApprovalRequest | null;
   // The monorepo's local CI running under this chat, shown in green above its thread.
   readonly localCi: LocalCiRun | null;
+  // Any CI running under this chat, local or GitHub's watched from the terminal; its spinner turns green.
+  readonly runsCi?: boolean;
 }
 
 export type MessageRole = 'user' | 'assistant';

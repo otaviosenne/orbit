@@ -16,6 +16,6 @@ export function showSpinner(slot: HTMLElement, state: WorkState): void {
 function shownState(slot: HTMLElement): WorkState {
   const spinner: Element | null = slot.firstElementChild;
   if (spinner === null) return 'resting';
-  if (spinner.classList.contains(SPINNER_TINTS['local-ci'])) return 'local-ci';
+  if (spinner.classList.contains(SPINNER_TINTS['ci'])) return 'ci';
   return spinner.classList.contains(SPINNER_TINTS['shell-only']) ? 'shell-only' : 'working';
 }

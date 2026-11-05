@@ -2,9 +2,9 @@ import type { AgentSnapshot, ChatSnapshot, ShellSnapshot } from '../shared/types
 
 // What a chat is doing for the board. A chat whose only activity is a command left running in the background still
 // belongs with the working ones, but its spinner is grey: nothing is thinking, a command is just still going. The
-// monorepo's local CI is the exception: it is the work itself, so its chat keeps spinning however long it runs, in
-// green like the panel's local CI bar, so a chat checking its work stands apart from one still writing it.
-export type WorkState = 'working' | 'local-ci' | 'shell-only' | 'resting';
+// CI is the exception: it is the work itself, so its chat keeps spinning however long it runs, in green like the
+// panel's local CI bar, so a chat checking its work stands apart from one still writing it.
+export type WorkState = 'working' | 'ci' | 'shell-only' | 'resting';
 
 // A background command running longer than this is a server or a watcher, not work about to finish, so it no longer
 // keeps its chat in Working.
@@ -12,7 +12,7 @@ export const LONG_SHELL_MS: number = 10 * 60_000;
 
 export function workStateOf(chat: ChatSnapshot, now: number = Date.now()): WorkState {
   if (chat.status !== 'busy' && chat.status !== 'shell') return 'resting';
-  if (chat.localCi !== null) return 'local-ci';
+  if (chat.runsCi === true || chat.localCi !== null) return 'ci';
   if (chat.status === 'busy') return 'working';
   if (chat.agents.some((agent: AgentSnapshot) => agent.state === 'running')) return 'working';
   return onlyLongShells(chat.shells, now) ? 'resting' : 'shell-only';
