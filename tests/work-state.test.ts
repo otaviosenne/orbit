@@ -30,3 +30,10 @@ describe('a chat kept busy only by background commands', () => {
     expect(workStateOf(shellChat([]), NOW)).toBe('shell-only');
   });
 });
+
+describe('a chat running the local CI in the background', () => {
+  it('spins orange, as working, however long the run takes', () => {
+    const ci: ChatSnapshot = { ...shellChat([shell(LONG_SHELL_MS + 1)]), localCi: { startedAt: NOW - LONG_SHELL_MS - 1, options: [] } };
+    expect(workStateOf(ci, NOW)).toBe('working');
+  });
+});

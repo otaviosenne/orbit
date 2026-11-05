@@ -1,7 +1,8 @@
 import type { AgentSnapshot, ChatSnapshot, ShellSnapshot } from '../shared/types';
 
 // What a chat is doing for the board. A chat whose only activity is a command left running in the background still
-// belongs with the working ones, but its spinner is grey: nothing is thinking, a command is just still going.
+// belongs with the working ones, but its spinner is grey: nothing is thinking, a command is just still going. The
+// monorepo's local CI is the exception: it is the work itself, so its chat spins orange however long it runs.
 export type WorkState = 'working' | 'shell-only' | 'resting';
 
 // A background command running longer than this is a server or a watcher, not work about to finish, so it no longer
@@ -11,6 +12,7 @@ export const LONG_SHELL_MS: number = 10 * 60_000;
 export function workStateOf(chat: ChatSnapshot, now: number = Date.now()): WorkState {
   if (chat.status === 'busy') return 'working';
   if (chat.status !== 'shell') return 'resting';
+  if (chat.localCi !== null) return 'working';
   if (chat.agents.some((agent: AgentSnapshot) => agent.state === 'running')) return 'working';
   return onlyLongShells(chat.shells, now) ? 'resting' : 'shell-only';
 }
