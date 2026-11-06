@@ -1,10 +1,13 @@
 import { markWebHost } from '../renderer/host';
+import type { RadarApi } from '../shared/types';
 import { applyTheme, loadTheme } from '../renderer/theme';
 import { dictationSocketUrl } from './dictation/socket-url';
 import { RemoteDictation } from './dictation/remote-dictation';
 import { createHttpRadar } from './http-radar';
 import { installMobileLayout } from './mobile/mobile-layout';
 import { startBuildRefresh } from './refresh/build-refresh';
+import { PowerOverlay } from './power/power-overlay';
+import { PowerWatch } from './power/power-watch';
 import { createRemoteCall } from './remote-caller';
 import { hasSession, signIn, takePairingToken } from './session';
 import { showSignInForm } from './sign-in-form';
@@ -17,7 +20,9 @@ async function start(): Promise<void> {
   applyTheme(loadTheme());
   await ensureSignedIn();
   const voice: RemoteDictation = new RemoteDictation((): string => dictationSocketUrl(window.location), (url: string): WebSocket => new WebSocket(url));
-  Object.defineProperty(window, 'radar', { value: createHttpRadar(createRemoteCall(fetch.bind(window), onSignedOut), voice) });
+  const power: PowerWatch = new PowerWatch(new PowerOverlay());
+  const radar: RadarApi = createHttpRadar(createRemoteCall(power.watchFetch(fetch.bind(window)), onSignedOut), voice);
+  Object.defineProperty(window, 'radar', { value: power.watchPower(radar) });
   installMobileLayout();
   startBuildRefresh();
   await import('../renderer/app');
