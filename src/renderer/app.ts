@@ -73,6 +73,7 @@ import type { SettingsPage } from './views/settings-pages';
 import { DEFAULT_SETTINGS_PAGE, availablePages } from './views/settings-pages';
 import { renderAppearanceSection } from './views/appearance-section';
 import { renderUsageSection } from './views/usage-section';
+import { isPaceSelecting } from './usage/pace-zoom';
 import { UsageBadge } from './usage/usage-badge';
 import { SignInBadge, openSignIn } from './usage/sign-in-button';
 import type { TimelineChats } from './views/timeline-view';
@@ -352,6 +353,7 @@ function renderView(): void {
   if (view === 'board' && (cardRename.isActive || cardDrag.isActive)) return;
   if (view === 'settings' && remoteSection?.isEditing === true) return;
   if (view === 'settings' && settingsPage === 'computer' && computerSection.isHolding) return;
+  if (view === 'settings' && settingsPage === 'usage' && isPaceSelecting()) return;
   if (view === 'list' && listView.isPressed) return;
   if (view === 'board') {
     boardMotion.replace(viewRoot, renderBoard(chats, boardMarks(), now));
