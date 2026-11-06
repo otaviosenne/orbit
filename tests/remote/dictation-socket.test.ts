@@ -2,7 +2,12 @@ import type { IncomingMessage, Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import { DEMO_ROUTES } from '../../src/demo/demo-routes';
-import { generateToken, sessionValueFor } from '../../src/main/remote/access-token';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { generateToken } from '../../src/main/remote/access-token';
+import { DeviceSessions } from '../../src/main/remote/device-sessions';
+import { LegacySessions } from '../../src/main/remote/legacy-session';
 import { contentSecurityPolicy } from '../../src/main/remote/content-security';
 import { DICTATION_LIMITS } from '../../src/main/remote/dictation/dictation-limits';
 import { CLOSE_POLICY_VIOLATION, CLOSE_UNSUPPORTED_DATA } from '../../src/main/remote/dictation/close-codes';
@@ -20,7 +25,15 @@ type Handshake = { readonly socket: WebSocket } | { readonly status: number };
 const CHUNK: Uint8Array = new Uint8Array(320);
 const engines: RecordingEngine[] = [];
 const logLines: string[] = [];
-let token: string = generateToken();
+const token: string = generateToken();
+const devicesDir: string = mkdtempSync(join(tmpdir(), 'orbit-dictation-devices-'));
+const devices: DeviceSessions = new DeviceSessions(devicesDir);
+let device: { readonly id: string; readonly cookieValue: string } = newDevice();
+
+function newDevice(): { readonly id: string; readonly cookieValue: string } {
+  const created = devices.create('Test browser', Date.now());
+  return { id: created.device.id, cookieValue: created.cookieValue };
+}
 let server: Server;
 let port: number = 0;
 
@@ -28,8 +41,8 @@ function origin(): string {
   return `http://127.0.0.1:${port}`;
 }
 
-function cookieFor(value: string): string {
-  return `orbit_session=${sessionValueFor(value)}`;
+function signedInCookie(): string {
+  return `orbit_session=${device.cookieValue}`;
 }
 
 function handshake(headers: Readonly<Record<string, string>>, path: string = '/api/dictation'): Promise<Handshake> {
@@ -42,7 +55,7 @@ function handshake(headers: Readonly<Record<string, string>>, path: string = '/a
 }
 
 async function signedInSocket(): Promise<WebSocket> {
-  const result: Handshake = await handshake({ origin: origin(), cookie: cookieFor(token) });
+  const result: Handshake = await handshake({ origin: origin(), cookie: signedInCookie() });
   if (!('socket' in result)) throw new Error(`refused with ${result.status}`);
   return result.socket;
 }
@@ -77,9 +90,10 @@ beforeAll(async () => {
   server = createRemoteServer({
     routes: DEMO_ROUTES,
     webRoot: '/nonexistent',
-    credentials: () => ({ token, trusted: trustedOrigins(port, '') }),
+    credentials: () => ({ token, trusted: trustedOrigins(port, ''), devices }),
     limiter: new FailureLimiter(SIGN_IN_POLICY),
     pairing: new PairingCodes(),
+    legacy: new LegacySessions(),
     dictation: (): RecordingEngine => {
       const engine: RecordingEngine = new RecordingEngine();
       engines.push(engine);
@@ -93,14 +107,16 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await closeServer(server);
+  await devices.flushed();
+  rmSync(devicesDir, { recursive: true, force: true });
 });
 
 describe('Orbit Web dictation socket', () => {
   it('refuses a handshake that would not pass as an API call', async () => {
-    const signedIn: Readonly<Record<string, string>> = { origin: origin(), cookie: cookieFor(token) };
+    const signedIn: Readonly<Record<string, string>> = { origin: origin(), cookie: signedInCookie() };
     expect(await handshake({ origin: origin() })).toEqual({ status: 401 });
     expect(await handshake({ origin: origin(), cookie: 'orbit_session=forged' })).toEqual({ status: 401 });
-    expect(await handshake({ cookie: cookieFor(token) })).toEqual({ status: 403 });
+    expect(await handshake({ cookie: signedInCookie() })).toEqual({ status: 403 });
     expect(await handshake({ ...signedIn, origin: 'https://evil.example' })).toEqual({ status: 403 });
     expect(await handshake({ ...signedIn, host: `rebind.example:${port}` })).toEqual({ status: 421 });
     expect(await handshake(signedIn, '/api/call/GetChats')).toEqual({ status: 404 });
@@ -141,7 +157,7 @@ describe('Orbit Web dictation socket', () => {
   it('turns away browsers past the cap', async () => {
     const admitted: WebSocket[] = [];
     for (let index: number = 0; index < DICTATION_LIMITS.maxClients; index += 1) admitted.push(await signedInSocket());
-    expect(await handshake({ origin: origin(), cookie: cookieFor(token) })).toEqual({ status: 503 });
+    expect(await handshake({ origin: origin(), cookie: signedInCookie() })).toEqual({ status: 503 });
     await closeAll(admitted);
   });
 
@@ -152,10 +168,11 @@ describe('Orbit Web dictation socket', () => {
     expect(await closed).toBe(CLOSE_UNSUPPORTED_DATA);
   });
 
-  it('ends an open socket at its next message once the token changes', async () => {
+  it('ends an open socket at its next message once its device is signed out', async () => {
     const socket: WebSocket = await signedInSocket();
     const closed: Promise<number> = closeCode(socket);
-    token = generateToken();
+    devices.revoke(device.id, Date.now());
+    device = newDevice();
     socket.send('{"type":"prepare"}');
     expect(await closed).toBe(CLOSE_POLICY_VIOLATION);
   });
@@ -163,16 +180,17 @@ describe('Orbit Web dictation socket', () => {
   it('logs handshakes like requests, without secrets', () => {
     expect(logLines.some((line: string) => / GET \/api\/dictation 101 \d+ms$/.test(line))).toBe(true);
     expect(logLines.some((line: string) => / GET \/api\/dictation 401 \d+ms$/.test(line))).toBe(true);
-    expect(logLines.join('\n')).not.toContain(sessionValueFor(token));
+    expect(logLines.join('\n')).not.toContain(device.cookieValue);
   });
 
   it('closes the server even with a browser still connected', async () => {
     const other: Server = createRemoteServer({
       routes: DEMO_ROUTES,
       webRoot: '/nonexistent',
-      credentials: () => ({ token, trusted: trustedOrigins(port, '') }),
+      credentials: () => ({ token, trusted: trustedOrigins(port, ''), devices }),
       limiter: new FailureLimiter(SIGN_IN_POLICY),
       pairing: new PairingCodes(),
+      legacy: new LegacySessions(),
       dictation: (): RecordingEngine => new RecordingEngine(),
       now: (): number => Date.now(),
       log: (): void => undefined,

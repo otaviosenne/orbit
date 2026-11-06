@@ -1,7 +1,10 @@
 import type { RemoteSettings } from '../../shared/remote-settings';
 import { element } from '../dom';
+import { renderDeviceList } from './remote-devices';
 
 const COPIED_FEEDBACK_MS: number = 1500;
+// How often the device list is read again while the page is open, so a phone that just signed in shows up.
+const DEVICES_REFRESH_MS: number = 10_000;
 
 // Settings' Orbit Web section. It is one persistent element, re-attached on every settings render, so what is typed
 // in the External URL field survives the board's polling.
@@ -11,10 +14,13 @@ export class RemoteSection {
   private busy: boolean = false;
   // Kept across renders, so How it works stays open while the switch or a field is used.
   private readonly intro: HTMLElement = renderIntro();
+  // Redrawn on its own when the list is read again, so a field being typed in elsewhere in the section is left alone.
+  private readonly devices: HTMLDivElement = element('div', 'remote-devices-box');
 
   constructor() {
     this.root.append(element('h2', 'settings-heading', 'Orbit Web'), element('p', 'settings-note', 'Loading…'));
     void this.apply(window.radar.getRemoteSettings());
+    window.setInterval((): void => this.refreshDevices(), DEVICES_REFRESH_MS);
   }
 
   // True while a field in the section has focus, so the settings view is not rebuilt under the typing.
@@ -43,7 +49,26 @@ export class RemoteSection {
     if (settings.enabled) group.append(this.renderLocalUrl(settings), this.renderExternalUrl(settings), this.renderToken(settings));
     this.root.append(group);
     if (settings.error !== null) this.root.append(element('p', 'settings-note remote-error', settings.error));
-    if (settings.enabled) this.root.append(this.renderPairing(settings));
+    if (settings.enabled) this.root.append(this.devices, this.renderPairing(settings));
+    this.renderDevices(settings);
+  }
+
+  // Only while the page is on screen: the section stays alive, detached, for the rest of the app's life.
+  private refreshDevices(): void {
+    if (!this.root.isConnected || this.busy || this.settings?.enabled !== true) return;
+    void window.radar.getRemoteSettings().then((settings: RemoteSettings): void => {
+      this.settings = settings;
+      this.renderDevices(settings);
+    });
+  }
+
+  private renderDevices(settings: RemoteSettings): void {
+    this.devices.replaceChildren(
+      ...renderDeviceList(settings.devices, Date.now(), {
+        revoke: (id: string): void => void this.apply(window.radar.revokeRemoteDevice(id)),
+        signOutAll: (): void => void this.apply(window.radar.signOutRemoteDevices()),
+      }),
+    );
   }
 
   private renderToggle(settings: RemoteSettings): HTMLElement {
@@ -104,7 +129,7 @@ export class RemoteSection {
     copy.addEventListener('click', (): void => void copyText(copy, settings.token));
     const regenerate: HTMLButtonElement = element('button', 'button', 'New token');
     regenerate.type = 'button';
-    regenerate.title = 'Signs every paired phone out';
+    regenerate.title = 'A new token and QR code for new sign-ins; devices already signed in stay until signed out below';
     regenerate.addEventListener('click', (): void => void this.apply(window.radar.regenerateRemoteToken()));
     row.append(element('span', 'remote-label', 'Access token'), element('code', 'remote-value remote-token', settings.token), copy, regenerate);
     return row;
@@ -120,7 +145,7 @@ export class RemoteSection {
     const code: HTMLDivElement = element('div', 'remote-qr');
     // Drawn by the main process from the pairing URL alone (pairing-qr.ts), never from text a page supplied.
     code.innerHTML = settings.pairingQrSvg;
-    pairing.append(code, element('p', 'settings-note', 'Scan with your phone to sign in. Anyone with this code or the token can type into your chats; New token signs every phone out.'));
+    pairing.append(code, element('p', 'settings-note', 'Scan with your phone to sign in. Anyone with this code or the token can type into your chats: New token retires both, and Signed-in devices signs out any browser already in.'));
     return pairing;
   }
 }

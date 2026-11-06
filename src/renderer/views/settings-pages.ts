@@ -19,7 +19,7 @@ const PAGES: readonly PageEntry[] = [
 
 export const DEFAULT_SETTINGS_PAGE: SettingsPage = 'appearance';
 
-// The pages this window can show: Orbit Web's own settings exist only on the desktop.
+// The pages this window can show: the desktop's Orbit Web page holds its settings, a browser's lets another device in.
 export function availablePages(hasWeb: boolean): readonly SettingsPage[] {
   return PAGES.map((entry: PageEntry) => entry.page).filter((page: SettingsPage) => hasWeb || page !== 'web');
 }

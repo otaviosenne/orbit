@@ -37,7 +37,7 @@ async function ensureSignedIn(): Promise<void> {
 
 let signingIn: boolean = false;
 
-// A new token on the desktop signs every phone out; once signed in again, the app starts over clean.
+// The desktop signed this device out (or all of them); once signed in again, the app starts over clean.
 function onSignedOut(): void {
   if (signingIn) return;
   signingIn = true;

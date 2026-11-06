@@ -25,8 +25,8 @@ export function upgradeRefusal(request: IncomingMessage, credentials: RemoteCred
   return null;
 }
 
-// What the handshake proved, checked again against the current settings: a new token, another External URL or
-// Orbit Web turned off must end a socket that is already open, as they end every cookie.
+// What the handshake proved, checked again against the current settings: a device signed out, another External URL or
+// Orbit Web turned off must end a socket that is already open, as they end its cookie.
 export function stillAuthorized(request: IncomingMessage, credentials: () => RemoteCredentials): () => boolean {
   const { cookie, origin, host } = request.headers;
   return (): boolean => {

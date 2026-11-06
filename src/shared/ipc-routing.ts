@@ -13,6 +13,8 @@ export const REMOTE_SETTINGS_CHANNELS = [
   'SetRemoteExternalUrl',
   'SetRemotePort',
   'RegenerateRemoteToken',
+  'RevokeRemoteDevice',
+  'SignOutRemoteDevices',
 ] as const satisfies readonly ChannelKey[];
 
 export type ListenerChannel = (typeof LISTENER_CHANNELS)[number];

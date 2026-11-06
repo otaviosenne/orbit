@@ -15,4 +15,6 @@ export function registerRemoteSettingsHandlers(controller: RemoteController): vo
   );
   ipcMain.handle(IpcChannel.SetRemotePort, (_event: IpcMainInvokeEvent, port: unknown): Promise<RemoteSettings> => controller.setPort(port));
   ipcMain.handle(IpcChannel.RegenerateRemoteToken, (): Promise<RemoteSettings> => controller.regenerateToken());
+  ipcMain.handle(IpcChannel.RevokeRemoteDevice, (_event: IpcMainInvokeEvent, id: unknown): Promise<RemoteSettings> => controller.revokeDevice(id));
+  ipcMain.handle(IpcChannel.SignOutRemoteDevices, (): Promise<RemoteSettings> => controller.signOutAllDevices());
 }

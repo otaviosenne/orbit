@@ -11,7 +11,7 @@ import { isSignedIn } from './sign-in';
 // POST /api/call/<Channel> with the channel's arguments as a JSON array; answers with the route's result.
 export async function handleApiCall(request: IncomingMessage, response: ServerResponse, path: string, context: RemoteContext): Promise<void> {
   if (request.method !== 'POST') return sendError(response, 405, 'Method not allowed');
-  if (!isSignedIn(request, context.credentials())) return sendError(response, 401, 'Sign in first');
+  if (!isSignedIn(request, context.credentials(), context.now())) return sendError(response, 401, 'Sign in first');
   const channel: string = path.slice(REMOTE_API_PREFIX.length);
   // Desktop-only and unknown channels look the same from outside.
   if (!isRemoteChannel(channel)) return sendError(response, 404, 'Unknown call');

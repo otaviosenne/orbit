@@ -10,7 +10,7 @@ import { isSignedIn } from './sign-in';
 // that carry it. The link points at the address this device used, so it works wherever that one did.
 export function handlePairingOffer(request: IncomingMessage, response: ServerResponse, context: RemoteContext): void {
   if (request.method !== 'POST') return sendError(response, 405, 'Method not allowed');
-  if (!isSignedIn(request, context.credentials())) return sendError(response, 401, 'Sign in first');
+  if (!isSignedIn(request, context.credentials(), context.now())) return sendError(response, 401, 'Sign in first');
   const { code, expiresAt } = context.pairing.issue(context.now());
   const link: string = `${siteOf(request)}/#${PAIRING_HASH_KEY}=${code}`;
   const offer: PairingOffer = { code, expiresAt, link, qrSvg: pairingQrSvg(link) };

@@ -2,9 +2,11 @@ import type { Server } from 'node:http';
 import type { RemoteSettings } from '../../shared/remote-settings';
 import { PAIRING_HASH_KEY } from '../../shared/remote-settings';
 import { generateToken } from './access-token';
+import type { DeviceSessions } from './device-sessions';
 import type { DictationEngineFactory } from './dictation/dictation-engine';
 import { normalizeExternalUrl } from './external-url';
 import { FailureLimiter, SIGN_IN_POLICY } from './failure-limiter';
+import { LegacySessions } from './legacy-session';
 import { PairingCodes } from './pairing-codes';
 import { pairingQrSvg } from './pairing-qr';
 import type { RemoteConfig, RemoteConfigStore } from './remote-config';
@@ -15,6 +17,8 @@ import { trustedOrigins } from './trusted-origins';
 
 export interface RemoteControllerOptions {
   readonly store: RemoteConfigStore;
+  // Kept beside the config, in the same private folder.
+  readonly devices: DeviceSessions;
   readonly routes: RemoteRoutes;
   readonly webRoot: string;
   readonly dictation: DictationEngineFactory;
@@ -30,6 +34,7 @@ export class RemoteController {
   private readonly limiter: FailureLimiter = new FailureLimiter(SIGN_IN_POLICY);
   // Kept across server restarts, so turning Orbit Web off and on does not matter to a code just made.
   private readonly pairing: PairingCodes = new PairingCodes();
+  private readonly legacy: LegacySessions = new LegacySessions();
   // Changes run one at a time: an "off" arriving while "on" still binds the port must wait for it, or the server
   // would end up listening with the setting off.
   private queue: Promise<unknown> = Promise.resolve();
@@ -39,6 +44,7 @@ export class RemoteController {
   start(): Promise<void> {
     return this.serialize(async (): Promise<void> => {
       this.config = await this.options.store.load();
+      await this.options.devices.load();
       if (this.config.enabled) await this.applyEnabled(true);
     });
   }
@@ -63,6 +69,7 @@ export class RemoteController {
       pairingUrl,
       pairingQrSvg: pairingUrl === null ? null : pairingQrSvg(pairingUrl),
       error: this.error,
+      devices: this.options.devices.list(),
     };
   }
 
@@ -107,10 +114,28 @@ export class RemoteController {
     });
   }
 
-  // Every cookie is derived from the token, so a new one signs every paired browser out at once.
+  // Retires the token and its QR code for new sign-ins; browsers already signed in keep their own device sessions,
+  // which the device list signs out one by one or all at once.
   regenerateToken(): Promise<RemoteSettings> {
     return this.serialize(async (): Promise<RemoteSettings> => {
       await this.update({ ...this.config, token: generateToken() });
+      return this.settings();
+    });
+  }
+
+  // An open dictation socket of that device ends on its next message, when its cookie is checked again.
+  revokeDevice(id: unknown): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      if (typeof id === 'string') this.options.devices.revoke(id, Date.now());
+      await this.options.devices.flushed();
+      return this.settings();
+    });
+  }
+
+  signOutAllDevices(): Promise<RemoteSettings> {
+    return this.serialize(async (): Promise<RemoteSettings> => {
+      this.options.devices.revokeAll(Date.now());
+      await this.options.devices.flushed();
       this.dropDictation();
       return this.settings();
     });
@@ -128,7 +153,7 @@ export class RemoteController {
   }
 
   private credentials(): RemoteCredentials {
-    return { token: this.config.token, trusted: trustedOrigins(this.config.port, this.config.externalUrl) };
+    return { token: this.config.token, trusted: trustedOrigins(this.config.port, this.config.externalUrl), devices: this.options.devices };
   }
 
   private async update(next: RemoteConfig): Promise<void> {
@@ -145,6 +170,7 @@ export class RemoteController {
       credentials: (): RemoteCredentials => this.credentials(),
       limiter: this.limiter,
       pairing: this.pairing,
+      legacy: this.legacy,
       dictation: this.options.dictation,
       now: (): number => Date.now(),
       log: this.options.log,

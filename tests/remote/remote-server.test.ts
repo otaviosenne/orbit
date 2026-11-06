@@ -4,7 +4,9 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { generateToken } from '../../src/main/remote/access-token';
+import { generateToken, sessionValueFor } from '../../src/main/remote/access-token';
+import { DeviceSessions } from '../../src/main/remote/device-sessions';
+import { LegacySessions } from '../../src/main/remote/legacy-session';
 import { PairingCodes } from '../../src/main/remote/pairing-codes';
 import { FailureLimiter } from '../../src/main/remote/failure-limiter';
 import type { RemoteRoutes } from '../../src/main/remote/remote-context';
@@ -39,6 +41,8 @@ let server: Server;
 let port: number = 0;
 let webRoot: string;
 let cookie: string = '';
+let devices: DeviceSessions;
+const PHONE_AGENT: string = 'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36';
 
 function call({ method, path, headers = {}, body }: Call): Promise<Reply> {
   return new Promise((resolve: (reply: Reply) => void, reject: (error: Error) => void): void => {
@@ -56,8 +60,8 @@ function origin(): string {
   return `http://127.0.0.1:${port}`;
 }
 
-function signIn(token: string): Promise<Reply> {
-  return call({ method: 'POST', path: '/api/session', headers: { origin: origin(), 'content-type': 'application/json' }, body: JSON.stringify({ token }) });
+function signIn(token: string, headers: Readonly<Record<string, string>> = {}): Promise<Reply> {
+  return call({ method: 'POST', path: '/api/session', headers: { origin: origin(), 'content-type': 'application/json', ...headers }, body: JSON.stringify({ token }) });
 }
 
 function apiCall(channel: string, args: unknown[], headers: Readonly<Record<string, string>> = {}): Promise<Reply> {
@@ -72,12 +76,14 @@ function apiCall(channel: string, args: unknown[], headers: Readonly<Record<stri
 beforeAll(async () => {
   webRoot = await mkdtemp(join(tmpdir(), 'orbit-web-root-'));
   await writeFile(join(webRoot, 'index.html'), '<!doctype html><title>Orbit</title>');
+  devices = new DeviceSessions(webRoot);
   server = createRemoteServer({
     routes: ROUTES,
     webRoot,
-    credentials: () => ({ token: TOKEN, trusted: trustedOrigins(port, '') }),
+    credentials: () => ({ token: TOKEN, trusted: trustedOrigins(port, ''), devices }),
     limiter: new FailureLimiter({ maxFailures: LOCKOUT_FAILURES, windowMs: 60_000, lockoutMs: 60_000 }),
     pairing: new PairingCodes(),
+    legacy: new LegacySessions(),
     dictation: () => new DemoDictationEngine(),
     now: (): number => Date.now(),
     log: (line: string): void => void logLines.push(line),
@@ -87,6 +93,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await closeServer(server);
+  await devices.flushed();
   await rm(webRoot, { recursive: true, force: true });
 });
 
@@ -145,8 +152,43 @@ describe('Orbit Web server', () => {
     expect(reply.body).not.toContain(TOKEN);
     const signedIn: Reply = await signIn(offer.code.toLowerCase().replace('-', ' '));
     expect(signedIn.status).toBe(204);
-    expect(signedIn.headers['set-cookie']?.[0]?.split(';')[0]).toBe(cookie);
+    const otherCookie: string = signedIn.headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+    expect(otherCookie).toMatch(/^orbit_session=./);
+    expect(otherCookie).not.toBe(cookie);
+    expect((await call({ method: 'GET', path: '/api/session', headers: { cookie: otherCookie } })).status).toBe(204);
     expect((await signIn(offer.code)).status).toBe(401);
+  });
+
+  it('names each signed-in browser and lists it as a device', async () => {
+    const reply: Reply = await signIn(TOKEN, { 'user-agent': PHONE_AGENT });
+    const phoneCookie: string = reply.headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+    const device: Reply = await call({ method: 'GET', path: '/api/device', headers: { cookie: phoneCookie } });
+    expect(device.status).toBe(200);
+    expect((JSON.parse(device.body) as { name: string }).name).toBe('Chrome on Android');
+    expect(devices.list().some((listed: { name: string }) => listed.name === 'Chrome on Android')).toBe(true);
+  });
+
+  it('signs a browser out for good, here and when the desktop revokes it', async () => {
+    const first: string = (await signIn(TOKEN)).headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+    const signedOut: Reply = await call({ method: 'DELETE', path: '/api/session', headers: { origin: origin(), cookie: first } });
+    expect(signedOut.status).toBe(204);
+    expect(signedOut.headers['set-cookie']?.[0]).toContain('Max-Age=0');
+    expect((await call({ method: 'GET', path: '/api/session', headers: { cookie: first } })).status).toBe(401);
+    const second: string = (await signIn(TOKEN)).headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+    const id: string = second.slice('orbit_session='.length).split('.')[0] ?? '';
+    devices.revoke(id, Date.now());
+    expect((await apiCall('GetChats', [], { cookie: second })).status).toBe(401);
+  });
+
+  it('moves a browser holding the cookie from before devices onto a device of its own', async () => {
+    const legacy: string = `orbit_session=${sessionValueFor(TOKEN)}`;
+    const reply: Reply = await apiCall('GetChats', [], { cookie: legacy, 'user-agent': PHONE_AGENT });
+    expect(reply.status).toBe(200);
+    const upgraded: string = reply.headers['set-cookie']?.[0]?.split(';')[0] ?? '';
+    expect(upgraded).toMatch(/^orbit_session=[^.]+\../);
+    const again: Reply = await apiCall('GetChats', [], { cookie: legacy, 'user-agent': PHONE_AGENT });
+    expect(again.headers['set-cookie']?.[0]?.split(';')[0]).toBe(upgraded);
+    expect((await apiCall('GetChats', [], { cookie: upgraded })).status).toBe(200);
   });
 
   it('answers a signed-in call with the route’s result', async () => {

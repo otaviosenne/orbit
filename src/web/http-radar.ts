@@ -138,6 +138,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     setRemoteExternalUrl: (): Promise<RemoteSettings> => desktopOnly(),
     setRemotePort: (): Promise<RemoteSettings> => desktopOnly(),
     regenerateRemoteToken: (): Promise<RemoteSettings> => desktopOnly(),
+    revokeRemoteDevice: (): Promise<RemoteSettings> => desktopOnly(),
+    signOutRemoteDevices: (): Promise<RemoteSettings> => desktopOnly(),
   };
 }
 

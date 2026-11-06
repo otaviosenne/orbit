@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { REMOTE_API_PREFIX, REMOTE_PAIRING_PATH, REMOTE_SESSION_PATH } from '../../shared/remote-settings';
+import { REMOTE_API_PREFIX, REMOTE_DEVICE_PATH, REMOTE_PAIRING_PATH, REMOTE_SESSION_PATH } from '../../shared/remote-settings';
 import { handleApiCall } from './api-call';
+import { handleDevice } from './device-route';
 import { applySecurityHeaders, sendError } from './http-io';
 import type { RemoteContext, RemoteCredentials } from './remote-context';
 import { handlePairingOffer } from './pairing-offer';
@@ -24,7 +25,9 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
   applySecurityHeaders(response, credentials.trusted);
   if (!isTrustedHost(credentials.trusted, request.headers.host)) return sendError(response, 421, 'Unknown host');
   if (!isAllowedOrigin(request, credentials)) return sendError(response, 403, 'Cross-origin request refused');
+  context.legacy.upgrade(request, response, credentials, context.now());
   const path: string = requestPath(request);
+  if (path === REMOTE_DEVICE_PATH) return handleDevice(request, response, context);
   if (path === REMOTE_SESSION_PATH) return handleSession(request, response, context);
   if (path === REMOTE_PAIRING_PATH) return handlePairingOffer(request, response, context);
   if (path.startsWith(REMOTE_API_PREFIX)) return handleApiCall(request, response, path, context);

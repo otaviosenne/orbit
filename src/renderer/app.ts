@@ -73,6 +73,7 @@ import type { SettingsPage } from './views/settings-pages';
 import { DEFAULT_SETTINGS_PAGE, availablePages } from './views/settings-pages';
 import { renderAppearanceSection } from './views/appearance-section';
 import { renderUsageSection } from './views/usage-section';
+import { WebAccessPage } from './pairing/web-access-page';
 import { isPaceSelecting } from './usage/pace-zoom';
 import { UsageBadge } from './usage/usage-badge';
 import { SignInBadge, openSignIn } from './usage/sign-in-button';
@@ -139,6 +140,8 @@ const listView: ListView = new ListView({ open: (sessionId: string): void => tog
 const pendingEdits: PendingEdits = new PendingEdits();
 // Orbit Web's own settings exist only in the desktop window: a phone must not be able to read or change its token.
 const remoteSection: RemoteSection | null = isWebHost() ? null : new RemoteSection();
+// The browser's own Orbit Web page: connect another device, or sign this one out.
+const webAccessPage: WebAccessPage | null = isWebHost() ? new WebAccessPage() : null;
 const resourcesSection: ResourcesSection = new ResourcesSection((): readonly ChatSnapshot[] => chats);
 const computerSection: ComputerSection = new ComputerSection();
 const seen: SeenTracker = new SeenTracker(Date.now());
@@ -369,7 +372,7 @@ function renderView(): void {
 // The settings page is rebuilt on every poll; without this a scrolled page snaps back to the top.
 function showSettings(now: number): void {
   const scrollTop: number = viewRoot.querySelector<HTMLElement>('.settings-column')?.scrollTop ?? 0;
-  const layout: SettingsLayout = { pages: availablePages(remoteSection !== null), current: settingsPage, choose: showSettingsPage };
+  const layout: SettingsLayout = { pages: availablePages(remoteSection !== null || webAccessPage !== null), current: settingsPage, choose: showSettingsPage };
   const settings: HTMLElement = renderSettings(layout, settingsContent(now));
   viewRoot.replaceChildren(settings);
   const column: HTMLElement | null = settings.querySelector<HTMLElement>('.settings-column');
@@ -382,6 +385,7 @@ function settingsContent(now: number): HTMLElement {
   if (settingsPage === 'resources') return resourcesSection.root;
   if (settingsPage === 'computer') return computerSection.root;
   if (settingsPage === 'web' && remoteSection !== null) return remoteSection.root;
+  if (settingsPage === 'web' && webAccessPage !== null) return webAccessPage.root;
   return renderAppearanceSection(theme);
 }
 

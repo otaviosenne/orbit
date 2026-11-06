@@ -20,7 +20,7 @@ export function secretsMatch(given: string, expected: string): boolean {
   return timingSafeEqual(digest(given), digest(expected));
 }
 
-// The cookie carries this rather than the token: it opens nothing else, and a new token voids every cookie at once.
+// The cookie every browser held before device sessions; still read once, to move such a browser onto a device.
 export function sessionValueFor(token: string): string {
   return createHmac('sha256', token).update(SESSION_LABEL).digest('base64url');
 }

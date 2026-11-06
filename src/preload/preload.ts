@@ -137,6 +137,8 @@ const api: RadarApi = {
   setRemoteExternalUrl: (url: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemoteExternalUrl, url),
   setRemotePort: (port: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SetRemotePort, port),
   regenerateRemoteToken: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.RegenerateRemoteToken),
+  revokeRemoteDevice: (id: string): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.RevokeRemoteDevice, id),
+  signOutRemoteDevices: (): Promise<RemoteSettings> => ipcRenderer.invoke(IpcChannel.SignOutRemoteDevices),
 };
 
 contextBridge.exposeInMainWorld('radar', api);

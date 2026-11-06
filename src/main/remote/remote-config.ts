@@ -1,7 +1,8 @@
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isAccessToken } from './access-token';
 import { normalizeExternalUrl } from './external-url';
+import { writePrivateFile } from './private-file';
 
 export interface RemoteConfig {
   readonly enabled: boolean;
@@ -18,9 +19,6 @@ export const DEFAULT_REMOTE_PORT: number = 4690;
 const LOWEST_USER_PORT: number = 1024;
 const HIGHEST_PORT: number = 65535;
 const CONFIG_FILE: string = 'remote.json';
-// The token is as good as a shell on this machine, so only its owner may read the file or list the folder.
-const FILE_MODE: number = 0o600;
-const DIR_MODE: number = 0o700;
 const JSON_INDENT: number = 2;
 
 // Tests and the demo point this elsewhere so they never touch the user's real token.
@@ -67,11 +65,7 @@ export class RemoteConfigStore {
     }
   }
 
-  // mode only applies when a file or folder is created, so existing ones are tightened with chmod as well.
   async save(config: RemoteConfig): Promise<void> {
-    await mkdir(this.dir, { recursive: true, mode: DIR_MODE });
-    await chmod(this.dir, DIR_MODE);
-    await writeFile(this.path, `${JSON.stringify(config, null, JSON_INDENT)}\n`, { mode: FILE_MODE });
-    await chmod(this.path, FILE_MODE);
+    await writePrivateFile(this.dir, this.path, `${JSON.stringify(config, null, JSON_INDENT)}\n`);
   }
 }
