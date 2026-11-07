@@ -279,11 +279,15 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 
 .view { height: calc(100% - 52px); overflow: hidden; }
 
-/* Narrow layouts (tiled window or open panel): drop secondary toolbar text, let board columns scroll sideways */
+/* Narrow layouts (tiled window or open panel): drop the wordmark and the buttons' words, never the buttons, so
+   Resume, New chat and Settings stay in reach with a chat open. The board's narrow rule sits after .board below */
 .topbar { container-type: inline-size; }
 .view { container-type: inline-size; }
-@container (max-width: 620px) { .app-title { display: none; } .topbar-info { display: none; } }
-@container (max-width: 860px) { .board { grid-template-columns: repeat(3, minmax(250px, 1fr)); overflow-x: auto; } }
+@container (max-width: 620px) {
+  .app-title, .resume-label, .new-chat-label { display: none; }
+  .topbar-info { gap: 10px; }
+  .tab { min-width: 0; padding: 4px 10px; }
+}
 
 /* ---------- Board ---------- */
 /* Pinned chats sit in a row above the columns; the columns take the rest of the height */
@@ -319,6 +323,9 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 .suspended-cards .card { width: auto; min-width: 0; }
 .suspended-row.is-drop-placeholder .suspended-cards { min-height: 44px; }
 .board { height: 100%; display: grid; grid-template-columns: 0.9fr 1.2fr 1fr; gap: 12px; padding: 0 20px 20px; }
+/* Columns never shrink below a readable card (names take two lines, so 190px still reads); past that the board
+   scrolls sideways. After .board, which would otherwise win with the same specificity */
+@container (max-width: 860px) { .board { grid-template-columns: repeat(3, minmax(190px, 1fr)); overflow-x: auto; } }
 .column { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; padding: 10px; border-radius: 14px; background: var(--well); }
 .column-title { display: flex; align-items: center; gap: 8px; padding: 2px 4px 4px; font-size: 13px; font-weight: 700; }
 .column-count {
@@ -343,9 +350,10 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
   padding: 7px 10px; border-radius: 8px; background: var(--panel); color: var(--text);
   box-shadow: 0 0 0 0.5px var(--control-border), 0 8px 24px rgb(0 0 0 / 0.15);
   font-size: 12px; font-weight: 500; line-height: 1.4; text-align: left; white-space: normal;
-  opacity: 0; pointer-events: none; transition: opacity 0.12s;
+  display: none; pointer-events: none;
 }
-.column-info:hover .column-info-tip, .column-info:focus .column-info-tip { opacity: 1; }
+/* Hidden with display, not opacity: an invisible tip still widens its column's scroll area in a narrow board */
+.column-info:hover .column-info-tip, .column-info:focus .column-info-tip { display: block; }
 .card {
   --card-hover-opacity: 0.72;
   flex: none; padding: 11px 13px; border-radius: var(--radius-card); cursor: default;
@@ -403,9 +411,17 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card.is-open { box-shadow: 0 0 0 2px var(--accent), var(--shadow-card); }
 .card-top { display: flex; justify-content: space-between; gap: 10px; }
-.card-name { font-size: 13.5px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Grows to fill the row so the rename field still spans it; the icons follow the name, and the name shortens first */
-.card-title { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 4px; }
+/* Up to two lines before the ellipsis, so a long title reads whole instead of being cut where a second line fits */
+.card-name {
+  font-size: 13.5px; font-weight: 600; min-width: 0; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  /* The second line starts under the first one's text, not under the color dot (9px dot + 7px gap) */
+  padding-left: var(--card-dot-room); text-indent: calc(-1 * var(--card-dot-room));
+  --card-dot-room: 16px;
+}
+/* Grows to fill the row so the rename field still spans it; the icons follow the name, and drop to a line of their
+   own when a narrow column leaves the name no room */
+.card-title { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
 /* Icon-only versions of the panel's Emulator and Browser pills, tinted the same so they read as the same buttons */
 .card-device {
   flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px;
@@ -418,7 +434,7 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
 .card-device.is-servers { --device-tint: var(--tag-orange); }
 .card-device:hover { background: color-mix(in srgb, var(--device-tint) 26%, transparent); }
 .card-device svg { width: 14px; height: 14px; fill: currentColor; }
-.card-time { display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.card-time { display: inline-flex; align-items: center; gap: 6px; flex: none; align-self: flex-start; white-space: nowrap; color: var(--secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
 /* Finished since you last looked */
 /* Unread reply: a green dot whose halo swells and fades, so it catches the eye across the board (unseen-dot.ts keeps
    the phase across rebuilds) */
@@ -712,7 +728,10 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
 .panel-resizer:hover, body.is-resizing .panel-resizer { background: linear-gradient(to right, transparent 4px, var(--accent) 4px 6px, transparent 6px); }
 .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 14px 12px 18px; border-bottom: 1px solid var(--separator); }
 .sheet-title { flex: 1; min-width: 0; }
-.sheet-name { min-width: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet-name {
+  min-width: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
 /* Title row: color dot (opens the picker), name, pencil (renames) */
 .sheet-title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .sheet-title-row:has(.rename-form:not([hidden])) .icon-button { display: none; }
