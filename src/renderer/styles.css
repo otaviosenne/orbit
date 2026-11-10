@@ -732,6 +732,8 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
   min-width: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; overflow: hidden; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
 }
+/* The rename field takes the name's place; the display above would otherwise beat the hidden attribute */
+.sheet-name[hidden] { display: none; }
 /* Title row: color dot (opens the picker), name, pencil (renames) */
 .sheet-title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .sheet-title-row:has(.rename-form:not([hidden])) .icon-button { display: none; }
