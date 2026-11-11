@@ -80,7 +80,7 @@ export class VoiceHub {
   attach(field: VoiceField): FieldVoice {
     const voice: FieldVoice = new FieldVoice(field, this.transcripts, {
       holdStart: (held: FieldVoice): void => this.holdStart(held),
-      tap: (tapped: FieldVoice, pressedAt: number): void => this.tapInField(tapped, pressedAt),
+      tap: (tapped: FieldVoice, pressedAt: number, byNextKey: boolean): void => this.tapInField(tapped, pressedAt, byNextKey),
       mic: (): void => this.toggleFromMic(),
       edited: (edited: FieldVoice): void => this.handsFree.edited(edited.field),
       dictationChanged: (): void => this.showStates(),
@@ -140,10 +140,15 @@ export class VoiceHub {
     if (!this.handsFree.isBusy) this.startDictation(voice);
   }
 
-  private tapInField(voice: FieldVoice, pressedAt: number): void {
-    if (this.taps.press(pressedAt)) return this.doubleTapped(voice);
-    if (this.handsFree.isOn) voice.spaces.defer();
-    else if (voice.dictation.listening) voice.dictation.release();
+  // byNextKey: another key came while Space was down. That is typing, never half of a double tap, so the space goes
+  // in at once, ahead of that key's character.
+  private tapInField(voice: FieldVoice, pressedAt: number, byNextKey: boolean): void {
+    if (byNextKey) this.taps.forget();
+    else if (this.taps.press(pressedAt)) return this.doubleTapped(voice);
+    if (this.handsFree.isOn) {
+      if (byNextKey) voice.spaces.typeAtOnce();
+      else voice.spaces.defer();
+    } else if (voice.dictation.listening) voice.dictation.release();
     else voice.spaces.type();
   }
 

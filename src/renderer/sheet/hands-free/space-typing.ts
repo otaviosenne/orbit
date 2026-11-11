@@ -43,9 +43,19 @@ export class SpaceTyping {
     return this.input.value === typed.value && this.input.selectionStart === typed.caret && this.input.selectionEnd === typed.caret;
   }
 
+  // A space that cannot be half of a double tap (the next key already came): typed now, and told like typing is.
+  typeAtOnce(): void {
+    this.cancelDeferred();
+    this.typeAndAnnounce();
+  }
+
   private flush(): void {
     if (this.deferred === undefined) return;
     this.cancelDeferred();
+    this.typeAndAnnounce();
+  }
+
+  private typeAndAnnounce(): void {
     this.type();
     // setRangeText fires no input event; the draft store and hands-free dictation listen for one.
     this.input.dispatchEvent(new Event('input'));

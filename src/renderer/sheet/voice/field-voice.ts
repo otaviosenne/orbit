@@ -16,7 +16,7 @@ const WEB_MIC_TITLE: string = 'Keep the mic on hands-free';
 // dictation at a time).
 export interface FieldVoiceRoutes {
   readonly holdStart: (voice: FieldVoice) => void;
-  readonly tap: (voice: FieldVoice, pressedAt: number) => void;
+  readonly tap: (voice: FieldVoice, pressedAt: number, byNextKey: boolean) => void;
   readonly mic: (voice: FieldVoice) => void;
   readonly edited: (voice: FieldVoice) => void;
   readonly dictationChanged: () => void;
@@ -65,7 +65,7 @@ export class FieldVoice {
       onPress: (): void => window.radar.prepareDictation(),
       onHoldStart: (): void => routes.holdStart(this),
       onHoldEnd: (): void => this.dictation.release(),
-      onTap: (pressedAt: number): void => routes.tap(this, pressedAt),
+      onTap: (pressedAt: number, byNextKey: boolean): void => routes.tap(this, pressedAt, byNextKey),
     });
   }
 
