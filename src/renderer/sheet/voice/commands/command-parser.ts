@@ -17,8 +17,14 @@ export function parseVoiceCommand(text: string, options: ParseOptions): SpokenCo
 
 // What a draft reads without the send words that wait for a pause; null when it does not end with them.
 export function pausedSendText(text: string): string | null {
+  const spoken: SpokenCommand | null = pausedCommand(text);
+  return spoken?.command.action === 'send' ? spoken.remainder : null;
+}
+
+// The command a draft ends with when it is one that waits for a pause; null otherwise.
+export function pausedCommand(text: string): SpokenCommand | null {
   const spoken: SpokenCommand | null = parseVoiceCommand(text, { isSelectorOpen: false, isFinal: true });
-  return spoken?.command.action === 'send' && spoken.afterPauseMs !== undefined ? spoken.remainder : null;
+  return spoken?.afterPauseMs !== undefined ? spoken : null;
 }
 
 function phraseCommand(text: string, words: readonly SpokenWord[]): SpokenCommand | null {
@@ -26,6 +32,7 @@ function phraseCommand(text: string, words: readonly SpokenWord[]): SpokenComman
     const start: number | null = startOfRule(words, rule);
     if (start === null) continue;
     const remainder: string = draftBefore(text, start);
+    if (rule.isAlone === true && remainder.length > 0) continue;
     return rule.afterPauseMs === undefined ? { command: rule.command, remainder } : { command: rule.command, remainder, afterPauseMs: rule.afterPauseMs };
   }
   return null;

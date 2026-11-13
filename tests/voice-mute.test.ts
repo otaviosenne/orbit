@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseVoiceCommand } from '../src/renderer/sheet/voice/commands/command-parser';
+import { MUTE_PAUSE_MS } from '../src/renderer/sheet/voice/commands/phrase-table';
 import type { ParseOptions, VoiceCommand } from '../src/renderer/sheet/voice/commands/voice-command';
 import { isVoiceMuted, onlyMuteWhile, onVoiceMuteChange, setVoiceMuted } from '../src/renderer/sheet/voice/voice-mute';
 
@@ -23,6 +24,14 @@ describe('mute by voice', () => {
 
   it('keeps what was said before it', () => {
     expect(parseVoiceCommand('corrige o bug, Orbit multi.', FINAL)).toEqual({ command: { action: 'mute' }, remainder: 'corrige o bug' });
+  });
+
+  it.each(['mute', 'Mute.', 'muti', 'mutar', 'corrige o bug, mute', 'multi'])('bare "%s" mutes after a pause', (text: string) => {
+    expect(parseVoiceCommand(text, FINAL)).toMatchObject({ command: { action: 'mute' }, afterPauseMs: MUTE_PAUSE_MS });
+  });
+
+  it.each(['unmute', 'desmute', 'des multi', 'Dis Muti.'])('bare "%s" unmutes after a pause', (text: string) => {
+    expect(parseVoiceCommand(text, FINAL)).toMatchObject({ command: { action: 'unmute' }, afterPauseMs: MUTE_PAUSE_MS });
   });
 
   it('leaves "multi" in an ordinary sentence alone', () => {
@@ -89,6 +98,31 @@ describe('running mute', () => {
     expect(isVoiceMuted()).toBe(true);
     expect(runMutedVoiceCommand(inputWith('blá blá Orbit desmulti', sent), true)).toBe(true);
     expect(isVoiceMuted()).toBe(false);
+  });
+
+  it('a bare mute waits for the pause, then mutes and keeps the draft before it', async () => {
+    vi.useFakeTimers();
+    const { runVoiceCommand } = await import('../src/renderer/sheet/voice/voice-command-runner');
+    setVoiceMuted(false);
+    const input: HTMLTextAreaElement = inputWith('corrige o bug mute');
+    expect(runVoiceCommand(input, true)).toBe(false);
+    expect(isVoiceMuted()).toBe(false);
+    vi.advanceTimersByTime(MUTE_PAUSE_MS);
+    expect(input.value).toBe('corrige o bug');
+    expect(isVoiceMuted()).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('while muted, a bare mute said again unmutes after the pause', async () => {
+    vi.useFakeTimers();
+    const { runMutedVoiceCommand } = await import('../src/renderer/sheet/voice/voice-command-runner');
+    setVoiceMuted(true);
+    const input: HTMLTextAreaElement = inputWith('multi');
+    expect(runMutedVoiceCommand(input, true)).toBe(false);
+    expect(isVoiceMuted()).toBe(true);
+    vi.advanceTimersByTime(MUTE_PAUSE_MS);
+    expect(isVoiceMuted()).toBe(false);
+    vi.useRealTimers();
   });
 
   it('while muted, Orbit mute again unmutes: it toggles', async () => {

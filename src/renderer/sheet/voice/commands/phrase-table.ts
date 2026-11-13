@@ -10,10 +10,15 @@ export interface PhraseRule {
   // The rule acts only once nothing changes for this long. For words people say in ordinary sentences, so a pause
   // after them is what shows they ended the message.
   readonly afterPauseMs?: number;
+  // The phrase counts only when nothing was said before it, for a word that also ends ordinary sentences.
+  readonly isAlone?: boolean;
 }
 
 // Silence after "pode enviar" and the like before the message goes out.
 export const SEND_PAUSE_MS: number = 1000;
+
+// Silence after a bare "mute" before it mutes: the same wait as a bare "enviar", so both feel alike.
+export const MUTE_PAUSE_MS: number = SEND_PAUSE_MS;
 
 // Words no prompt ends with by accident. This table is the one place to change them; longer forms come first so all
 // of their words are removed. Rules are tried in order. Words are bare: lowercase, no accents or punctuation.
@@ -34,6 +39,22 @@ export const PHRASE_RULES: readonly PhraseRule[] = [
     phrases: [['orbit', 'mute']],
     gluedPhrases: ['orbitmute', 'orbitmuti', 'orbitmulti', 'orbitmutar', 'orbitmuta', 'orbitmudo', 'orbitmutado'],
   },
+  // A bare "mute" or "unmute" works like a bare "enviar": said last, then a pause. "mute" toggles, so saying it again
+  // unmutes. Unmute comes first for the same reason as above.
+  {
+    command: { action: 'unmute' },
+    afterPauseMs: MUTE_PAUSE_MS,
+    phrases: [['unmute'], ['desmute'], ['desmutar'], ['desmuta']],
+    gluedPhrases: ['unmuti', 'unmulti', 'anmute', 'anmulti', 'desmuti', 'desmulti', 'dismute', 'dismuti', 'dismulti'],
+  },
+  {
+    command: { action: 'mute' },
+    afterPauseMs: MUTE_PAUSE_MS,
+    phrases: [['mute'], ['muti'], ['mutar']],
+  },
+  // How dictation often hears a bare "mute"; "multi" also ends ordinary sentences ("o projeto é multi"), so it only
+  // counts said on its own.
+  { command: { action: 'mute' }, afterPauseMs: MUTE_PAUSE_MS, isAlone: true, phrases: [['multi']] },
   {
     command: { action: 'clear' },
     phrases: [['orbit', 'clear'], ['orbit', 'limpar'], ['chat', 'clear'], ['chat', 'limpar']],

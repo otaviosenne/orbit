@@ -1,5 +1,5 @@
 import { element } from '../dom';
-import { SEND_PAUSE_MS } from '../sheet/voice/commands/phrase-table';
+import { MUTE_PAUSE_MS, SEND_PAUSE_MS } from '../sheet/voice/commands/phrase-table';
 import { highlighted } from './highlight';
 import { matchesAllTerms } from './text-search';
 
@@ -39,8 +39,13 @@ export const VOICE_HELP: readonly VoiceHelpEntry[] = [
     does: `Send the message after a ${SEND_PAUSE_MS / MS_PER_SECOND} second pause: say it, then stop talking`,
   },
   { group: 'Write and send', says: ['orbit limpar', 'orbit clear'], does: 'Clear the message box' },
-  { group: 'Write and send', says: ['orbit mute', 'orbit multi'], does: 'Mute: the mic stays on (red) but ignores everything until you say Orbit mute again or Orbit unmute' },
-  { group: 'Write and send', says: ['orbit unmute', 'orbit desmulti'], does: 'Listen again after Orbit mute' },
+  { group: 'Write and send', says: ['orbit mute', 'orbit multi'], does: 'Mute: the mic stays on (red) but ignores everything until you say mute again or unmute' },
+  {
+    group: 'Write and send',
+    says: ['mute', 'muti', 'multi'],
+    does: `Mute, or unmute when muted, after a ${MUTE_PAUSE_MS / MS_PER_SECOND} second pause: say it, then stop talking ("multi" only on its own)`,
+  },
+  { group: 'Write and send', says: ['orbit unmute', 'orbit desmulti', 'unmute', 'desmute'], does: 'Listen again after mute (the bare words after a pause)' },
   { group: 'Devices', says: ['orbit emulador'], does: "Go to the open chat's emulator (nothing if it has none)" },
   { group: 'Devices', says: ['orbit navegador'], does: "Go to the open chat's browser tab (nothing if it has none)" },
 ];
