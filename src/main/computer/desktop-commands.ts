@@ -23,6 +23,7 @@ export const STATUS_COMMANDS = {
   processes: command(join(STATUS_MENU, 'top-processes.sh')),
   notificationCount: command('swaync-client', '--count'),
   doNotDisturb: command('swaync-client', '--get-dnd'),
+  monitors: command('hyprctl', '-j', 'monitors'),
   media: command('playerctl', 'metadata', '--format', '{{status}}\t{{artist}}\t{{title}}'),
 } as const;
 

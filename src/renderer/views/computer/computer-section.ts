@@ -5,6 +5,7 @@ import { renderAudioGroup } from './audio-group';
 import type { ComputerControls } from './computer-controls';
 import { renderDevicesGroup } from './devices-group';
 import { renderMediaGroup, renderNotificationsGroup } from './notifications-group';
+import type { ScreensState } from './power-group';
 import { renderPowerGroup } from './power-group';
 import type { ShutdownDraft } from './shutdown-group';
 import { renderShutdownGroup } from './shutdown-group';
@@ -16,6 +17,9 @@ import { renderSystemGroup } from './system-group';
 const POLL_MS: number = 3000;
 // A risky button stays armed this long for the confirming second tap.
 const ARMED_MS: number = 4000;
+// The screen scripts run detached and Hyprland reports the change a moment later; until then the switch keeps the
+// state just asked for instead of flicking back.
+const SCREENS_SETTLE_MS: number = 4000;
 // After a slider is let go, its own change needs a poll to come back before the page may redraw under the finger.
 const HOLD_AFTER_RELEASE_MS: number = 1500;
 const LEAD: string = 'This computer from wherever Orbit is open: power, screens, sound, batteries and notifications.';
@@ -35,6 +39,7 @@ export class ComputerSection {
   private refreshing: boolean = false;
   private holding: boolean = false;
   private holdUntil: number = 0;
+  private screensWanted: { readonly isOn: boolean; readonly until: number } | null = null;
 
   constructor() {
     this.render();
@@ -127,6 +132,18 @@ export class ComputerSection {
     this.root.replaceChildren(heading, lead, ...parts);
   }
 
+  private screensState(status: ComputerStatus): ScreensState {
+    const wanted: { readonly isOn: boolean; readonly until: number } | null = this.screensWanted;
+    const isSettling: boolean = wanted !== null && Date.now() < wanted.until && wanted.isOn !== status.screensOn;
+    return {
+      isOn: isSettling && wanted !== null ? wanted.isOn : status.screensOn,
+      set: (isOn: boolean): void => {
+        this.screensWanted = { isOn, until: Date.now() + SCREENS_SETTLE_MS };
+        void this.act({ kind: 'screens', on: isOn });
+      },
+    };
+  }
+
   private parts(status: ComputerStatus): HTMLElement[] {
     const controls: ComputerControls = {
       act: (action: ComputerAction): void => void this.act(action),
@@ -134,7 +151,7 @@ export class ComputerSection {
       arm: (key: string): void => this.arm(key),
     };
     return [
-      ...renderPowerGroup(controls, (): void => {
+      ...renderPowerGroup(controls, this.screensState(status), (): void => {
         this.disarm();
         void this.planShutdown((): Promise<ActionResult> => window.radar.shutDownSafely());
       }),

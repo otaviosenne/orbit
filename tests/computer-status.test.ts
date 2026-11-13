@@ -5,7 +5,7 @@ import { STATUS_COMMANDS } from '../src/main/computer/desktop-commands';
 import { ComputerStatusReader } from '../src/main/computer/computer-status';
 import { runComputerAction } from '../src/main/computer/computer-actions';
 import { TimedValue } from '../src/main/computer/timed-value';
-import { parseAudio, parseBatteries, parseMedia, parseSystemLoad } from '../src/core/computer/status-parsers';
+import { parseAudio, parseBatteries, parseMedia, parseScreensOn, parseSystemLoad } from '../src/core/computer/status-parsers';
 
 const OUTPUTS: ReadonlyMap<Command, string> = new Map<Command, string>([
   [STATUS_COMMANDS.system, '{"cpu":12,"ram":"20.5","temp":60}'],
@@ -52,6 +52,14 @@ describe('computer status', () => {
     expect(parseAudio('not json')).toBeNull();
     expect(parseMedia('Playing\tArtist\tSong')).toEqual({ playing: true, artist: 'Artist', title: 'Song' });
     expect(parseMedia('')).toBeNull();
+  });
+
+  it('reads the screens as on while any monitor is lit, unknown when Hyprland gave nothing usable', () => {
+    expect(parseScreensOn('[{"name":"DP-1","dpmsStatus":false},{"name":"HDMI-A-1","dpmsStatus":true}]')).toBe(true);
+    expect(parseScreensOn('[{"name":"DP-1","dpmsStatus":false}]')).toBe(false);
+    expect(parseScreensOn('[]')).toBeNull();
+    expect(parseScreensOn('not json')).toBeNull();
+    expect(parseScreensOn(null)).toBeNull();
   });
 
   it('shares a timed value until it expires or is invalidated', async () => {

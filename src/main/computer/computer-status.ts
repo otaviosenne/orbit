@@ -9,6 +9,7 @@ import {
   parseDisks,
   parseMedia,
   parseNotificationCount,
+  parseScreensOn,
   parseSystemLoad,
   parseTemperatures,
   parseTopProcesses,
@@ -31,7 +32,7 @@ const BYTES_PER_GB: number = 1024 ** 3;
 
 type ReadText = (path: string) => Promise<string | null>;
 
-export type StatusPart = 'audio' | 'apps' | 'brightness' | 'notifications' | 'media';
+export type StatusPart = 'audio' | 'apps' | 'brightness' | 'notifications' | 'media' | 'screens';
 
 const readTextFile: ReadText = (path: string): Promise<string | null> => readFile(path, 'utf8').catch((): null => null);
 
@@ -55,11 +56,12 @@ export class ComputerStatusReader {
       brightness: new TimedValue(LIVE_MS, (): Promise<string | null> => readText(BRIGHTNESS_CACHE)),
       notifications: this.timed(LIVE_MS, STATUS_COMMANDS.notificationCount),
       media: this.timed(LIVE_MS, STATUS_COMMANDS.media),
+      screens: this.timed(LIVE_MS, STATUS_COMMANDS.monitors),
     };
   }
 
   async status(): Promise<ComputerStatus> {
-    const [system, overview, batteries, processes, audio, apps, brightness, count, doNotDisturb, media] = await Promise.all([
+    const [system, overview, batteries, processes, audio, apps, brightness, count, doNotDisturb, media, screens] = await Promise.all([
       this.system.get(),
       this.overview.get(),
       this.batteries.get(),
@@ -70,6 +72,7 @@ export class ComputerStatusReader {
       this.parts.notifications.get(),
       this.doNotDisturb.get(),
       this.parts.media.get(),
+      this.parts.screens.get(),
     ]);
     return {
       system: system === null ? null : parseSystemLoad(system, totalmem() / BYTES_PER_GB),
@@ -79,6 +82,7 @@ export class ComputerStatusReader {
       audio: audio === null ? null : parseAudio(audio),
       apps: apps === null ? [] : parseAppStreams(apps),
       brightness: parseBrightness(brightness),
+      screensOn: parseScreensOn(screens),
       notifications: notificationState(count, doNotDisturb),
       media: parseMedia(media),
       processes: processes === null ? null : parseTopProcesses(processes),

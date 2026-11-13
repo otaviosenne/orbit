@@ -30,3 +30,28 @@ export function actionButton(label: string, onPress: () => void, className: stri
 export function subheading(text: string): HTMLElement {
   return element('h3', 'settings-subheading', text);
 }
+
+// A row's title with a line under it saying what it does or how it stands.
+export function rowText(title: string, caption: string): HTMLElement {
+  const text: HTMLSpanElement = element('span', 'computer-row-text');
+  text.append(element('span', 'computer-row-title', title), element('span', 'computer-row-caption', caption));
+  return text;
+}
+
+// An on/off switch: one control that shows the state and changes it, instead of an On and an Off button.
+export function switchInput(isOn: boolean, onChange: (isOn: boolean) => void, label: string): HTMLInputElement {
+  const toggle: HTMLInputElement = element('input', 'switch');
+  toggle.type = 'checkbox';
+  toggle.setAttribute('role', 'switch');
+  toggle.setAttribute('aria-label', label);
+  toggle.checked = isOn;
+  toggle.addEventListener('change', (): void => onChange(toggle.checked));
+  return toggle;
+}
+
+// A whole row that flips its switch when tapped anywhere on it.
+export function switchRow(title: string, caption: string, toggle: HTMLInputElement, ...extra: HTMLElement[]): HTMLElement {
+  const line: HTMLLabelElement = element('label', 'settings-row computer-switch-row');
+  line.append(rowText(title, caption), ...extra, toggle);
+  return line;
+}

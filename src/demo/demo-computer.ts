@@ -23,6 +23,7 @@ export const DEMO_COMPUTER: ComputerStatus = {
     { id: '102', name: 'Browser · Video', volume: 100, muted: false },
   ],
   brightness: 70,
+  screensOn: true,
   notifications: { count: 3, doNotDisturb: false },
   media: { playing: true, title: 'Focus Mix', artist: 'Lo-fi Radio' },
   processes: {

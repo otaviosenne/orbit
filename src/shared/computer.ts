@@ -8,6 +8,8 @@ export interface ComputerStatus {
   readonly audio: AudioState | null;
   readonly apps: readonly AppStream[];
   readonly brightness: number | null;
+  // Whether the monitors are on (any of them lit counts); null when Hyprland could not be asked.
+  readonly screensOn: boolean | null;
   readonly notifications: NotificationState | null;
   readonly media: MediaState | null;
   readonly processes: TopProcesses | null;

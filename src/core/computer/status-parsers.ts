@@ -71,6 +71,18 @@ export function parseBrightness(text: string | null): number | null {
   return text === null ? null : numberOf(text.trim());
 }
 
+// hyprctl -j monitors: one entry per monitor with dpmsStatus; the screens count as on while any one is lit.
+export function parseScreensOn(text: string | null): boolean | null {
+  if (text === null) return null;
+  try {
+    const monitors: unknown = JSON.parse(text);
+    if (!Array.isArray(monitors) || monitors.length === 0) return null;
+    return monitors.some((monitor: unknown): boolean => typeof monitor === 'object' && monitor !== null && (monitor as { dpmsStatus?: unknown }).dpmsStatus === true);
+  } catch {
+    return null;
+  }
+}
+
 export function parseNotificationCount(text: string | null): number | null {
   return text === null ? null : numberOf(text.trim());
 }

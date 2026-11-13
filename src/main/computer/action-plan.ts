@@ -36,7 +36,7 @@ export function planAction(action: ComputerAction, context: ActionContext): Acti
     case 'power':
       return { command: POWER_COMMANDS[action.power], mode: 'power', changes: null };
     case 'screens':
-      return { command: { file: action.on ? SCREENS_ON_SCRIPT : SCREENS_OFF_SCRIPT, args: [] }, mode: 'launch', changes: null };
+      return { command: { file: action.on ? SCREENS_ON_SCRIPT : SCREENS_OFF_SCRIPT, args: [] }, mode: 'launch', changes: 'screens' };
     case 'volume':
       return pactl(['set-sink-volume', DEFAULT_SINK, `${action.percent}%`], 'audio');
     case 'mute':
