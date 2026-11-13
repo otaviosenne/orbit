@@ -1143,7 +1143,13 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
   display: inline-flex; align-items: center; padding: 0 7px; margin: 0 1px; border: 0; border-radius: 6px;
   background: rgb(255 255 255 / 0.22); color: inherit; font: inherit; font-weight: 600; cursor: pointer;
 }
-.message-assistant .image-chip { background: rgb(127 127 127 / 0.18); }
+/* Sent and received chips take the chat's colour so they stand out in a long message, without shouting: a darker shade
+   of it on the user's own bubble (which is that colour), a light tint of it on Claude's grey one */
+.message-user .image-chip { background: color-mix(in srgb, var(--chat, var(--accent)), #000000 26%); }
+.message-assistant .image-chip {
+  background: color-mix(in srgb, var(--chat, var(--accent)) 22%, transparent);
+  color: color-mix(in srgb, var(--chat, var(--accent)) 72%, var(--bubble-them-text));
+}
 .image-chip:hover { text-decoration: underline; }
 .image-chip.is-inert { cursor: default; text-decoration: none; opacity: 0.8; }
 
