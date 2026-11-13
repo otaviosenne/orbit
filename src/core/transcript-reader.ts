@@ -4,7 +4,7 @@ import { FileMemo } from './file-memo';
 import { isTranscriptLine, parseRecords } from './jsonl';
 import type { TailSearchResult } from './tail-search';
 import { searchTail } from './tail-search';
-import type { ChatNameResolver, ImageBlob, ImageStore, TranscriptSource } from './transcript-extractor';
+import type { ChatNameResolver, ImageStore, StoredImage, TranscriptSource } from './transcript-extractor';
 import { extractTranscript } from './transcript-extractor';
 
 // Listing the live chats reads every session file, so it is only done when a transcript really has to be parsed.
@@ -35,9 +35,9 @@ export class TranscriptReader {
   }
 
   // A thumbnail of a message paged in from deep history may sit before the recent window.
-  async image(transcriptPath: string, key: string, loadNames: ChatNamesLoader): Promise<ImageBlob | null> {
+  async image(transcriptPath: string, key: string, loadNames: ChatNamesLoader): Promise<StoredImage | null> {
     const recent: ReadTranscript = await this.load(transcriptPath, loadNames, 'chat', TRANSCRIPT_ITEM_LIMIT);
-    const blob: ImageBlob | undefined = recent.images.get(key);
+    const blob: StoredImage | undefined = recent.images.get(key);
     if (blob !== undefined || recent.isWhole) return blob ?? null;
     return (await this.load(transcriptPath, loadNames, 'chat', EVERY_ITEM)).images.get(key) ?? null;
   }

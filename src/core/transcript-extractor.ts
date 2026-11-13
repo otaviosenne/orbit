@@ -9,6 +9,8 @@ import type { TaskNotification } from './tagged-text';
 import { parseSlashCommand, parseTaskNotification } from './tagged-text';
 import type { ToolInput } from './tool-summary';
 import { describeToolInput, displayToolName, summarizeTool } from './tool-summary';
+import type { ReplyImage, ReplyWithImages } from './reply-images';
+import { extractReplyImages } from './reply-images';
 import type { ContentBlock, RecordAttachment, TranscriptRecord } from './transcript-record';
 import { recordTime } from './transcript-record';
 
@@ -20,8 +22,16 @@ export interface ImageBlob {
   readonly data: string;
 }
 
-// Image pixels by MessageImage key; kept out of the items so polling does not move megabytes around.
-export type ImageStore = Map<string, ImageBlob>;
+// A picture a reply points at on disk; read only when it is shown, and only because the reply named it.
+export interface ReplyImageFile {
+  readonly path: string;
+}
+
+export type StoredImage = ImageBlob | ReplyImageFile;
+
+// Image pixels (or where a reply's picture lies) by MessageImage key; kept out of the items so polling does not move
+// megabytes around.
+export type ImageStore = Map<string, StoredImage>;
 
 type MutableTool = { -readonly [K in keyof ToolItem]: ToolItem[K] };
 
@@ -92,9 +102,20 @@ class TranscriptBuilder {
   private addAssistant(record: TranscriptRecord, id: string, timestamp: number): void {
     contentBlocks(record).forEach((block: ContentBlock, index: number) => {
       const text: string = block.text?.trim() ?? '';
-      if (block.type === 'text' && text.length > 0) this.items.push({ kind: 'message', id: `${id}-${index}`, timestamp, role: 'assistant', text, images: [] });
+      if (block.type === 'text' && text.length > 0) this.addReply(`${id}-${index}`, timestamp, text);
       if (block.type === 'tool_use') this.addToolUse(block, `${id}-${index}`, timestamp);
     });
+  }
+
+  // Pictures the reply points at become "[Image #N]" chips with thumbnails, like the user's pasted ones.
+  private addReply(id: string, timestamp: number, text: string): void {
+    const reply: ReplyWithImages = extractReplyImages(text);
+    const images: MessageImage[] = reply.images.map((image: ReplyImage): MessageImage => {
+      const key: string = `${id}@${image.number}`;
+      this.images.set(key, { path: image.path });
+      return { number: image.number, key };
+    });
+    this.items.push({ kind: 'message', id, timestamp, role: 'assistant', text: reply.text, images });
   }
 
   private addToolUse(block: ContentBlock, fallbackId: string, timestamp: number): void {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ImageStore } from '../src/core/transcript-extractor';
 import { extractTranscript } from '../src/core/transcript-extractor';
 import type { TranscriptRecord } from '../src/core/transcript-record';
 
@@ -28,6 +29,17 @@ describe('extractTranscript', () => {
       'find the bug',
       'found it',
     ]);
+  });
+
+  it('turns a picture a reply points at into an image chip whose key leads to the file', () => {
+    const images: ImageStore = new Map();
+    const records: TranscriptRecord[] = [
+      { type: 'assistant', uuid: 'a1', message: { content: [{ type: 'text', text: 'See ![chart](/tmp/chart.png)' }] } },
+    ];
+    expect(extractTranscript(records, 10, noNames, images)).toMatchObject([
+      { kind: 'message', role: 'assistant', text: 'See [Image #1]', images: [{ number: 1, key: 'a1-0@1' }] },
+    ]);
+    expect(images.get('a1-0@1')).toEqual({ path: '/tmp/chart.png' });
   });
 
   it('pairs a tool call with its result and summarizes it', () => {

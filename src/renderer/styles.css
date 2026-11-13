@@ -1001,6 +1001,8 @@ body.chat-window #action-window { display: none; }
 /* Markdown inside bubbles: compact, so a long answer still reads like a message */
 .markdown { white-space: normal; }
 .markdown > :first-child { margin-top: 0; }
+/* A picture the markdown still draws itself (a web address) stays inside the bubble instead of overflowing it */
+.markdown img { max-width: 100%; max-height: 320px; height: auto; border-radius: 8px; }
 .markdown > :last-child { margin-bottom: 0; }
 .markdown p, .markdown ul, .markdown ol, .markdown pre, .markdown blockquote, .markdown table { margin: 0 0 7px; }
 .markdown h1, .markdown h2, .markdown h3, .markdown h4 { margin: 10px 0 4px; font-weight: 700; line-height: 1.25; letter-spacing: -0.2px; }
@@ -1131,6 +1133,8 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
   display: block; min-width: 0; max-width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden;
   background: var(--well); box-shadow: 0 0 0 0.5px var(--control-border); cursor: zoom-in;
 }
+/* A reply's pictures follow its text, on its side of the thread */
+.message-assistant .message-images { justify-content: flex-start; margin: 6px 0 0; }
 .message-image-picture { display: block; height: var(--message-image-height); width: auto; max-width: 100%; object-fit: cover; }
 /* Until its pixels arrive, a square placeholder holds the picture's place */
 .message-image-picture:not([src]) { width: var(--message-image-height); }

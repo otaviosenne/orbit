@@ -72,10 +72,13 @@ export function renderMessage(message: MessageItem, lookup: ImageLookup): HTMLEl
   // Files sent from the composer reach Claude as paths; the user's own bubble shows them as chips again.
   const files: MessageFiles | null = isUser ? transcriptFiles(message.text) : null;
   renderMarkdown(body, files?.text ?? message.text);
-  if (isUser) linkImages(body, message.images);
+  // A reply only links the pictures it carries, so an "[Image #N]" it merely quotes from the user stays plain text.
+  if (isUser || message.images.length > 0) linkImages(body, message.images);
   if (files !== null) linkFileChips(body, files.chips);
-  const thumbnails: ThumbnailSource[] = isUser ? transcriptThumbnails(message.images, lookup) : [];
-  item.append(messageMeta(message, isQueued), ...thumbnailRow(thumbnails), body);
+  const thumbnails: HTMLElement[] = thumbnailRow(transcriptThumbnails(message.images, lookup));
+  // The user's pictures sit above their text as in chat apps; a reply's come after it, once it has been read.
+  const content: HTMLElement[] = isUser ? [...thumbnails, body] : [body, ...thumbnails];
+  item.append(messageMeta(message, isQueued), ...content);
   return item;
 }
 

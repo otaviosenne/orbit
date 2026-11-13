@@ -21,7 +21,8 @@ import { readAgentMeta } from './agent-meta';
 import type { ShellRecord } from './shells/background-shells';
 import { ChatShells } from './shells/chat-shells';
 import { SubagentReader, subagentMetaPath, subagentTranscriptPath } from './subagent-reader';
-import type { ChatNameResolver } from './transcript-extractor';
+import type { ChatNameResolver, ImageBlob, StoredImage } from './transcript-extractor';
+import { readReplyImage } from './reply-image-file';
 import { TranscriptLocator } from './transcript-locator';
 import { TranscriptReader } from './transcript-reader';
 import { QueuedPromptReader, queuedMessages } from './queue/queued-prompt-reader';
@@ -124,7 +125,8 @@ export class ChatRadar {
   async image(sessionId: string, key: string): Promise<string | null> {
     const transcript: string | null = await this.locator.locate(sessionId);
     if (transcript === null) return null;
-    const blob = await this.transcriptReader.image(transcript, key, liveChatNames);
+    const stored: StoredImage | null = await this.transcriptReader.image(transcript, key, liveChatNames);
+    const blob: ImageBlob | null = stored === null ? null : 'path' in stored ? await readReplyImage(stored.path) : stored;
     return blob === null ? null : `data:${blob.mediaType};base64,${blob.data}`;
   }
 

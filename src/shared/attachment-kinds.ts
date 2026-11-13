@@ -91,6 +91,11 @@ export function viewableKindOf(name: string, mediaType: string): ViewableKind | 
   return byType?.[1] ?? null;
 }
 
+// The type of a picture Orbit shows as an image (the same formats Claude Code takes in), from its name; null otherwise.
+export function imageMediaTypeOf(name: string): string | null {
+  return PASTED_IMAGE_EXTENSIONS[extensionOf(name)] ?? null;
+}
+
 // The type to serve a viewable file as, from its name; null for anything Orbit does not show.
 export function viewableMediaType(name: string): string | null {
   return VIEWABLE_EXTENSIONS[extensionOf(name)]?.mediaType ?? null;
