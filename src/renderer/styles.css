@@ -450,6 +450,8 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; }
   animation: unseen-pulse-waiting 1s ease-out infinite;
 }
 .unseen-dot.is-permission { --unseen-color: var(--tag-red); }
+/* Approval for main or a release: purple, the approval bar's tint, so it reads apart from every other dot */
+.unseen-dot.is-approval { --unseen-color: var(--tag-purple); }
 @keyframes unseen-pulse-waiting {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--unseen-color) 90%, transparent), 0 0 0 0 color-mix(in srgb, var(--unseen-color) 60%, transparent); transform: scale(1); }
   25% { transform: scale(1.3); }
@@ -783,14 +785,14 @@ body.is-resizing, body.is-resizing .sheet { transition: none; user-select: none;
    under the pointer and while its confirmation is open; the row keeps room for it so the time never moves */
 .agent-strip-item { position: relative; }
 
-/* ---------- Banners under the chat header, above the agents and shells: local CI running (green), a request for approval (blue) ---------- */
+/* ---------- Banners under the chat header, above the agents and shells: local CI running (green), a request for approval (purple, like its dot) ---------- */
 .chat-banner[hidden] { display: none; }
 .chat-banner {
   display: flex; align-items: center; gap: 8px 10px; padding: 8px 12px; font-size: 12.5px;
   background: color-mix(in srgb, var(--banner-tint) 16%, var(--panel));
   border-bottom: 1px solid color-mix(in srgb, var(--banner-tint) 32%, var(--separator));
 }
-.approval-bar { --banner-tint: var(--tag-blue); flex-wrap: wrap; }
+.approval-bar { --banner-tint: var(--tag-purple); flex-wrap: wrap; }
 .approval-text { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .approval-title { font-weight: 650; color: color-mix(in srgb, var(--banner-tint) 80%, var(--text)); }
 .approval-summary { color: var(--text); line-height: 1.35; overflow-wrap: anywhere; }

@@ -56,8 +56,8 @@ export const FAQ: readonly FaqEntry[] = [
   },
   {
     id: 'approval-bar',
-    question: 'What are the blue and green bars above a chat?',
-    answer: 'Blue: the chat asks your go-ahead to push to main or cut a release (Orbit’s request_approval tool); Approve or Deny answers it in the chat, Always approve also approves every later request from that chat (even after a resume), Discuss leaves it to you to talk it over. Green: local CI (scripts/ci/local-ci.sh) is running under the chat.',
+    question: 'What are the purple and green bars above a chat?',
+    answer: 'Purple: the chat asks your go-ahead to push to main or cut a release (Orbit’s request_approval tool), and its card blinks a purple dot in Needs you until you answer; Approve or Deny answers it in the chat, Always approve also approves every later request from that chat (even after a resume), Discuss leaves it to you to talk it over. Green: local CI (scripts/ci/local-ci.sh) is running under the chat.',
   },
   {
     id: 'interrupt',

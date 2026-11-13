@@ -23,6 +23,12 @@ describe('when a chat shows its dot', () => {
     expect(dotKindOf(chat('idle'), false)).toBeNull();
   });
 
+  it('keeps the approval dot on an open Orbit approval request, read or not', () => {
+    const asking: ChatSnapshot = { ...chat('idle'), approval: { action: 'release', summary: 'Cut v1.2.3', requestedAt: 0 } };
+    expect(dotKindOf(asking, false)).toBe('approval');
+    expect(dotKindOf(asking, true)).toBe('approval');
+  });
+
   it('shows nothing for a working chat that has nothing unread', () => {
     expect(dotKindOf(chat('busy'), false)).toBeNull();
   });
