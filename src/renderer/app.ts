@@ -148,7 +148,7 @@ const seen: SeenTracker = new SeenTracker(Date.now());
 const pins: PinnedChats = new PinnedChats();
 const pinnedInfo: PinnedInfoStore = new PinnedInfoStore(!isWebHost());
 const restingPins: RestingPins = new RestingPins();
-const openChats: OpenChatsMemory = new OpenChatsMemory();
+const openChats: OpenChatsMemory = new OpenChatsMemory(!isWebHost());
 const closedEmulators: ClosedEmulators = new ClosedEmulators();
 const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar, Date.now, closedEmulators);
 // Which chat used which emulator is noted just before they close, so Continue can ask each chat to open its own again.
@@ -167,6 +167,7 @@ const boardSync: BoardSync = new BoardSync(window.radar, localStorage, (): void 
   pins.reload();
   pinnedInfo.reload();
   suspension.reload();
+  openChats.reload();
   showChats();
 });
 const closedChats: ClosedChats = new ClosedChats(pins, pinnedInfo, suspension, (): readonly ChatSnapshot[] => chats, (): readonly LeftOpenChat[] => leftOpenChats());

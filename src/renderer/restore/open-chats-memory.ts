@@ -2,6 +2,7 @@ import type { ChatSnapshot } from '../../shared/types';
 import { toClosedChatInfo, type ClosedChatInfo } from '../board/closed-chat-info';
 import { isMidWork } from '../../shared/pause-targets';
 import type { ColumnKey } from '../views/board-columns';
+import { saveShared } from '../board/shared-storage';
 
 const STORAGE_KEY: string = 'orbit.open-chats';
 // A chat missing this long while Orbit watched it was closed on purpose. A shutdown takes Orbit down within seconds
@@ -21,14 +22,25 @@ export interface RememberedChat {
 export type ColumnOf = (chat: ChatSnapshot) => ColumnKey;
 
 // The chats that were open the last time Orbit watched. The ones gone at the next start stay on the board as closed cards.
+// The desktop keeps the list and shares it through the main process; Orbit Web (a phone, another origin with its own
+// storage) only mirrors it, so it shows the same Closed cards, and a phone that slept never sends back an older list.
+// Removing a card is the user's choice, so that is shared from any window.
 export class OpenChatsMemory {
   private chats: RememberedChat[] = load();
+
+  constructor(private readonly keepsTheList: boolean) {}
+
+  // The shared copy changed in another window.
+  reload(): void {
+    this.chats = load();
+  }
   // Only chats seen live in this run can be judged closed; the ones loaded from disk have not had the chance yet.
   private readonly missingSince: Map<string, number> = new Map();
   private readonly seenLive: Set<string> = new Set();
 
   // Called with every poll: remembers what is open and forgets what stayed gone while Orbit was watching.
   observe(live: readonly ChatSnapshot[], columnOf: ColumnOf, now: number): void {
+    if (!this.keepsTheList) return;
     const before: string = JSON.stringify(this.chats);
     live.forEach((chat: ChatSnapshot): void => this.see(chat, columnOf(chat)));
     this.chats.filter((chat: RememberedChat) => !live.some((candidate: ChatSnapshot) => candidate.sessionId === chat.sessionId))
@@ -83,9 +95,5 @@ function isRemembered(value: unknown): value is RememberedChat {
 }
 
 function save(chats: readonly RememberedChat[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
-  } catch {
-    // Not persisted: chats are then only brought back while Orbit stays open.
-  }
+  saveShared(STORAGE_KEY, JSON.stringify(chats));
 }

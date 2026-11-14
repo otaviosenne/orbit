@@ -27,63 +27,74 @@ afterEach(() => {
 
 describe('OpenChatsMemory', () => {
   it('remembers open chats across a restart', () => {
-    new OpenChatsMemory().observe([chat('a'), chat('b')], columnOf, NOW);
-    expect(new OpenChatsMemory().closed([]).map((remembered) => remembered.sessionId)).toEqual(['a', 'b']);
+    new OpenChatsMemory(true).observe([chat('a'), chat('b')], columnOf, NOW);
+    expect(new OpenChatsMemory(true).closed([]).map((remembered) => remembered.sessionId)).toEqual(['a', 'b']);
+  });
+
+  it('on Orbit Web only mirrors the shared list: polling there never rewrites it, and a reload picks up a new one', () => {
+    new OpenChatsMemory(true).observe([chat('a')], columnOf, NOW);
+    const mirror: OpenChatsMemory = new OpenChatsMemory(false);
+    mirror.observe([chat('b')], columnOf, NOW);
+    mirror.observe([], columnOf, NOW + FORGET_AFTER_MISSING_MS + 1);
+    expect(mirror.closed([]).map((remembered) => remembered.sessionId)).toEqual(['a']);
+    new OpenChatsMemory(true).observe([chat('a'), chat('c')], columnOf, NOW);
+    mirror.reload();
+    expect(mirror.closed([]).map((remembered) => remembered.sessionId)).toEqual(['a', 'c']);
   });
 
   it('lists only the remembered chats that are not open', () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
     memory.observe([chat('a'), chat('b')], columnOf, NOW);
     expect(memory.closed([chat('a')]).map((remembered) => remembered.sessionId)).toEqual(['b']);
   });
 
   it('forgets a chat that stayed gone while watched, but not one that vanished with the machine', () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
     memory.observe([chat('a')], columnOf, NOW);
     memory.observe([], columnOf, NOW + 1);
     memory.observe([], columnOf, NOW + FORGET_AFTER_MISSING_MS + 2);
-    expect(new OpenChatsMemory().closed([])).toEqual([]);
+    expect(new OpenChatsMemory(true).closed([])).toEqual([]);
 
     memory.observe([chat('b')], columnOf, NOW);
-    const restarted: OpenChatsMemory = new OpenChatsMemory();
+    const restarted: OpenChatsMemory = new OpenChatsMemory(true);
     restarted.observe([], columnOf, NOW + FORGET_AFTER_MISSING_MS * 10);
     expect(restarted.closed([]).map((remembered) => remembered.sessionId)).toEqual(['b']);
   });
 
   it('forgets a chat closed on purpose', () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
     memory.observe([chat('a')], columnOf, NOW);
     memory.forget('a');
-    expect(new OpenChatsMemory().closed([])).toEqual([]);
+    expect(new OpenChatsMemory(true).closed([])).toEqual([]);
   });
 });
 
 describe('OpenChatsMemory columns', () => {
   it('keeps the column a chat was in, with how its card looked', () => {
-    new OpenChatsMemory().observe([chat('a')], (): 'needs' => 'needs', NOW);
-    const [remembered] = new OpenChatsMemory().closed([]);
+    new OpenChatsMemory(true).observe([chat('a')], (): 'needs' => 'needs', NOW);
+    const [remembered] = new OpenChatsMemory(true).closed([]);
     expect(remembered.column).toBe('needs');
     expect(remembered.info.name).toBe('chat a');
   });
 
   it('follows the chat when it moves to another column', () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
     memory.observe([chat('a')], (): 'busy' => 'busy', NOW);
     memory.observe([chat('a')], (): 'idle' => 'idle', NOW + 1);
-    expect(new OpenChatsMemory().closed([])[0].column).toBe('idle');
+    expect(new OpenChatsMemory(true).closed([])[0].column).toBe('idle');
   });
 });
 
 describe('OpenChatsMemory cut mid-work', () => {
   it('remembers that a chat was cut off midway, across a restart', () => {
-    new OpenChatsMemory().observe([{ ...chat('a'), status: 'busy' }, chat('b')], columnOf, NOW);
-    const restarted: OpenChatsMemory = new OpenChatsMemory();
+    new OpenChatsMemory(true).observe([{ ...chat('a'), status: 'busy' }, chat('b')], columnOf, NOW);
+    const restarted: OpenChatsMemory = new OpenChatsMemory(true);
     expect(restarted.wasCutMidWork('a')).toBe(true);
     expect(restarted.wasCutMidWork('b')).toBe(false);
   });
 
   it('does not call a chat cut off when it had finished by the last look', () => {
-    const memory: OpenChatsMemory = new OpenChatsMemory();
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
     memory.observe([{ ...chat('a'), status: 'busy' }], columnOf, NOW);
     memory.observe([chat('a')], columnOf, NOW + 1);
     expect(memory.wasCutMidWork('a')).toBe(false);
