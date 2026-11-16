@@ -97,7 +97,9 @@
 .lightbox-grid-toggle:hover, .lightbox-nav:hover:not(:disabled) { background: rgb(255 255 255 / 0.26); }
 .lightbox-nav:disabled { opacity: 0.3; cursor: default; }
 .lightbox-grid {
-  position: absolute; inset: 64px 3vw 3vh; display: grid; gap: 12px; overflow-y: auto; cursor: zoom-out;
+  /* The padding is room for a hovered cell's growth and border, which the scroll box would otherwise clip */
+  position: absolute; inset: 54px calc(3vw - 10px) calc(3vh - 10px); padding: 10px; display: grid; gap: 12px;
+  overflow-y: auto; cursor: zoom-out;
   grid-template-columns: repeat(var(--grid-columns, 2), minmax(0, 1fr));
   /* The rows share the screen's height; past what fits, each keeps a usable size and the grid scrolls */
   grid-template-rows: repeat(var(--grid-rows, 1), minmax(180px, 1fr));
