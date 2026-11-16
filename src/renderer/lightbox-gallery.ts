@@ -48,12 +48,14 @@ export class LightboxGallery {
     this.listen();
   }
 
-  start(images: readonly ImageLoader[], index: number): void {
+  // Opens on one picture, or straight on the grid when the message's grid button asked for all of them.
+  start(images: readonly ImageLoader[], index: number, startsInGrid: boolean): void {
     this.images = images;
     this.isActive = true;
     this.controls.hidden = images.length < 2;
-    this.setGrid(false);
-    this.show(index);
+    this.index = steppedIndex(index, 0, images.length);
+    this.setGrid(startsInGrid && images.length > 1);
+    if (!this.showsGrid) this.show(this.index);
   }
 
   end(): void {

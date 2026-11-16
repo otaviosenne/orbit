@@ -1165,6 +1165,15 @@ div.notice { align-self: center; padding: 4px 12px; border-radius: 10px; backgro
 /* A reply's pictures follow its text, on its side of the thread */
 .message-assistant .message-images { justify-content: flex-start; margin: 6px 0 0; }
 .message-image-picture { display: block; height: var(--message-image-height); width: auto; max-width: 100%; object-fit: cover; }
+/* Several pictures: a small square that opens them all in the viewer's grid, on the thread's inner side */
+.message-images-grid {
+  flex: none; align-self: flex-start; display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0;
+  border: 0; border-radius: 8px; background: var(--well); color: var(--secondary); cursor: pointer;
+  box-shadow: 0 0 0 0.5px var(--control-border); transition: background 120ms ease, color 120ms ease;
+}
+.message-images-grid:hover { background: var(--control); color: var(--text); }
+.message-images-grid svg { width: 15px; height: 15px; fill: currentColor; }
+.message-user .message-images-grid { order: -1; }
 /* Until its pixels arrive, a square placeholder holds the picture's place */
 .message-image-picture:not([src]) { width: var(--message-image-height); }
 

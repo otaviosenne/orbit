@@ -6,7 +6,7 @@ import { handOverImages } from './pending-images';
 import type { Confirmation, PendingAttachment, PendingMessage } from './pending-messages';
 import { fileUrlsOf } from './pending-messages';
 import type { ImageLookup } from './transcript/message-thumbnails';
-import { fillThumbnails, IMAGE_KEY_ATTRIBUTE, missingThumbnailKeys, shownSource, THUMBNAIL_SELECTOR } from './transcript/message-thumbnails';
+import { fillThumbnails, GRID_BUTTON_SELECTOR, IMAGE_KEY_ATTRIBUTE, missingThumbnailKeys, shownSource, THUMBNAIL_SELECTOR } from './transcript/message-thumbnails';
 
 const IMAGE_TRIGGER_SELECTOR: string = `.image-chip, ${THUMBNAIL_SELECTOR}`;
 const MESSAGE_SELECTOR: string = '.message';
@@ -58,16 +58,26 @@ export class ThreadImages {
 
   // The clicked picture opens among the rest of its message's, so the viewer can step or lay them all out.
   private async open(target: EventTarget | null): Promise<void> {
-    const trigger: HTMLElement | null = target instanceof HTMLElement ? target.closest<HTMLElement>(IMAGE_TRIGGER_SELECTOR) : null;
+    if (!(target instanceof Element)) return;
+    const gridButton: HTMLElement | null = target.closest<HTMLElement>(GRID_BUTTON_SELECTOR);
+    if (gridButton !== null) {
+      this.lightbox.openGallery(this.loadersOf(messageThumbnails(gridButton)), 0, true);
+      return;
+    }
+    const trigger: HTMLElement | null = target.closest<HTMLElement>(IMAGE_TRIGGER_SELECTOR);
     if (trigger === null) return;
     const thumbnails: HTMLElement[] = messageThumbnails(trigger);
     const index: number = thumbnails.findIndex((thumbnail: HTMLElement): boolean => isSameImage(thumbnail, trigger));
     if (index >= 0) {
-      this.lightbox.openGallery(thumbnails.map((thumbnail: HTMLElement): ImageLoader => (): Promise<string | null> => this.sourceOf(thumbnail)), index);
+      this.lightbox.openGallery(this.loadersOf(thumbnails), index);
       return;
     }
     const source: string | null = await this.sourceOf(trigger);
     if (source !== null) this.lightbox.open(source);
+  }
+
+  private loadersOf(thumbnails: readonly HTMLElement[]): ImageLoader[] {
+    return thumbnails.map((thumbnail: HTMLElement): ImageLoader => (): Promise<string | null> => this.sourceOf(thumbnail));
   }
 
   private sourceOf(trigger: HTMLElement): Promise<string | null> {

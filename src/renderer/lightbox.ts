@@ -41,10 +41,10 @@ export class Lightbox {
     this.image.src = source;
   }
 
-  // A message's pictures, opened at the one clicked: arrows step through them and a grid shows them all.
-  openGallery(images: readonly ImageLoader[], index: number): void {
+  // A message's pictures, opened at the one clicked (or on the grid of them all): arrows step through them.
+  openGallery(images: readonly ImageLoader[], index: number, startsInGrid: boolean = false): void {
     this.showImage();
-    this.gallery.start(images, index);
+    this.gallery.start(images, index, startsInGrid);
   }
 
   // Shows a panel of its own; release runs once when it closes (or another view replaces it).

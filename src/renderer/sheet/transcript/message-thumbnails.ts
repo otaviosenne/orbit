@@ -1,9 +1,11 @@
 import type { MessageImage } from '../../../shared/types';
 import { element } from '../../dom';
+import { GRID_ICON } from '../../icons';
 
 // Both image chips and thumbnails carry the image's key here; clicking either opens that image.
 export const IMAGE_KEY_ATTRIBUTE: string = 'imageKey';
 export const THUMBNAIL_SELECTOR: string = '.message-image';
+export const GRID_BUTTON_SELECTOR: string = '.message-images-grid';
 const PICTURE_SELECTOR: string = '.message-image-picture';
 
 // Where a thumbnail's pixels come from right now; undefined while they are still being fetched.
@@ -19,7 +21,19 @@ export interface ThumbnailSource {
 export function renderThumbnails(sources: readonly ThumbnailSource[]): HTMLElement {
   const row: HTMLDivElement = element('div', 'message-images');
   row.append(...sources.map((source: ThumbnailSource, index: number) => renderThumbnail(source, index)));
+  if (sources.length > 1) row.append(gridButton());
   return row;
+}
+
+// Several pictures get a small button that opens them all at once in the viewer's grid.
+function gridButton(): HTMLButtonElement {
+  const button: HTMLButtonElement = element('button', 'message-images-grid');
+  button.type = 'button';
+  button.setAttribute('aria-label', 'Show all images');
+  button.title = 'Show all images';
+  // Bundled Phosphor markup, never user content.
+  button.innerHTML = GRID_ICON;
+  return button;
 }
 
 export function transcriptThumbnails(images: readonly MessageImage[], lookup: ImageLookup): ThumbnailSource[] {
