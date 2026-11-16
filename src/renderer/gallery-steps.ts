@@ -43,3 +43,16 @@ const LAYOUT_CYCLE: readonly GalleryLayout[] = ['single', 'grid', 'row'];
 export function nextLayout(layout: GalleryLayout): GalleryLayout {
   return LAYOUT_CYCLE[(LAYOUT_CYCLE.indexOf(layout) + 1) % LAYOUT_CYCLE.length] ?? 'single';
 }
+
+// Sub-pixel scroll widths leave a row a fraction short of its end; within this it counts as the end.
+const ROW_END_TOLERANCE_PX: number = 1;
+
+export interface RowEnds {
+  readonly atStart: boolean;
+  readonly atEnd: boolean;
+}
+
+// Which of the row's arrows has nowhere left to go.
+export function rowEnds(scrollLeft: number, visibleWidth: number, scrollWidth: number): RowEnds {
+  return { atStart: scrollLeft <= ROW_END_TOLERANCE_PX, atEnd: scrollLeft + visibleWidth >= scrollWidth - ROW_END_TOLERANCE_PX };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { counterText, gridShape, nextLayout, steppedIndex, SWIPE_MIN_PX, swipeStep, totalText } from '../src/renderer/gallery-steps';
+import { counterText, gridShape, nextLayout, rowEnds, steppedIndex, SWIPE_MIN_PX, swipeStep, totalText } from '../src/renderer/gallery-steps';
 
 describe('steppedIndex', () => {
   it('moves one picture either way', () => {
@@ -60,5 +60,21 @@ describe('nextLayout', () => {
     expect(nextLayout('single')).toBe('grid');
     expect(nextLayout('grid')).toBe('row');
     expect(nextLayout('row')).toBe('single');
+  });
+});
+
+describe('rowEnds', () => {
+  it('turns off the arrow whose end the row has reached', () => {
+    expect(rowEnds(0, 900, 3000)).toEqual({ atStart: true, atEnd: false });
+    expect(rowEnds(1000, 900, 3000)).toEqual({ atStart: false, atEnd: false });
+    expect(rowEnds(2100, 900, 3000)).toEqual({ atStart: false, atEnd: true });
+  });
+
+  it('counts a sub-pixel shortfall as the end', () => {
+    expect(rowEnds(2099.5, 900, 3000).atEnd).toBe(true);
+  });
+
+  it('has both ends when everything fits', () => {
+    expect(rowEnds(0, 900, 900)).toEqual({ atStart: true, atEnd: true });
   });
 });

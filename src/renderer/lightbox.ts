@@ -21,12 +21,12 @@ export class Lightbox {
 
   constructor() {
     this.root.addEventListener('click', (event: MouseEvent): void => {
-      if (event.target === this.root) this.close();
+      if (event.target === this.root) this.dismiss(event);
     });
     document.addEventListener('keydown', (event: KeyboardEvent): void => {
       if (event.key === CLOSE_KEY && this.isOpen) {
         event.stopPropagation();
-        this.close();
+        this.dismiss(event);
       }
     }, true);
     document.addEventListener('keydown', (event: KeyboardEvent): void => this.takeSpace(event), true);
@@ -57,6 +57,16 @@ export class Lightbox {
     this.panel.hidden = false;
     this.root.hidden = false;
     releaseShown = release;
+  }
+
+  // What the backdrop and Esc do: a picture opened from the gallery's grid or row goes back to it, anything else
+  // closes. Every Lightbox listens on the same page, so a step back must stop the others from closing right after.
+  private dismiss(event: Event): void {
+    if (!this.gallery.returnToOverview()) {
+      this.close();
+      return;
+    }
+    event.stopImmediatePropagation();
   }
 
   close(): void {

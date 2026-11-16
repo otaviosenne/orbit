@@ -102,7 +102,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'images',
     question: 'How do I send images or other files?',
-    answer: 'Paste, drop or pick them with the paperclip in the composer. Each shows as a chip ([Image #N], [Video #N], [PDF #N], [File #N]…); click one to see it. A message with several pictures opens them as a gallery: ← → (or a swipe) step through them and the grid button (also beside the thumbnails) lays them all out, a second press puts them in one tall row you scroll sideways, and a third goes back to one picture. Claude gets other files as their saved path; in the thread, videos and audio play and PDFs open, anything else shows its path.',
+    answer: 'Paste, drop or pick them with the paperclip in the composer. Each shows as a chip ([Image #N], [Video #N], [PDF #N], [File #N]…); click one to see it. A message with several pictures opens them as a gallery: ← → (or a swipe) step through them and the grid button (also beside the thumbnails) lays them all out, a second press puts them in one tall row (drag it, scroll or use its arrows), and a third goes back to one picture. A picture opened from the grid or row goes back there with Esc, the backdrop or the grid button. Claude gets other files as their saved path; in the thread, videos and audio play and PDFs open, anything else shows its path.',
   },
   {
     id: 'jump-messages',

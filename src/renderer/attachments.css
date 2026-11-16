@@ -115,6 +115,10 @@
 .lightbox-grid.is-row { display: flex; overflow-x: auto; overflow-y: hidden; justify-content: safe center; }
 .lightbox-grid.is-row .lightbox-grid-cell { flex: 0 0 auto; height: 100%; min-width: 120px; }
 .lightbox-grid.is-row .lightbox-grid-picture { width: auto; }
+/* A mouse drags the row sideways; the arrows stay above the pictures they pan */
+.lightbox-grid.is-row { cursor: grab; user-select: none; }
+.lightbox-grid.is-row.is-dragging, .lightbox-grid.is-row.is-dragging .lightbox-grid-cell { cursor: grabbing; }
+.lightbox-nav { z-index: 1; }
 /* A phone is narrower than one wide picture at full height, so there a picture is fitted to the screen's width */
 @media (max-width: 699px) {
   .lightbox-grid.is-row .lightbox-grid-picture { max-width: calc(94vw - 24px); }
