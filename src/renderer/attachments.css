@@ -71,6 +71,8 @@
 .lightbox-gallery { display: contents; }
 .lightbox-gallery[hidden], .lightbox-gallery [hidden] { display: none; }
 .lightbox-image { touch-action: pinch-zoom; user-select: none; }
+/* A picture opened from the grid or row goes back to it when clicked again */
+.lightbox-image.returns-to-overview { cursor: zoom-out; }
 .lightbox-bar {
   position: absolute; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 12px; border-radius: 999px;

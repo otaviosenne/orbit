@@ -18,6 +18,7 @@ const ROW_CLASS: string = 'is-row';
 // An arrow (key or button) moves the row by most of a screen, keeping a sliver of the last view for orientation.
 const ROW_ARROW_SCROLL_SHARE: number = 0.8;
 const BACK_LABEL: string = 'Back to all images';
+const RETURNS_CLASS: string = 'returns-to-overview';
 // The toggle names what the next press does, since one button walks through all three layouts.
 const TOGGLE_LABELS: Readonly<Record<GalleryLayout, string>> = {
   single: 'Show all images',
@@ -45,6 +46,8 @@ export class LightboxGallery {
   // Only the newest load may paint the big picture, so a slow fetch never replaces the one stepped to since.
   private loadTurn: number = 0;
   private swipeStartX: number | null = null;
+  // A press that ended in a swipe also clicks; that click stepped the picture and must not leave it.
+  private hasSwiped: boolean = false;
   private readonly controls: HTMLElement = element('div', 'lightbox-gallery');
   private readonly counter: HTMLElement = element('span', 'lightbox-counter');
   private readonly gridToggle: HTMLButtonElement = iconButton('lightbox-grid-toggle', GRID_ICON, TOGGLE_LABELS.single);
@@ -81,6 +84,7 @@ export class LightboxGallery {
     this.isActive = false;
     this.loadTurn += 1;
     this.overview = null;
+    this.image.classList.remove(RETURNS_CLASS);
     this.controls.hidden = true;
     this.grid.replaceChildren();
   }
@@ -101,6 +105,10 @@ export class LightboxGallery {
       this.swipeStartX = event.clientX;
     });
     this.image.addEventListener('pointerup', (event: PointerEvent): void => this.endSwipe(event.clientX));
+    // Clicking the picture again, the way it was opened, goes back to the grid or row it came from.
+    this.image.addEventListener('click', (): void => {
+      if (!this.hasSwiped) this.returnToOverview();
+    });
   }
 
   private get isBrowsing(): boolean {
@@ -157,6 +165,7 @@ export class LightboxGallery {
   private endSwipe(endX: number): void {
     const startX: number | null = this.swipeStartX;
     this.swipeStartX = null;
+    this.hasSwiped = startX !== null && swipeStep(endX - startX) !== 0;
     if (startX !== null && this.isBrowsing) this.step(swipeStep(endX - startX));
   }
 
@@ -206,6 +215,7 @@ export class LightboxGallery {
     this.next.hidden = layout === 'grid';
     this.counter.textContent = showsAll ? totalText(this.images.length) : counterText(this.index, this.images.length);
     this.gridToggle.setAttribute('aria-pressed', String(showsAll));
+    this.image.classList.toggle(RETURNS_CLASS, this.overview !== null);
     const label: string = this.overview === null ? TOGGLE_LABELS[layout] : BACK_LABEL;
     this.gridToggle.setAttribute('aria-label', label);
     this.gridToggle.title = label;
