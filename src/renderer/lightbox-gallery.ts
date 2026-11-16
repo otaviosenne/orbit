@@ -1,6 +1,7 @@
 import { element } from './dom';
 import type { GalleryStep } from './gallery-steps';
-import { counterText, steppedIndex, swipeStep, totalText } from './gallery-steps';
+import type { GridShape } from './gallery-steps';
+import { counterText, gridShape, steppedIndex, swipeStep, totalText } from './gallery-steps';
 import { CARET_LEFT_ICON, CARET_RIGHT_ICON, GRID_ICON } from './icons';
 
 // Resolves one picture's pixels: already shown thumbnails answer at once, others are fetched by key.
@@ -9,6 +10,10 @@ export type ImageLoader = () => Promise<string | null>;
 const PREVIOUS_KEY: string = 'ArrowLeft';
 const NEXT_KEY: string = 'ArrowRight';
 const CURRENT_CLASS: string = 'is-current';
+// Matches the phone layout in attachments.css, where the arrows float over the picture.
+const NARROW_QUERY: string = '(max-width: 699px)';
+const NARROW_MAX_COLUMNS: number = 2;
+const WIDE_MAX_COLUMNS: number = 4;
 
 // Steps through the pictures of one message inside the lightbox (arrows, keys, swipe) or lays them all out in a
 // grid. The page has one #lightbox, so every Lightbox shares this one gallery and its controls.
@@ -121,6 +126,14 @@ export class LightboxGallery {
     this.counter.textContent = showsGrid ? totalText(this.images.length) : counterText(this.index, this.images.length);
     this.gridToggle.setAttribute('aria-pressed', String(showsGrid));
     this.grid.replaceChildren(...(showsGrid ? this.images.map((load: ImageLoader, index: number) => this.gridCell(load, index)) : []));
+    if (showsGrid) this.shapeGrid();
+  }
+
+  private shapeGrid(): void {
+    const maxColumns: number = window.matchMedia(NARROW_QUERY).matches ? NARROW_MAX_COLUMNS : WIDE_MAX_COLUMNS;
+    const shape: GridShape = gridShape(this.images.length, maxColumns);
+    this.grid.style.setProperty('--grid-columns', String(shape.columns));
+    this.grid.style.setProperty('--grid-rows', String(shape.rows));
   }
 
   private gridCell(load: ImageLoader, index: number): HTMLElement {

@@ -22,3 +22,15 @@ export function counterText(index: number, count: number): string {
 export function totalText(count: number): string {
   return `${count} images`;
 }
+
+export interface GridShape {
+  readonly columns: number;
+  readonly rows: number;
+}
+
+// As close to square as the count allows, so a few pictures fill the screen instead of one row of small tiles;
+// a phone keeps at most two side by side.
+export function gridShape(count: number, maxColumns: number): GridShape {
+  const columns: number = Math.max(1, Math.min(Math.ceil(Math.sqrt(count)), maxColumns));
+  return { columns, rows: Math.max(1, Math.ceil(count / columns)) };
+}
