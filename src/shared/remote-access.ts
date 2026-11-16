@@ -45,6 +45,8 @@ export const REMOTE_ACCESS = {
   RestartChat: 'chat',
   // Types the answer to a chat's request for approval into that chat, as Send would.
   AnswerApproval: 'chat',
+  // Types the picked option of a chat's question into that chat, as Send would.
+  AnswerAsk: 'chat',
   InterruptChat: 'chat',
   PauseChats: 'chat',
   ContinueChats: 'chat',

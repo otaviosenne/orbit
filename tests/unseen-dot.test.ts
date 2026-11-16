@@ -5,7 +5,7 @@ import type { ChatSnapshot } from '../src/shared/types';
 
 const chat = (status: ChatSnapshot['status'], isPermission: boolean = false): ChatSnapshot => ({
   sessionId: 's1', pid: 1, name: 'A', color: null, repository: { name: 'r', root: '/r' }, cwd: '/r', startedAt: 0, status, statusSince: 0,
-  asksPermission: isPermission, agents: [], shells: [], lastReplyAt: 0, isFocused: false, approval: null, localCi: null,
+  asksPermission: isPermission, agents: [], shells: [], lastReplyAt: 0, isFocused: false, approval: null, ask: null, localCi: null,
 });
 
 describe('when a chat shows its dot', () => {

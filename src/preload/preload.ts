@@ -1,5 +1,6 @@
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
+import type { AskAnswer } from '../shared/ask';
 import type { ComputerAction, ComputerStatus } from '../shared/computer';
 import type { BoardState } from '../shared/board-state';
 import { contextBridge, ipcRenderer } from 'electron';
@@ -86,6 +87,7 @@ const api: RadarApi = {
   closeChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CloseChat, pid),
   restartChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.RestartChat, pid),
   answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerApproval, pid, answer),
+  answerAsk: (pid: number, answer: AskAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerAsk, pid, answer),
   interruptChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptChat, pid),
   pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.PauseChats, targets),
   continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, targets),

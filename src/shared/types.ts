@@ -1,5 +1,6 @@
 import type { ShutdownPlan, ShutdownPlanState } from './shutdown-plan';
 import type { ApprovalAnswer, ApprovalRequest } from './approval';
+import type { AskAnswer, AskRequest } from './ask';
 import type { LocalCiRun } from './local-ci';
 import type { ComputerAction, ComputerStatus } from './computer';
 import type { BoardState } from './board-state';
@@ -92,6 +93,8 @@ export interface ChatSnapshot {
   readonly isFocused: boolean;
   // Waiting on the user's go-ahead to push to main or release, asked through Orbit's MCP tool.
   readonly approval: ApprovalRequest | null;
+  // A question or permission asked through Orbit's ask_user tool, pinned above the chat until answered.
+  readonly ask: AskRequest | null;
   // The monorepo's local CI running under this chat, shown in green above its thread.
   readonly localCi: LocalCiRun | null;
   // Any CI running under this chat, local or GitHub's watched from the terminal; its spinner turns green.
@@ -538,6 +541,7 @@ export interface RadarApi {
   // Closes the chat and resumes the same session, so it loads changed skills, MCP servers, CLAUDE.md and settings.
   restartChat(pid: number): Promise<ActionResult>;
   answerApproval(pid: number, answer: ApprovalAnswer): Promise<ActionResult>;
+  answerAsk(pid: number, answer: AskAnswer): Promise<ActionResult>;
   interruptChat(pid: number): Promise<ActionResult>;
   // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.
   pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;

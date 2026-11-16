@@ -27,6 +27,7 @@ export const IpcChannel = {
   CloseChat: 'radar:close-chat',
   RestartChat: 'radar:restart-chat',
   AnswerApproval: 'radar:answer-approval',
+  AnswerAsk: 'radar:answer-ask',
   InterruptChat: 'radar:interrupt-chat',
   PauseChats: 'radar:pause-chats',
   ContinueChats: 'radar:continue-chats',

@@ -57,7 +57,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'approval-bar',
     question: 'What are the purple and green bars above a chat?',
-    answer: 'Purple: the chat asks your go-ahead to push to main or cut a release (Orbit’s request_approval tool), and its card blinks a purple dot in Needs you until you answer; Approve or Deny answers it in the chat, Always approve also approves every later request from that chat (even after a resume), Discuss leaves it to you to talk it over. Green: local CI (scripts/ci/local-ci.sh) is running under the chat.',
+    answer: 'Purple: the chat asks your go-ahead to push to main or cut a release (Orbit’s request_approval tool), and its card blinks a purple dot in Needs you until you answer; Approve or Deny answers it in the chat, Always approve also approves every later request from that chat (even after a resume), Discuss leaves it to you to talk it over. A purple Question bar is a choice or permission the chat asked through Orbit’s ask_user tool: one button per option types your pick into the chat, Reply in chat lets you answer in your own words. Green: local CI (scripts/ci/local-ci.sh) is running under the chat.',
   },
   {
     id: 'interrupt',

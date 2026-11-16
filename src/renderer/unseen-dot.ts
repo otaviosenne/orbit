@@ -9,7 +9,7 @@ const WAITING_PULSE_CYCLE_MS: number = 1000;
 
 // A chat waiting on the user's answer gets a bigger, faster dot, so it stands apart from one that simply has a reply
 // to read and reads as more urgent: blue for a question, red for an allow-or-deny permission prompt, purple for an
-// Orbit approval request (main or a release), a colour no other state uses.
+// Orbit approval request (main or a release) or an Orbit question, a colour no other state uses.
 const WAITING_CLASS: string = 'is-waiting';
 const KIND_CLASSES: Readonly<Partial<Record<DotKind, string>>> = { permission: 'is-permission', approval: 'is-approval' };
 
@@ -30,7 +30,7 @@ export function renderUnseenDot(kind: DotKind = 'unread'): HTMLSpanElement {
 // answered, however often the chat was looked at meanwhile, since seeing it does not answer it. Null when the chat
 // has no dot.
 export function dotKindOf(chat: ChatSnapshot, hasUnreadReply: boolean): DotKind | null {
-  if (chat.approval !== null) return 'approval';
+  if (chat.approval !== null || chat.ask !== null) return 'approval';
   if (chat.status === 'waiting') return chat.asksPermission === true ? 'permission' : 'question';
   return hasUnreadReply ? 'unread' : null;
 }

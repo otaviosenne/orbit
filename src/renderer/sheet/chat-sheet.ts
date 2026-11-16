@@ -12,6 +12,7 @@ import { workStateOf } from '../work-state';
 import { chatStatusLabel } from '../status-label';
 import { AgentView } from './agent-view';
 import { ApprovalBar } from './approval-bar';
+import { AskBar } from './ask-bar';
 import { LocalCiBar } from './local-ci-bar';
 import type { AgentTitle } from './agent-view';
 import { ColorPicker } from './color-picker';
@@ -92,6 +93,12 @@ export class ChatSheet {
   // Under the header: a request for the go-ahead on main or a release (blue), and local CI running (green).
   private readonly approval: ApprovalBar = new ApprovalBar(requireElement('#approval-bar'), {
     answer: (pid, answer) => window.radar.answerApproval(pid, answer),
+    discuss: (): void => this.composer.focus(),
+    report: (result: ActionResult, successText: string): void => this.report(result, successText),
+  });
+  // A question the chat asked through Orbit (a choice, a permission), pinned the same way until answered.
+  private readonly ask: AskBar = new AskBar(requireElement('#ask-bar'), {
+    answer: (pid, answer) => window.radar.answerAsk(pid, answer),
     discuss: (): void => this.composer.focus(),
     report: (result: ActionResult, successText: string): void => this.report(result, successText),
   });
@@ -282,6 +289,7 @@ export class ChatSheet {
     if (this.isShowingClosed) this.devices.clear();
     else this.devices.follow(chat.sessionId);
     this.approval.show(this.isShowingClosed ? null : chat);
+    this.ask.show(this.isShowingClosed ? null : chat);
     this.localCi.show(this.isShowingClosed ? null : chat, now);
     this.agentView.update(chat, now);
     this.composer.followDictationTarget(this.dictationTarget());

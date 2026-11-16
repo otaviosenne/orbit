@@ -20,7 +20,7 @@ export async function readApproval(chat: ApprovalChat): Promise<ApprovalRequest 
 
 // After asking, the chat ends its turn; working again means the user answered some other way (typed in the chat
 // or its terminal), so the question on screen is no longer the one the chat waits on.
-export function isOpen(request: ApprovalRequest, chat: ApprovalChat): boolean {
+export function isOpen(request: { readonly requestedAt: number }, chat: ApprovalChat): boolean {
   if (request.requestedAt < chat.startedAt) return false;
   return !(chat.status === BUSY_STATUS && chat.statusUpdatedAt > request.requestedAt);
 }

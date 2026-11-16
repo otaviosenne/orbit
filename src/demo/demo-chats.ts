@@ -173,7 +173,7 @@ function toChatSnapshot(chat: DemoChat, now: number): ChatSnapshot {
     shells: [],
     // The demo's chats last replied when their status last changed.
     lastReplyAt: status.statusSince,
-    isFocused: false, approval: null, localCi: null,
+    isFocused: false, approval: null, ask: null, localCi: null,
   };
 }
 

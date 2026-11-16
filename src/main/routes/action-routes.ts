@@ -17,6 +17,8 @@ import { failure } from '../terminal-input';
 import { closeChat } from '../chat-closer';
 import { restartChat } from '../chat-restarter';
 import { answerApproval } from '../approvals/approval-answerer';
+import { answerAsk } from '../asks/ask-answerer';
+import { isAskAnswer } from '../../shared/ask';
 import { isApprovalAnswer } from '../../shared/approval';
 import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
@@ -48,6 +50,7 @@ type ActionChannel =
   | 'CloseChat'
   | 'RestartChat'
   | 'AnswerApproval'
+  | 'AnswerAsk'
   | 'RunComputerAction'
   | 'SetShutdownPlan'
   | 'CancelShutdownPlan'
@@ -73,6 +76,8 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(radar, pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
       onChat(pid, (chat: number) => (isApprovalAnswer(answer) ? answerApproval(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
+    AnswerAsk: (pid: unknown, answer: unknown): Promise<ActionResult> =>
+      onChat(pid, (chat: number) => (isAskAnswer(answer) ? answerAsk(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
     FocusChat: (pid: unknown): Promise<void> => (isPid(pid) ? focusTerminalOf(pid) : Promise.resolve()),
     // The id ends up in a file URL, so anything but a real id is ignored.
     OpenChatWindow: (sessionId: unknown): void => {

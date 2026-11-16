@@ -1,5 +1,6 @@
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
+import type { AskAnswer } from '../shared/ask';
 import type { ComputerAction, ComputerStatus } from '../shared/computer';
 import type { BoardState } from '../shared/board-state';
 import type { ChatColor } from '../shared/chat-colors';
@@ -90,6 +91,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     closeChat: (pid: number): Promise<ActionResult> => call('CloseChat', [pid]),
     restartChat: (pid: number): Promise<ActionResult> => call('RestartChat', [pid]),
     answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => call('AnswerApproval', [pid, answer]),
+    answerAsk: (pid: number, answer: AskAnswer): Promise<ActionResult> => call('AnswerAsk', [pid, answer]),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
     pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
     continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => call('ContinueChats', [targets]),

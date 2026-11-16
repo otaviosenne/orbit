@@ -1,10 +1,11 @@
-import { mkdir, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { isAlwaysApproved } from '../core/approvals/always-approved';
 import { approvalPath } from '../core/approvals/approval-file';
 import { approvalReply } from '../core/approvals/approval-reply';
 import type { ApprovalAction } from '../shared/approval';
 import { APPROVAL_ACTIONS, isApprovalAction, MAX_SUMMARY_LENGTH } from '../shared/approval';
+import { currentSessionId, saveRequestFile } from './request-file';
+import type { ToolResult } from './tool-result';
+import { answer, problem } from './tool-result';
 
 export const APPROVAL_TOOL_NAME: string = 'request_approval';
 
@@ -31,11 +32,6 @@ export const APPROVAL_TOOL = {
   },
 } as const;
 
-export interface ToolResult {
-  readonly content: readonly { readonly type: 'text'; readonly text: string }[];
-  readonly isError: boolean;
-}
-
 const SHOWN: string =
   'Shown in Orbit above this chat. End your turn now without doing anything else; the user\'s answer arrives as ' +
   'their next message. Also say in one line, in your reply, that you are waiting for approval in Orbit.';
@@ -57,23 +53,6 @@ export async function requestApproval(
   return answer(SHOWN);
 }
 
-function currentSessionId(): string | null {
-  return process.env['CLAUDE_CODE_SESSION_ID'] ?? null;
-}
-
-// Written whole and then renamed, so Orbit never reads half a request.
-async function saveRequest(chatPid: number, action: ApprovalAction, summary: string, requestedAt: number, sessionId: string | null): Promise<void> {
-  const path: string = approvalPath(chatPid);
-  const draft: string = `${path}.${process.pid}.tmp`;
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(draft, JSON.stringify({ action, summary, requestedAt, sessionId }));
-  await rename(draft, path);
-}
-
-function answer(text: string): ToolResult {
-  return { content: [{ type: 'text', text }], isError: false };
-}
-
-function problem(text: string): ToolResult {
-  return { content: [{ type: 'text', text }], isError: true };
+function saveRequest(chatPid: number, action: ApprovalAction, summary: string, requestedAt: number, sessionId: string | null): Promise<void> {
+  return saveRequestFile(approvalPath(chatPid), { action, summary, requestedAt, sessionId });
 }
