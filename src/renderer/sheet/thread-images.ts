@@ -1,4 +1,5 @@
 import type { Lightbox } from '../lightbox';
+import type { ImageLoader } from '../lightbox-gallery';
 import { ImageCache } from './image-cache';
 import type { ImageHandover, ImageSeed } from './pending-images';
 import { handOverImages } from './pending-images';
@@ -8,6 +9,7 @@ import type { ImageLookup } from './transcript/message-thumbnails';
 import { fillThumbnails, IMAGE_KEY_ATTRIBUTE, missingThumbnailKeys, shownSource, THUMBNAIL_SELECTOR } from './transcript/message-thumbnails';
 
 const IMAGE_TRIGGER_SELECTOR: string = `.image-chip, ${THUMBNAIL_SELECTOR}`;
+const MESSAGE_SELECTOR: string = '.message';
 
 export type SessionLookup = () => string | null;
 
@@ -54,11 +56,23 @@ export class ThreadImages {
     this.cache.clear();
   }
 
+  // The clicked picture opens among the rest of its message's, so the viewer can step or lay them all out.
   private async open(target: EventTarget | null): Promise<void> {
     const trigger: HTMLElement | null = target instanceof HTMLElement ? target.closest<HTMLElement>(IMAGE_TRIGGER_SELECTOR) : null;
     if (trigger === null) return;
-    const source: string | null = shownSource(trigger) ?? (await this.fetchFor(trigger));
+    const thumbnails: HTMLElement[] = messageThumbnails(trigger);
+    const index: number = thumbnails.findIndex((thumbnail: HTMLElement): boolean => isSameImage(thumbnail, trigger));
+    if (index >= 0) {
+      this.lightbox.openGallery(thumbnails.map((thumbnail: HTMLElement): ImageLoader => (): Promise<string | null> => this.sourceOf(thumbnail)), index);
+      return;
+    }
+    const source: string | null = await this.sourceOf(trigger);
     if (source !== null) this.lightbox.open(source);
+  }
+
+  private sourceOf(trigger: HTMLElement): Promise<string | null> {
+    const shown: string | null = shownSource(trigger);
+    return shown !== null ? Promise.resolve(shown) : this.fetchFor(trigger);
   }
 
   // Chips carry only a key; their pixels come from the cache, or from the transcript the first time.
@@ -67,6 +81,18 @@ export class ThreadImages {
     const sessionId: string | null = this.sessionId();
     return key === undefined || sessionId === null ? Promise.resolve(null) : this.cache.load(sessionId, key);
   }
+}
+
+function messageThumbnails(trigger: HTMLElement): HTMLElement[] {
+  const message: HTMLElement | null = trigger.closest<HTMLElement>(MESSAGE_SELECTOR);
+  return message === null ? [] : [...message.querySelectorAll<HTMLElement>(THUMBNAIL_SELECTOR)];
+}
+
+// A chip names its picture by key; a thumbnail of a message still being sent has no key, only itself.
+function isSameImage(thumbnail: HTMLElement, trigger: HTMLElement): boolean {
+  if (thumbnail === trigger) return true;
+  const key: string | undefined = trigger.dataset[IMAGE_KEY_ATTRIBUTE];
+  return key !== undefined && thumbnail.dataset[IMAGE_KEY_ATTRIBUTE] === key;
 }
 
 function revoke(source: string): void {

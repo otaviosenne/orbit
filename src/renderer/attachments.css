@@ -65,3 +65,49 @@
 .tile-composer-attach svg { width: 16px; height: 16px; fill: currentColor; }
 .tile-attachment-tray { padding: 0 2px; }
 .tile-composer:not(.is-open) .tile-composer-attach-holder, .tile-composer:not(.is-open) .tile-attachment-tray { display: none; }
+
+/* A message's pictures in the viewer: side arrows and a counter step through them, the grid lays them all out.
+   The controls wrapper adds no box, so only the buttons themselves cover the backdrop */
+.lightbox-gallery { display: contents; }
+.lightbox-gallery[hidden], .lightbox-gallery [hidden] { display: none; }
+.lightbox-image { touch-action: pinch-zoom; user-select: none; }
+.lightbox-bar {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 12px; border-radius: 999px;
+  background: rgb(20 20 22 / 0.72); color: #ffffff; backdrop-filter: blur(12px); cursor: default;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.lightbox-counter { min-width: 3.2em; text-align: center; }
+.lightbox-grid-toggle, .lightbox-nav {
+  display: inline-grid; place-items: center; border: 0; color: #ffffff; cursor: pointer;
+  background: rgb(255 255 255 / 0.12); transition: background 120ms ease, opacity 120ms ease;
+}
+.lightbox-grid-toggle { width: 30px; height: 30px; border-radius: 999px; }
+.lightbox-grid-toggle[aria-pressed="true"] { background: #ffffff; color: #111111; }
+/* Laid out side by side the pictures need a calmer backdrop than one picture does */
+.lightbox:has(.lightbox-grid:not([hidden])) { background: rgb(0 0 0 / 0.88); backdrop-filter: blur(6px); }
+.lightbox-grid-toggle svg { width: 17px; height: 17px; fill: currentColor; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 999px;
+  background: rgb(20 20 22 / 0.62); backdrop-filter: blur(12px); box-shadow: 0 6px 20px rgb(0 0 0 / 0.35);
+}
+.lightbox-nav.is-previous { left: 16px; }
+.lightbox-nav.is-next { right: 16px; }
+.lightbox-nav svg { width: 18px; height: 18px; fill: currentColor; }
+.lightbox-grid-toggle:hover, .lightbox-nav:hover:not(:disabled) { background: rgb(255 255 255 / 0.26); }
+.lightbox-nav:disabled { opacity: 0.3; cursor: default; }
+.lightbox-grid {
+  position: absolute; inset: 64px 4vw 4vh; display: grid; align-content: start; gap: 10px; overflow-y: auto;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 40vw), 1fr)); cursor: zoom-out;
+}
+.lightbox-grid-cell {
+  aspect-ratio: 4 / 3; padding: 0; border: 2px solid transparent; border-radius: 12px; overflow: hidden;
+  background: rgb(255 255 255 / 0.08); cursor: zoom-in; transition: border-color 120ms ease, transform 120ms ease;
+}
+.lightbox-grid-cell:hover { transform: scale(1.015); border-color: rgb(255 255 255 / 0.5); }
+.lightbox-grid-cell.is-current { border-color: #ffffff; }
+.lightbox-grid-picture { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* On a wide window the picture leaves room for the arrows and the bar; on a phone they float over it */
+@media (min-width: 700px) {
+  .lightbox:has(.lightbox-gallery:not([hidden])) .lightbox-image { max-width: calc(100vw - 152px); max-height: calc(100vh - 128px); }
+}

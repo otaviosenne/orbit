@@ -1,4 +1,6 @@
 import { element, requireElement } from './dom';
+import type { ImageLoader } from './lightbox-gallery';
+import { LightboxGallery } from './lightbox-gallery';
 
 const CLOSE_KEY: string = 'Escape';
 const PLAY_KEY: string = ' ';
@@ -15,6 +17,7 @@ export class Lightbox {
   private readonly root: HTMLElement = requireElement('#lightbox');
   private readonly image: HTMLImageElement = requireElement('#lightbox-image');
   private readonly panel: HTMLElement = this.root.querySelector<HTMLElement>(`.${PANEL_CLASS}`) ?? this.createPanel();
+  private readonly gallery: LightboxGallery = LightboxGallery.on(this.root, this.image, (): void => this.close());
 
   constructor() {
     this.root.addEventListener('click', (event: MouseEvent): void => {
@@ -34,16 +37,20 @@ export class Lightbox {
   }
 
   open(source: string): void {
-    this.releaseContent();
-    this.panel.hidden = true;
-    this.image.hidden = false;
+    this.showImage();
     this.image.src = source;
-    this.root.hidden = false;
+  }
+
+  // A message's pictures, opened at the one clicked: arrows step through them and a grid shows them all.
+  openGallery(images: readonly ImageLoader[], index: number): void {
+    this.showImage();
+    this.gallery.start(images, index);
   }
 
   // Shows a panel of its own; release runs once when it closes (or another view replaces it).
   openContent(content: HTMLElement, release: () => void): void {
     this.releaseContent();
+    this.gallery.end();
     this.image.hidden = true;
     this.image.removeAttribute('src');
     this.panel.replaceChildren(content);
@@ -55,7 +62,16 @@ export class Lightbox {
   close(): void {
     this.root.hidden = true;
     this.image.removeAttribute('src');
+    this.gallery.end();
     this.releaseContent();
+  }
+
+  private showImage(): void {
+    this.releaseContent();
+    this.gallery.end();
+    this.panel.hidden = true;
+    this.image.hidden = false;
+    this.root.hidden = false;
   }
 
   private releaseContent(): void {
