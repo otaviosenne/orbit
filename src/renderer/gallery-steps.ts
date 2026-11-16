@@ -34,3 +34,12 @@ export function gridShape(count: number, maxColumns: number): GridShape {
   const columns: number = Math.max(1, Math.min(Math.ceil(Math.sqrt(count)), maxColumns));
   return { columns, rows: Math.max(1, Math.ceil(count / columns)) };
 }
+
+// The grid button cycles one picture → all of them in a grid → all of them in one tall row scrolled sideways → back.
+export type GalleryLayout = 'single' | 'grid' | 'row';
+
+const LAYOUT_CYCLE: readonly GalleryLayout[] = ['single', 'grid', 'row'];
+
+export function nextLayout(layout: GalleryLayout): GalleryLayout {
+  return LAYOUT_CYCLE[(LAYOUT_CYCLE.indexOf(layout) + 1) % LAYOUT_CYCLE.length] ?? 'single';
+}

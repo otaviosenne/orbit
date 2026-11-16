@@ -1,7 +1,6 @@
 import { element } from './dom';
-import type { GalleryStep } from './gallery-steps';
-import type { GridShape } from './gallery-steps';
-import { counterText, gridShape, steppedIndex, swipeStep, totalText } from './gallery-steps';
+import type { GalleryLayout, GalleryStep, GridShape } from './gallery-steps';
+import { counterText, gridShape, nextLayout, steppedIndex, swipeStep, totalText } from './gallery-steps';
 import { CARET_LEFT_ICON, CARET_RIGHT_ICON, GRID_ICON } from './icons';
 
 // Resolves one picture's pixels: already shown thumbnails answer at once, others are fetched by key.
@@ -14,6 +13,15 @@ const CURRENT_CLASS: string = 'is-current';
 const NARROW_QUERY: string = '(max-width: 699px)';
 const NARROW_MAX_COLUMNS: number = 2;
 const WIDE_MAX_COLUMNS: number = 4;
+const ROW_CLASS: string = 'is-row';
+// An arrow key moves the row by most of a screen, keeping a sliver of the last view for orientation.
+const ROW_ARROW_SCROLL_SHARE: number = 0.8;
+// The toggle names what the next press does, since one button walks through all three layouts.
+const TOGGLE_LABELS: Readonly<Record<GalleryLayout, string>> = {
+  single: 'Show all images',
+  grid: 'Show all images in a row',
+  row: 'Show one image',
+};
 
 // Steps through the pictures of one message inside the lightbox (arrows, keys, swipe) or lays them all out in a
 // grid. The page has one #lightbox, so every Lightbox shares this one gallery and its controls.
@@ -23,13 +31,13 @@ export class LightboxGallery {
   private images: readonly ImageLoader[] = [];
   private index: number = 0;
   private isActive: boolean = false;
-  private showsGrid: boolean = false;
+  private layout: GalleryLayout = 'single';
   // Only the newest load may paint the big picture, so a slow fetch never replaces the one stepped to since.
   private loadTurn: number = 0;
   private swipeStartX: number | null = null;
   private readonly controls: HTMLElement = element('div', 'lightbox-gallery');
   private readonly counter: HTMLElement = element('span', 'lightbox-counter');
-  private readonly gridToggle: HTMLButtonElement = iconButton('lightbox-grid-toggle', GRID_ICON, 'Show all images');
+  private readonly gridToggle: HTMLButtonElement = iconButton('lightbox-grid-toggle', GRID_ICON, TOGGLE_LABELS.single);
   private readonly previous: HTMLButtonElement = iconButton('lightbox-nav is-previous', CARET_LEFT_ICON, 'Previous image');
   private readonly next: HTMLButtonElement = iconButton('lightbox-nav is-next', CARET_RIGHT_ICON, 'Next image');
   private readonly grid: HTMLElement = element('div', 'lightbox-grid');
@@ -54,8 +62,8 @@ export class LightboxGallery {
     this.isActive = true;
     this.controls.hidden = images.length < 2;
     this.index = steppedIndex(index, 0, images.length);
-    this.setGrid(startsInGrid && images.length > 1);
-    if (!this.showsGrid) this.show(this.index);
+    this.setLayout(startsInGrid && images.length > 1 ? 'grid' : 'single');
+    if (this.layout === 'single') this.show(this.index);
   }
 
   end(): void {
@@ -68,11 +76,13 @@ export class LightboxGallery {
   private listen(): void {
     this.previous.addEventListener('click', (): void => this.step(-1));
     this.next.addEventListener('click', (): void => this.step(1));
-    this.gridToggle.addEventListener('click', (): void => this.toggleGrid());
+    this.gridToggle.addEventListener('click', (): void => this.cycleLayout());
     // The grid's gaps are backdrop too.
     this.grid.addEventListener('click', (event: MouseEvent): void => {
       if (event.target === this.grid) this.close();
     });
+    // A mouse wheel only scrolls up and down, so in the row it moves the pictures sideways instead.
+    this.grid.addEventListener('wheel', (event: WheelEvent): void => this.scrollRow(event), { passive: false });
     document.addEventListener('keydown', (event: KeyboardEvent): void => this.takeArrow(event), true);
     this.image.addEventListener('pointerdown', (event: PointerEvent): void => {
       this.swipeStartX = event.clientX;
@@ -81,7 +91,11 @@ export class LightboxGallery {
   }
 
   private get isBrowsing(): boolean {
-    return this.isActive && !this.root.hidden && this.images.length > 1 && !this.showsGrid;
+    return this.isOpen && this.layout === 'single';
+  }
+
+  private get isOpen(): boolean {
+    return this.isActive && !this.root.hidden && this.images.length > 1;
   }
 
   private show(index: number): void {
@@ -102,10 +116,18 @@ export class LightboxGallery {
 
   // The arrows would move the composer's caret or the board's focus behind the viewer.
   private takeArrow(event: KeyboardEvent): void {
-    if (!this.isBrowsing || (event.key !== PREVIOUS_KEY && event.key !== NEXT_KEY)) return;
+    if (!this.isOpen || this.layout === 'grid' || (event.key !== PREVIOUS_KEY && event.key !== NEXT_KEY)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    this.step(event.key === NEXT_KEY ? 1 : -1);
+    const step: GalleryStep = event.key === NEXT_KEY ? 1 : -1;
+    if (this.layout === 'row') this.grid.scrollBy({ left: step * this.grid.clientWidth * ROW_ARROW_SCROLL_SHARE, behavior: 'smooth' });
+    else this.step(step);
+  }
+
+  private scrollRow(event: WheelEvent): void {
+    if (this.layout !== 'row' || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    this.grid.scrollLeft += event.deltaY;
   }
 
   private endSwipe(endX: number): void {
@@ -114,21 +136,26 @@ export class LightboxGallery {
     if (startX !== null && this.isBrowsing) this.step(swipeStep(endX - startX));
   }
 
-  private toggleGrid(): void {
-    this.setGrid(!this.showsGrid);
-    if (!this.showsGrid) this.show(this.index);
+  private cycleLayout(): void {
+    this.setLayout(nextLayout(this.layout));
+    if (this.layout === 'single') this.show(this.index);
   }
 
-  private setGrid(showsGrid: boolean): void {
-    this.showsGrid = showsGrid;
-    this.image.hidden = showsGrid;
-    this.grid.hidden = !showsGrid;
-    this.previous.hidden = showsGrid;
-    this.next.hidden = showsGrid;
-    this.counter.textContent = showsGrid ? totalText(this.images.length) : counterText(this.index, this.images.length);
-    this.gridToggle.setAttribute('aria-pressed', String(showsGrid));
-    this.grid.replaceChildren(...(showsGrid ? this.images.map((load: ImageLoader, index: number) => this.gridCell(load, index)) : []));
-    if (showsGrid) this.shapeGrid();
+  private setLayout(layout: GalleryLayout): void {
+    this.layout = layout;
+    const showsAll: boolean = layout !== 'single';
+    this.image.hidden = showsAll;
+    this.grid.hidden = !showsAll;
+    this.grid.classList.toggle(ROW_CLASS, layout === 'row');
+    this.grid.scrollTo({ left: 0, top: 0 });
+    this.previous.hidden = showsAll;
+    this.next.hidden = showsAll;
+    this.counter.textContent = showsAll ? totalText(this.images.length) : counterText(this.index, this.images.length);
+    this.gridToggle.setAttribute('aria-pressed', String(showsAll));
+    this.gridToggle.setAttribute('aria-label', TOGGLE_LABELS[layout]);
+    this.gridToggle.title = TOGGLE_LABELS[layout];
+    this.grid.replaceChildren(...(showsAll ? this.images.map((load: ImageLoader, index: number) => this.gridCell(load, index)) : []));
+    if (layout === 'grid') this.shapeGrid();
   }
 
   private shapeGrid(): void {
@@ -149,8 +176,12 @@ export class LightboxGallery {
     void load().then((source: string | null): void => {
       if (source !== null) picture.src = source;
     });
+    // In the row the open picture may sit past the screen's edge; its width is only known once it has loaded.
+    if (index === this.index && this.layout === 'row') {
+      picture.addEventListener('load', (): void => cell.scrollIntoView({ inline: 'center', block: 'nearest' }), { once: true });
+    }
     cell.addEventListener('click', (): void => {
-      this.setGrid(false);
+      this.setLayout('single');
       this.show(index);
     });
     return cell;

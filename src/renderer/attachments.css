@@ -111,6 +111,14 @@
 .lightbox-grid-cell:hover { transform: scale(1.015); border-color: rgb(255 255 255 / 0.5); }
 .lightbox-grid-cell.is-current { border-color: #ffffff; }
 .lightbox-grid-picture { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* The row: every picture takes the full height in its own proportions, and the row scrolls sideways */
+.lightbox-grid.is-row { display: flex; overflow-x: auto; overflow-y: hidden; justify-content: safe center; }
+.lightbox-grid.is-row .lightbox-grid-cell { flex: 0 0 auto; height: 100%; min-width: 120px; }
+.lightbox-grid.is-row .lightbox-grid-picture { width: auto; }
+/* A phone is narrower than one wide picture at full height, so there a picture is fitted to the screen's width */
+@media (max-width: 699px) {
+  .lightbox-grid.is-row .lightbox-grid-picture { max-width: calc(94vw - 24px); }
+}
 /* On a wide window the picture leaves room for the arrows and the bar; on a phone they float over it */
 @media (min-width: 700px) {
   .lightbox:has(.lightbox-gallery:not([hidden])) .lightbox-image { max-width: calc(100vw - 152px); max-height: calc(100vh - 128px); }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { counterText, gridShape, steppedIndex, SWIPE_MIN_PX, swipeStep, totalText } from '../src/renderer/gallery-steps';
+import { counterText, gridShape, nextLayout, steppedIndex, SWIPE_MIN_PX, swipeStep, totalText } from '../src/renderer/gallery-steps';
 
 describe('steppedIndex', () => {
   it('moves one picture either way', () => {
@@ -52,5 +52,13 @@ describe('gridShape', () => {
   it('caps the columns and adds rows instead', () => {
     expect(gridShape(5, 2)).toEqual({ columns: 2, rows: 3 });
     expect(gridShape(30, 4)).toEqual({ columns: 4, rows: 8 });
+  });
+});
+
+describe('nextLayout', () => {
+  it('walks one picture, the grid, the row, and back to one picture', () => {
+    expect(nextLayout('single')).toBe('grid');
+    expect(nextLayout('grid')).toBe('row');
+    expect(nextLayout('row')).toBe('single');
   });
 });
