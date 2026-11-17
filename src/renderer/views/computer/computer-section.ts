@@ -4,12 +4,14 @@ import { element } from '../../dom';
 import { renderAudioGroup } from './audio-group';
 import type { ComputerControls } from './computer-controls';
 import { renderDevicesGroup } from './devices-group';
+import { renderNightGroup } from './night-group';
 import { renderMediaGroup, renderNotificationsGroup } from './notifications-group';
 import type { ScreensState } from './power-group';
 import { renderPowerGroup } from './power-group';
 import type { ShutdownDraft } from './shutdown-group';
 import { renderShutdownGroup } from './shutdown-group';
 import { suggestedTime } from './shutdown-time';
+import type { NightShutdownState } from '../../../shared/night-shutdown';
 import type { ShutdownPlan, ShutdownPlanState } from '../../../shared/shutdown-plan';
 import { renderShortcutsGroup } from './shortcuts-group';
 import { renderSystemGroup } from './system-group';
@@ -29,6 +31,7 @@ export class ComputerSection {
   readonly root: HTMLElement = element('section', 'settings-section computer-section');
   private status: ComputerStatus | null = null;
   private shutdown: ShutdownPlanState | null = null;
+  private night: NightShutdownState | null = null;
   // The form outlives the redraws on every poll, so a half-made plan is not lost.
   private shutdownDraft: ShutdownDraft = { whenIdle: true, useTime: false, time: suggestedTime(new Date()) };
   private problem: string | null = null;
@@ -84,7 +87,11 @@ export class ComputerSection {
     if (this.refreshing) return;
     this.refreshing = true;
     try {
-      [this.status, this.shutdown] = await Promise.all([window.radar.getComputerStatus(), window.radar.getShutdownPlan().catch((): null => null)]);
+      [this.status, this.shutdown, this.night] = await Promise.all([
+        window.radar.getComputerStatus(),
+        window.radar.getShutdownPlan().catch((): null => null),
+        window.radar.getNightShutdown().catch((): null => null),
+      ]);
       if (this.problem?.startsWith(LOAD_PROBLEM) === true) this.problem = null;
     } catch (error: unknown) {
       this.problem = `${LOAD_PROBLEM}${error instanceof Error ? error.message : String(error)}`;
@@ -164,6 +171,7 @@ export class ComputerSection {
         schedule: (plan: ShutdownPlan): void => void this.planShutdown((): Promise<ActionResult> => window.radar.setShutdownPlan(plan)),
         cancel: (): void => void this.planShutdown((): Promise<ActionResult> => window.radar.cancelShutdownPlan()),
       }),
+      ...renderNightGroup(this.night, (hour: number): void => void this.planShutdown((): Promise<ActionResult> => window.radar.setNightShutdownStart(hour))),
       ...renderSystemGroup(status),
       ...renderAudioGroup(status.audio, status.apps, controls),
       ...renderMediaGroup(status.media, controls),

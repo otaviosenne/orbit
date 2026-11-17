@@ -1680,8 +1680,8 @@ body.chat-window .sheet { width: 100%; border-left: 0; box-shadow: none; transit
 .web-access-offer { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; text-align: center; }
 .web-access-offer:empty { display: none; }
 .web-access-sign-out { margin-top: 18px; }
-.shutdown-time { flex: none; padding: 4px 8px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
-.shutdown-time:disabled { opacity: 0.45; }
+.shutdown-time, .night-start { flex: none; padding: 4px 8px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
+.shutdown-time:disabled, .night-start:disabled { opacity: 0.45; }
 .shutdown-actions { justify-content: flex-end; }
 .pairing-body { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
 .pairing-body .dialog-note { margin: 0; text-align: center; }

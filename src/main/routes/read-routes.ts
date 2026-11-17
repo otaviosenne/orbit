@@ -1,4 +1,6 @@
+import type { NightShutdownState } from '../../shared/night-shutdown';
 import type { ShutdownPlanState } from '../../shared/shutdown-plan';
+import { nightShutdownState } from '../night-shutdown/night-shutdown';
 import { transcriptLimit } from '../../core/transcript-limit';
 import type { RemoteChannel } from '../../shared/remote-access';
 import { REMOTE_ACCESS } from '../../shared/remote-access';
@@ -51,6 +53,7 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => boardState.get(knownVersion),
     GetComputerStatus: (): Promise<ComputerStatus> => computer.status(),
     GetShutdownPlan: (): Promise<ShutdownPlanState> => shutdown.state(),
+    GetNightShutdown: (): Promise<NightShutdownState> => nightShutdownState(),
     GetChatDevices: (sessionId: unknown): Promise<ChatDevices> =>
       isSessionId(sessionId) ? devices.devicesOf(sessionId) : Promise.resolve(NO_DEVICES),
   };

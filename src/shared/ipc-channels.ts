@@ -78,6 +78,8 @@ export const IpcChannel = {
   SetShutdownPlan: 'radar:set-shutdown-plan',
   CancelShutdownPlan: 'radar:cancel-shutdown-plan',
   ShutDownSafely: 'radar:shut-down-safely',
+  GetNightShutdown: 'radar:get-night-shutdown',
+  SetNightShutdownStart: 'radar:set-night-shutdown-start',
   RunComputerAction: 'radar:run-computer-action',
   GetBoardState: 'radar:get-board-state',
   SetBoardState: 'radar:set-board-state',

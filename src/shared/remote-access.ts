@@ -100,6 +100,9 @@ export const REMOTE_ACCESS = {
   CancelShutdownPlan: 'action',
   // Pauses the working chats, waits a minute at most for them to stop, then shuts down.
   ShutDownSafely: 'action',
+  // The night auto-shutdown's hours, and tonight's start moved later (to the morning end, for not tonight).
+  GetNightShutdown: 'read',
+  SetNightShutdownStart: 'action',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',

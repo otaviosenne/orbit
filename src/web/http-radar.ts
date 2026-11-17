@@ -1,3 +1,4 @@
+import type { NightShutdownState } from '../shared/night-shutdown';
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { AskAnswer } from '../shared/ask';
@@ -131,6 +132,8 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     getShutdownPlan: (): Promise<ShutdownPlanState> => call('GetShutdownPlan', []),
     setShutdownPlan: (plan: ShutdownPlan): Promise<ActionResult> => call('SetShutdownPlan', [plan]),
     cancelShutdownPlan: (): Promise<ActionResult> => call('CancelShutdownPlan', []),
+    getNightShutdown: (): Promise<NightShutdownState> => call('GetNightShutdown', []),
+    setNightShutdownStart: (hour: number): Promise<ActionResult> => call('SetNightShutdownStart', [hour]),
     shutDownSafely: (): Promise<ActionResult> => call('ShutDownSafely', []),
     runComputerAction: (action: ComputerAction): Promise<ActionResult> => call('RunComputerAction', [action]),
     getBoardState: (knownVersion: number | null): Promise<BoardState | null> => call('GetBoardState', [knownVersion]),

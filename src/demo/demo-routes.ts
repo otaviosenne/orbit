@@ -40,6 +40,11 @@ import { join } from 'node:path';
 import { BoardStateStore } from '../main/board-state/board-state-store';
 import type { BoardState } from '../shared/board-state';
 import type { ComputerStatus } from '../shared/computer';
+import type { NightShutdownState } from '../shared/night-shutdown';
+import { DemoNightShutdown } from './demo-night-shutdown';
+
+// Moving tonight's start in the demo only changes the demo's own state.
+const demoNight: DemoNightShutdown = new DemoNightShutdown();
 import { DEMO_COMPUTER } from './demo-computer';
 
 export type DemoRoute = Route;
@@ -127,6 +132,8 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   CancelShutdownPlan: (): ActionResult => demoShutdown.cancel(),
   // Shutting down the real machine from a demo would be a surprise.
   ShutDownSafely: (): ActionResult => DONE,
+  GetNightShutdown: (): NightShutdownState => demoNight.state(),
+  SetNightShutdownStart: (hour: unknown): ActionResult => demoNight.set(hour),
   // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
   GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
   SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),

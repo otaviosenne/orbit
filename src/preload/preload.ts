@@ -1,3 +1,4 @@
+import type { NightShutdownState } from '../shared/night-shutdown';
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { AskAnswer } from '../shared/ask';
@@ -131,6 +132,8 @@ const api: RadarApi = {
   getShutdownPlan: (): Promise<ShutdownPlanState> => ipcRenderer.invoke(IpcChannel.GetShutdownPlan),
   setShutdownPlan: (plan: ShutdownPlan): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetShutdownPlan, plan),
   cancelShutdownPlan: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CancelShutdownPlan),
+  getNightShutdown: (): Promise<NightShutdownState> => ipcRenderer.invoke(IpcChannel.GetNightShutdown),
+  setNightShutdownStart: (hour: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetNightShutdownStart, hour),
   shutDownSafely: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ShutDownSafely),
   getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
   setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),

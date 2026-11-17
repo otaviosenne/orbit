@@ -1,3 +1,4 @@
+import type { NightShutdownState } from './night-shutdown';
 import type { ShutdownPlan, ShutdownPlanState } from './shutdown-plan';
 import type { ApprovalAnswer, ApprovalRequest } from './approval';
 import type { AskAnswer, AskRequest } from './ask';
@@ -609,6 +610,8 @@ export interface RadarApi {
   setShutdownPlan(plan: ShutdownPlan): Promise<ActionResult>;
   cancelShutdownPlan(): Promise<ActionResult>;
   shutDownSafely(): Promise<ActionResult>;
+  getNightShutdown(): Promise<NightShutdownState>;
+  setNightShutdownStart(hour: number): Promise<ActionResult>;
   // Pins and suspended chats every Orbit window shares; null when knownVersion is still current.
   getBoardState(knownVersion: number | null): Promise<BoardState | null>;
   setBoardState(key: string, value: string): Promise<ActionResult>;
