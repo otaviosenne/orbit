@@ -9,6 +9,7 @@ interface HyprlandClient {
   readonly pid: number;
   readonly monitor: number;
   readonly workspace: { readonly id: number };
+  readonly title: string;
 }
 
 interface HyprlandMonitor {
@@ -50,6 +51,10 @@ export async function windowPlacement(windowPid: number): Promise<WindowPlacemen
   const monitors: HyprlandMonitor[] = JSON.parse(await runCommand('hyprctl', ['monitors', '-j'])) as HyprlandMonitor[];
   const monitor: HyprlandMonitor | undefined = monitors.find((candidate: HyprlandMonitor) => candidate.id === client.monitor);
   return monitor === undefined ? null : { workspace: client.workspace.id, visibleWorkspace: monitor.activeWorkspace.id };
+}
+
+export async function windowTitles(): Promise<ReadonlyMap<number, string>> {
+  return new Map((await listClients()).map((client: HyprlandClient): [number, string] => [client.pid, client.title]));
 }
 
 async function listWindowPids(): Promise<Set<number>> {

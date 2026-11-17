@@ -1,4 +1,4 @@
-import type { AgentSnapshot, ChatSettings, ChatSnapshot, ShellOutput, ShellSnapshot, TranscriptItem, TurnProgress } from '../shared/types';
+import type { AgentSnapshot, ChatSettings, ChatSnapshot, ChatStatus, ShellOutput, ShellSnapshot, TranscriptItem, TurnProgress } from '../shared/types';
 import { ChatSettingsReader } from './chat-settings/chat-settings-reader';
 import { DeviceReferenceReader } from './devices/device-reader';
 import type { DeviceReferences } from './devices/device-references';
@@ -30,11 +30,14 @@ import { QueuedPromptReader, queuedMessages } from './queue/queued-prompt-reader
 import type { QueuedPrompt } from './queue/prompt-queue';
 import { extractTurnProgress } from './turn-progress';
 import type { WindowLocator } from './window-locator';
+import { correctedStatus, needsTitleCheck } from './frozen-status';
 
 export interface LiveShell {
   readonly chatPid: number;
   readonly shell: ShellRecord;
 }
+
+const NO_TITLES: ReadonlyMap<number, string> = new Map();
 
 interface LiveTranscript {
   readonly session: SessionRecord;
@@ -70,7 +73,22 @@ export class ChatRadar {
     const now: number = Date.now();
     const sessions: SessionRecord[] = await listLiveSessions();
     const activeWindow: number | null = (await this.windowLocator?.activeWindowPid()) ?? null;
-    return Promise.all(sessions.map((session: SessionRecord) => this.toChat(session, now, activeWindow)));
+    const titles: ReadonlyMap<number, string> = await this.titlesToCheck(sessions, now);
+    return Promise.all(sessions.map((session: SessionRecord) => this.toChat(session, now, activeWindow, titles)));
+  }
+
+  // Read only while some chat's busy has gone stale, so a normal poll costs no extra Hyprland call.
+  private async titlesToCheck(sessions: readonly SessionRecord[], now: number): Promise<ReadonlyMap<number, string>> {
+    const isStale = (session: SessionRecord): boolean => needsTitleCheck(normalizeStatus(session.status), session.statusUpdatedAt, now);
+    if (this.windowLocator === null || !sessions.some(isStale)) return NO_TITLES;
+    return this.windowLocator.windowTitles().catch((): ReadonlyMap<number, string> => NO_TITLES);
+  }
+
+  private async statusOf(session: SessionRecord, now: number, titles: ReadonlyMap<number, string>): Promise<ChatStatus> {
+    const status: ChatStatus = normalizeStatus(session.status);
+    if (!needsTitleCheck(status, session.statusUpdatedAt, now)) return status;
+    const windowPid: number | null = await this.windowOf(session.pid);
+    return correctedStatus(status, session.statusUpdatedAt, now, windowPid === null ? null : (titles.get(windowPid) ?? null));
   }
 
   // The last `limit` items, ending with the prompts still queued in a live chat; fewer than asked means the chat has
@@ -164,7 +182,7 @@ export class ChatRadar {
     return transcript === null ? NO_DEVICE_REFERENCES : this.deviceReader.read(transcript);
   }
 
-  private async toChat(session: SessionRecord, now: number, activeWindow: number | null): Promise<ChatSnapshot> {
+  private async toChat(session: SessionRecord, now: number, activeWindow: number | null, titles: ReadonlyMap<number, string>): Promise<ChatSnapshot> {
     const transcript: string | null = await this.locator.locate(session.sessionId);
     const color: string | null = transcript === null ? null : await this.colors.colorOf(transcript);
     const agents: AgentSnapshot[] =
@@ -178,7 +196,7 @@ export class ChatRadar {
       repository: await this.repositories.resolve(session.cwd),
       cwd: session.cwd,
       startedAt: session.startedAt,
-      status: normalizeStatus(session.status),
+      status: await this.statusOf(session, now, titles),
       statusSince: session.statusUpdatedAt,
       asksPermission: asksPermission(session.status, session.waitingFor),
       lastReplyAt: transcript === null ? null : await this.replies.lastReplyAt(transcript),

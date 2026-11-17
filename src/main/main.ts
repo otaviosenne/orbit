@@ -11,7 +11,7 @@ import { ChatWindows } from './chat-windows';
 import { Computer } from './computer/computer';
 import { DictationService } from './dictation-service';
 import type { DictationEngine } from './remote/dictation/dictation-engine';
-import { activeWindowPid, findTerminalWindowPid } from './terminal-window';
+import { activeWindowPid, findTerminalWindowPid, windowTitles } from './terminal-window';
 import { registerIpcHandlers } from './ipc';
 import type { RadarServices } from './ipc';
 import { startRemoteAccess } from './remote/start-remote';
@@ -48,6 +48,7 @@ async function start(): Promise<void> {
   const radar: ChatRadar = new ChatRadar({
     activeWindowPid,
     windowPidOf: findTerminalWindowPid,
+    windowTitles,
   });
   const pastChats: PastChatCatalog = new PastChatCatalog();
   const timelineHistory: TimelineHistory = new TimelineHistory(pastChats);

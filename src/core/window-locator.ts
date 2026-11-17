@@ -2,4 +2,6 @@
 export interface WindowLocator {
   activeWindowPid(): Promise<number | null>;
   windowPidOf(chatPid: number): Promise<number | null>;
+  // Each terminal window's title, by the window's pid.
+  windowTitles(): Promise<ReadonlyMap<number, string>>;
 }
