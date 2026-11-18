@@ -79,6 +79,7 @@ const CASES: readonly [(radar: RadarApi) => unknown, RemoteChannel, readonly unk
   [(radar) => radar.answerApproval(PID, 'approve'), 'AnswerApproval', [PID, 'approve']],
   [(radar) => radar.answerAsk(PID, 1), 'AnswerAsk', [PID, 1]],
   [(radar) => radar.answerTyping(PID, 'decline'), 'AnswerTyping', [PID, 'decline']],
+  [(radar) => radar.answerTyping(PID, { texts: ['a', 'b'], pressEnter: false }), 'AnswerTyping', [PID, { texts: ['a', 'b'], pressEnter: false }]],
   [(radar) => radar.focusChat(PID), 'FocusChat', [PID]],
   [(radar) => radar.openChatWindow(SESSION), 'OpenChatWindow', [SESSION]],
   [(radar) => radar.setBoardState('orbit.pinned', '[]'), 'SetBoardState', ['orbit.pinned', '[]']],

@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { targetOf } from '../src/main/remote-typing/typing-target';
-import { MAX_TYPED_LENGTH, parseTypeRequest } from '../src/shared/remote-typing';
+import { MAX_TYPED_LENGTH, isTypableText } from '../src/shared/remote-typing';
 
-describe('parseTypeRequest', () => {
-  it('takes text and the Enter choice', () => {
-    expect(parseTypeRequest({ text: 's3cret!', pressEnter: true })).toEqual({ text: 's3cret!', pressEnter: true });
+describe('isTypableText', () => {
+  it('takes one line of text', () => {
+    expect(isTypableText('s3cret!')).toBe(true);
   });
 
-  it('refuses empty, overlong, multi-line or malformed requests', () => {
-    expect(parseTypeRequest({ text: '', pressEnter: true })).toBeNull();
-    expect(parseTypeRequest({ text: 'x'.repeat(MAX_TYPED_LENGTH + 1), pressEnter: false })).toBeNull();
-    expect(parseTypeRequest({ text: 'a\nb', pressEnter: false })).toBeNull();
-    expect(parseTypeRequest({ text: 'a', pressEnter: 'yes' })).toBeNull();
-    expect(parseTypeRequest('a')).toBeNull();
+  it('refuses empty, overlong, multi-line or non-text values', () => {
+    expect(isTypableText('')).toBe(false);
+    expect(isTypableText('x'.repeat(MAX_TYPED_LENGTH + 1))).toBe(false);
+    expect(isTypableText('a\nb')).toBe(false);
+    expect(isTypableText('a\rb')).toBe(false);
+    expect(isTypableText(7)).toBe(false);
   });
 });
 

@@ -13,19 +13,8 @@ export interface TypingTarget {
   readonly refusal: string | null;
 }
 
-export interface TypeRequest {
-  readonly text: string;
-  // Press Enter after the text, so typing a password also signs in.
-  readonly pressEnter: boolean;
-}
-
-export function parseTypeRequest(value: unknown): TypeRequest | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const candidate: Record<string, unknown> = value as Record<string, unknown>;
-  const text: unknown = candidate['text'];
-  const pressEnter: unknown = candidate['pressEnter'];
-  if (typeof text !== 'string' || text.length === 0 || text.length > MAX_TYPED_LENGTH || typeof pressEnter !== 'boolean') return null;
-  // A line break would submit the form early; a password never has one.
-  if (/[\r\n]/.test(text)) return null;
-  return { text, pressEnter };
+// One value Orbit is willing to type: something to type, not overlong, and on one line, since a line break would
+// submit the form early and a password never has one.
+export function isTypableText(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= MAX_TYPED_LENGTH && !/[\r\n]/.test(value);
 }
