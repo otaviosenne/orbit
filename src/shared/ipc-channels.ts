@@ -80,6 +80,8 @@ export const IpcChannel = {
   ShutDownSafely: 'radar:shut-down-safely',
   GetNightShutdown: 'radar:get-night-shutdown',
   SetNightShutdownStart: 'radar:set-night-shutdown-start',
+  GetTypingTarget: 'radar:get-typing-target',
+  TypeOnPc: 'radar:type-on-pc',
   RunComputerAction: 'radar:run-computer-action',
   GetBoardState: 'radar:get-board-state',
   SetBoardState: 'radar:set-board-state',

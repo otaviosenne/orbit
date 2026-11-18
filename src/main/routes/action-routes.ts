@@ -24,6 +24,7 @@ import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
 import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, textArg } from './route-args';
 import { setNightShutdownStart } from '../night-shutdown/night-shutdown';
+import { typeOnPc } from '../remote-typing/type-on-pc';
 import type { RouteServices } from './route-services';
 
 type ActionChannel =
@@ -57,6 +58,7 @@ type ActionChannel =
   | 'CancelShutdownPlan'
   | 'ShutDownSafely'
   | 'SetNightShutdownStart'
+  | 'TypeOnPc'
   | 'FocusChat'
   | 'OpenChatWindow';
 
@@ -75,6 +77,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     CancelShutdownPlan: (): Promise<ActionResult> => shutdown.cancel(),
     ShutDownSafely: (): Promise<ActionResult> => shutdown.shutDownSafely(),
     SetNightShutdownStart: (hour: unknown): Promise<ActionResult> => setNightShutdownStart(hour),
+    TypeOnPc: (request: unknown): Promise<ActionResult> => typeOnPc(request),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
     RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(radar, pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>

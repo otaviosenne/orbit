@@ -148,7 +148,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'computer',
     question: 'Can I control the computer from my phone?',
-    answer: 'Settings → Computer: turn the screens off and on, lock, suspend, restart or shut down (risky ones ask for a second tap), see CPU, RAM, temperatures, disks and the heaviest programs, and set volume, output, brightness, media, notifications and the status menu’s shortcuts. Batteries of the mouse and headset show there too. Night shutdown → Tonight moves tonight’s automatic power-off later (from midnight, say) or skips it with Not tonight.',
+    answer: 'Settings → Computer: turn the screens off and on, lock, suspend, restart or shut down (risky ones ask for a second tap), see CPU, RAM, temperatures, disks and the heaviest programs, and set volume, output, brightness, media, notifications and the status menu’s shortcuts. Batteries of the mouse and headset show there too. Night shutdown → Tonight moves tonight’s automatic power-off later (from midnight, say) or skips it with Not tonight. Type on the PC types what you write (a password, say) into the focused browser field on the PC, only when you press its button.',
   },
   {
     id: 'appearance-usage',

@@ -103,6 +103,9 @@ export const REMOTE_ACCESS = {
   // The night auto-shutdown's hours, and tonight's start moved later (to the morning end, for not tonight).
   GetNightShutdown: 'read',
   SetNightShutdownStart: 'action',
+  // Type on the PC: which window has focus, and the user's text typed into it (never into a terminal or Orbit).
+  GetTypingTarget: 'read',
+  TypeOnPc: 'action',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',

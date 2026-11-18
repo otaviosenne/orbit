@@ -45,6 +45,8 @@ import { DemoNightShutdown } from './demo-night-shutdown';
 
 // Moving tonight's start in the demo only changes the demo's own state.
 const demoNight: DemoNightShutdown = new DemoNightShutdown();
+const DEMO_TYPING_TARGET: TypingTarget = { title: 'Router login', app: 'google-chrome', accepts: true, refusal: null };
+import type { TypingTarget } from '../shared/remote-typing';
 import { DEMO_COMPUTER } from './demo-computer';
 
 export type DemoRoute = Route;
@@ -134,6 +136,9 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   ShutDownSafely: (): ActionResult => DONE,
   GetNightShutdown: (): NightShutdownState => demoNight.state(),
   SetNightShutdownStart: (hour: unknown): ActionResult => demoNight.set(hour),
+  GetTypingTarget: (): TypingTarget => DEMO_TYPING_TARGET,
+  // Typing on the real desktop from a demo would be a surprise.
+  TypeOnPc: (): ActionResult => DONE,
   // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
   GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
   SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),

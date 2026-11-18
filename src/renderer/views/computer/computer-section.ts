@@ -5,6 +5,7 @@ import { renderAudioGroup } from './audio-group';
 import type { ComputerControls } from './computer-controls';
 import { renderDevicesGroup } from './devices-group';
 import { renderNightGroup } from './night-group';
+import { TypeOnPcPanel } from './type-on-pc-panel';
 import { renderMediaGroup, renderNotificationsGroup } from './notifications-group';
 import type { ScreensState } from './power-group';
 import { renderPowerGroup } from './power-group';
@@ -32,6 +33,10 @@ export class ComputerSection {
   private status: ComputerStatus | null = null;
   private shutdown: ShutdownPlanState | null = null;
   private night: NightShutdownState | null = null;
+  private readonly typing: TypeOnPcPanel = new TypeOnPcPanel(
+    (text: string, pressEnter: boolean): Promise<ActionResult> => window.radar.typeOnPc({ text, pressEnter }),
+    (): void => this.render(),
+  );
   // The form outlives the redraws on every poll, so a half-made plan is not lost.
   private shutdownDraft: ShutdownDraft = { whenIdle: true, useTime: false, time: suggestedTime(new Date()) };
   private problem: string | null = null;
@@ -58,7 +63,7 @@ export class ComputerSection {
   get isHolding(): boolean {
     const focused: Element | null = document.activeElement;
     const isPicking: boolean = (focused instanceof HTMLSelectElement || (focused instanceof HTMLInputElement && focused.type === 'time')) && this.root.contains(focused);
-    return this.holding || Date.now() < this.holdUntil || isPicking;
+    return this.holding || Date.now() < this.holdUntil || isPicking || this.typing.isEditing;
   }
 
   setActive(active: boolean): void {
@@ -92,6 +97,7 @@ export class ComputerSection {
         window.radar.getShutdownPlan().catch((): null => null),
         window.radar.getNightShutdown().catch((): null => null),
       ]);
+      this.typing.update(await window.radar.getTypingTarget().catch((): null => null));
       if (this.problem?.startsWith(LOAD_PROBLEM) === true) this.problem = null;
     } catch (error: unknown) {
       this.problem = `${LOAD_PROBLEM}${error instanceof Error ? error.message : String(error)}`;
@@ -172,6 +178,7 @@ export class ComputerSection {
         cancel: (): void => void this.planShutdown((): Promise<ActionResult> => window.radar.cancelShutdownPlan()),
       }),
       ...renderNightGroup(this.night, (hour: number): void => void this.planShutdown((): Promise<ActionResult> => window.radar.setNightShutdownStart(hour))),
+      ...this.typing.render(),
       ...renderSystemGroup(status),
       ...renderAudioGroup(status.audio, status.apps, controls),
       ...renderMediaGroup(status.media, controls),
