@@ -25,7 +25,7 @@ function open(name: string, agents: AgentSnapshot[], statusMinutesAgo: number = 
     statusSince: NOW - statusMinutesAgo * MINUTE,
     agents,
     shells: [], lastReplyAt: null,
-    isFocused: false, approval: null, ask: null, localCi: null,
+    isFocused: false, approval: null, ask: null, typing: null, localCi: null,
   };
   return { kind: 'open', chat };
 }

@@ -24,7 +24,9 @@ import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
 import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, textArg } from './route-args';
 import { setNightShutdownStart } from '../night-shutdown/night-shutdown';
-import { typeOnPc } from '../remote-typing/type-on-pc';
+import { answerTyping } from '../typing/typing-answerer';
+import type { TypingAnswer } from '../../shared/typing-request';
+import { parseTypingAnswer } from '../../shared/typing-request';
 import type { RouteServices } from './route-services';
 
 type ActionChannel =
@@ -58,7 +60,7 @@ type ActionChannel =
   | 'CancelShutdownPlan'
   | 'ShutDownSafely'
   | 'SetNightShutdownStart'
-  | 'TypeOnPc'
+  | 'AnswerTyping'
   | 'FocusChat'
   | 'OpenChatWindow';
 
@@ -77,13 +79,13 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     CancelShutdownPlan: (): Promise<ActionResult> => shutdown.cancel(),
     ShutDownSafely: (): Promise<ActionResult> => shutdown.shutDownSafely(),
     SetNightShutdownStart: (hour: unknown): Promise<ActionResult> => setNightShutdownStart(hour),
-    TypeOnPc: (request: unknown): Promise<ActionResult> => typeOnPc(request),
     CloseChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? closeChat(pid) : Promise.resolve(NOT_A_CHAT)),
     RestartChat: (pid: unknown): Promise<ActionResult> => (isPid(pid) ? restartChat(radar, pid) : Promise.resolve(NOT_A_CHAT)),
     AnswerApproval: (pid: unknown, answer: unknown): Promise<ActionResult> =>
       onChat(pid, (chat: number) => (isApprovalAnswer(answer) ? answerApproval(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
     AnswerAsk: (pid: unknown, answer: unknown): Promise<ActionResult> =>
       onChat(pid, (chat: number) => (isAskAnswer(answer) ? answerAsk(chat, answer) : Promise.resolve(NOT_AN_ANSWER))),
+    AnswerTyping: (pid: unknown, answer: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => answerTypingWith(chat, answer)),
     FocusChat: (pid: unknown): Promise<void> => (isPid(pid) ? focusTerminalOf(pid) : Promise.resolve()),
     // The id ends up in a file URL, so anything but a real id is ignored.
     OpenChatWindow: (sessionId: unknown): void => {
@@ -116,4 +118,9 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
 
 function onChat(pid: unknown, action: (pid: number) => Promise<ActionResult>): Promise<ActionResult> {
   return isPid(pid) ? action(pid) : Promise.resolve(NOT_A_CHAT);
+}
+
+function answerTypingWith(chat: number, answer: unknown): Promise<ActionResult> {
+  const parsed: TypingAnswer | null = parseTypingAnswer(answer);
+  return parsed === null ? Promise.resolve(NOT_AN_ANSWER) : answerTyping(chat, parsed);
 }

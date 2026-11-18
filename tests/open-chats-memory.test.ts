@@ -9,7 +9,7 @@ let store: Map<string, string> = new Map();
 function chat(sessionId: string): ChatSnapshot {
   return {
     sessionId, pid: 7, name: `chat ${sessionId}`, color: 'blue', repository: { name: 'acme', root: '/code/acme' }, cwd: '/code/acme', startedAt: 1,
-    status: 'idle', statusSince: 1, agents: [], shells: [], lastReplyAt: 1, isFocused: false, approval: null, ask: null, localCi: null,
+    status: 'idle', statusSince: 1, agents: [], shells: [], lastReplyAt: 1, isFocused: false, approval: null, ask: null, typing: null, localCi: null,
   };
 }
 

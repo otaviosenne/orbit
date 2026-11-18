@@ -88,6 +88,7 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   RestartChat: (): ActionResult => DONE,
   AnswerApproval: (): ActionResult => DONE,
   AnswerAsk: (): ActionResult => DONE,
+  AnswerTyping: (): ActionResult => DONE,
   InterruptChat: (): ActionResult => DONE,
   // Nothing is typed into a terminal in the demo.
   PauseChats: (): PauseReport => ({ reached: [], skipped: [] }),
@@ -137,8 +138,6 @@ export const DEMO_ROUTES: Readonly<Record<InvokeChannel, DemoRoute>> = {
   GetNightShutdown: (): NightShutdownState => demoNight.state(),
   SetNightShutdownStart: (hour: unknown): ActionResult => demoNight.set(hour),
   GetTypingTarget: (): TypingTarget => DEMO_TYPING_TARGET,
-  // Typing on the real desktop from a demo would be a surprise.
-  TypeOnPc: (): ActionResult => DONE,
   // The demo profile keeps its own board, so trying pins and suspends there never touches the real one.
   GetBoardState: (knownVersion: unknown): Promise<BoardState | null> => demoBoardState().get(knownVersion),
   SetBoardState: (key: unknown, value: unknown): Promise<ActionResult> => demoBoardState().set(key, value),

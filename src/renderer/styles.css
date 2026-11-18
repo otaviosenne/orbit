@@ -1989,6 +1989,10 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
   flex: none; padding: 3px 10px; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
   background: var(--accent); color: var(--on-accent);
 }
-/* Type on the PC: the field takes the row, the button keeps its size */
-.type-on-pc-row { gap: 8px; }
-.type-on-pc-field { flex: 1; min-width: 0; padding: 6px 10px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
+/* A chat's request_typing: the field takes the row, the buttons keep their size; where it lands sits under the label */
+.typing-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.typing-field { flex: 1 1 180px; min-width: 0; padding: 6px 10px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
+.typing-enter { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); }
+.typing-decline { margin-left: auto; }
+.typing-target { display: block; font-size: 12px; color: var(--secondary); }
+.typing-target.is-refused { color: var(--danger, #e5484d); }

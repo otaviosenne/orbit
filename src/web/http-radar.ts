@@ -1,5 +1,6 @@
 import type { NightShutdownState } from '../shared/night-shutdown';
-import type { TypeRequest, TypingTarget } from '../shared/remote-typing';
+import type { TypingTarget } from '../shared/remote-typing';
+import type { TypingAnswer } from '../shared/typing-request';
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { AskAnswer } from '../shared/ask';
@@ -94,6 +95,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     restartChat: (pid: number): Promise<ActionResult> => call('RestartChat', [pid]),
     answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => call('AnswerApproval', [pid, answer]),
     answerAsk: (pid: number, answer: AskAnswer): Promise<ActionResult> => call('AnswerAsk', [pid, answer]),
+    answerTyping: (pid: number, answer: TypingAnswer): Promise<ActionResult> => call('AnswerTyping', [pid, answer]),
     interruptChat: (pid: number): Promise<ActionResult> => call('InterruptChat', [pid]),
     pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => call('PauseChats', [targets]),
     continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => call('ContinueChats', [targets]),
@@ -136,7 +138,6 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     getNightShutdown: (): Promise<NightShutdownState> => call('GetNightShutdown', []),
     setNightShutdownStart: (hour: number): Promise<ActionResult> => call('SetNightShutdownStart', [hour]),
     getTypingTarget: (): Promise<TypingTarget> => call('GetTypingTarget', []),
-    typeOnPc: (request: TypeRequest): Promise<ActionResult> => call('TypeOnPc', [request]),
     shutDownSafely: (): Promise<ActionResult> => call('ShutDownSafely', []),
     runComputerAction: (action: ComputerAction): Promise<ActionResult> => call('RunComputerAction', [action]),
     getBoardState: (knownVersion: number | null): Promise<BoardState | null> => call('GetBoardState', [knownVersion]),

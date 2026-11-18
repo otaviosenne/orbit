@@ -30,7 +30,7 @@ export function renderUnseenDot(kind: DotKind = 'unread'): HTMLSpanElement {
 // answered, however often the chat was looked at meanwhile, since seeing it does not answer it. Null when the chat
 // has no dot.
 export function dotKindOf(chat: ChatSnapshot, hasUnreadReply: boolean): DotKind | null {
-  if (chat.approval !== null || chat.ask !== null) return 'approval';
+  if (chat.approval !== null || chat.ask !== null || chat.typing !== null) return 'approval';
   if (chat.status === 'waiting') return chat.asksPermission === true ? 'permission' : 'question';
   return hasUnreadReply ? 'unread' : null;
 }

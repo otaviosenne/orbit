@@ -1,5 +1,6 @@
 import type { NightShutdownState } from '../shared/night-shutdown';
-import type { TypeRequest, TypingTarget } from '../shared/remote-typing';
+import type { TypingTarget } from '../shared/remote-typing';
+import type { TypingAnswer } from '../shared/typing-request';
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { AskAnswer } from '../shared/ask';
@@ -90,6 +91,7 @@ const api: RadarApi = {
   restartChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.RestartChat, pid),
   answerApproval: (pid: number, answer: ApprovalAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerApproval, pid, answer),
   answerAsk: (pid: number, answer: AskAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerAsk, pid, answer),
+  answerTyping: (pid: number, answer: TypingAnswer): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.AnswerTyping, pid, answer),
   interruptChat: (pid: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.InterruptChat, pid),
   pauseChats: (targets: readonly PauseTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.PauseChats, targets),
   continueChats: (targets: readonly ContinueTarget[]): Promise<PauseReport> => ipcRenderer.invoke(IpcChannel.ContinueChats, targets),
@@ -136,7 +138,6 @@ const api: RadarApi = {
   getNightShutdown: (): Promise<NightShutdownState> => ipcRenderer.invoke(IpcChannel.GetNightShutdown),
   setNightShutdownStart: (hour: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetNightShutdownStart, hour),
   getTypingTarget: (): Promise<TypingTarget> => ipcRenderer.invoke(IpcChannel.GetTypingTarget),
-  typeOnPc: (request: TypeRequest): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.TypeOnPc, request),
   shutDownSafely: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ShutDownSafely),
   getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
   setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),

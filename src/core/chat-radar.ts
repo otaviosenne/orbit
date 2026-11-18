@@ -30,6 +30,7 @@ import { QueuedPromptReader, queuedMessages } from './queue/queued-prompt-reader
 import type { QueuedPrompt } from './queue/prompt-queue';
 import { extractTurnProgress } from './turn-progress';
 import type { WindowLocator } from './window-locator';
+import { readTypingRequest } from './typing/typing-file';
 import { correctedStatus, needsTitleCheck } from './frozen-status';
 
 export interface LiveShell {
@@ -205,6 +206,7 @@ export class ChatRadar {
       isFocused: activeWindow !== null && (await this.windowOf(session.pid)) === activeWindow,
       approval: await readApproval(session),
       ask: await readAsk(session),
+      typing: await readTypingRequest(session),
       ...(await findChatCi(session.pid)),
     };
   }

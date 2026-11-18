@@ -13,6 +13,7 @@ import { chatStatusLabel } from '../status-label';
 import { AgentView } from './agent-view';
 import { ApprovalBar } from './approval-bar';
 import { AskBar } from './ask-bar';
+import { TypingBar } from './typing-bar';
 import { LocalCiBar } from './local-ci-bar';
 import type { AgentTitle } from './agent-view';
 import { ColorPicker } from './color-picker';
@@ -100,6 +101,12 @@ export class ChatSheet {
   private readonly ask: AskBar = new AskBar(requireElement('#ask-bar'), {
     answer: (pid, answer) => window.radar.answerAsk(pid, answer),
     discuss: (): void => this.composer.focus(),
+    report: (result: ActionResult, successText: string): void => this.report(result, successText),
+  });
+  // Something the chat asked the user to type on the PC (a password), pinned until typed or declined.
+  private readonly typing: TypingBar = new TypingBar(requireElement('#typing-bar'), {
+    answer: (pid, answer) => window.radar.answerTyping(pid, answer),
+    target: () => window.radar.getTypingTarget(),
     report: (result: ActionResult, successText: string): void => this.report(result, successText),
   });
   private readonly localCi: LocalCiBar = new LocalCiBar(requireElement('#local-ci-bar'));
@@ -290,6 +297,7 @@ export class ChatSheet {
     else this.devices.follow(chat.sessionId);
     this.approval.show(this.isShowingClosed ? null : chat);
     this.ask.show(this.isShowingClosed ? null : chat);
+    this.typing.show(this.isShowingClosed ? null : chat);
     this.localCi.show(this.isShowingClosed ? null : chat, now);
     this.agentView.update(chat, now);
     this.composer.followDictationTarget(this.dictationTarget());

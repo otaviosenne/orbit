@@ -1,12 +1,13 @@
 import { APPROVAL_TOOL, APPROVAL_TOOL_NAME, requestApproval } from './approval-tool';
 import { ASK_TOOL, ASK_TOOL_NAME, askUser } from './ask-tool';
+import { TYPING_TOOL, TYPING_TOOL_NAME, requestTyping } from './typing-tool';
 import type { RpcRequest } from './json-rpc';
 import { METHOD_NOT_FOUND, RpcError, serveRpc } from './json-rpc';
 import type { ToolArgs, ToolResult } from './tool-result';
 
 // Orbit's MCP server: the tools a Claude Code chat calls to reach Orbit. Registered at user scope as "orbit",
 // started by each chat as `node dist/orbit-mcp.js`, so its parent process is the chat itself.
-const SERVER_INFO = { name: 'orbit', version: '1.1.0' } as const;
+const SERVER_INFO = { name: 'orbit', version: '1.2.0' } as const;
 const FALLBACK_PROTOCOL: string = '2025-06-18';
 
 type ToolRunner = (args: ToolArgs, chatPid: number) => Promise<ToolResult>;
@@ -14,6 +15,7 @@ type ToolRunner = (args: ToolArgs, chatPid: number) => Promise<ToolResult>;
 const TOOLS: Readonly<Record<string, ToolRunner>> = {
   [APPROVAL_TOOL_NAME]: (args: ToolArgs, chatPid: number): Promise<ToolResult> => requestApproval(args, chatPid),
   [ASK_TOOL_NAME]: (args: ToolArgs, chatPid: number): Promise<ToolResult> => askUser(args, chatPid),
+  [TYPING_TOOL_NAME]: (args: ToolArgs, chatPid: number): Promise<ToolResult> => requestTyping(args, chatPid),
 };
 
 async function handle(request: RpcRequest): Promise<unknown> {
@@ -23,7 +25,7 @@ async function handle(request: RpcRequest): Promise<unknown> {
     case 'ping':
       return {};
     case 'tools/list':
-      return { tools: [APPROVAL_TOOL, ASK_TOOL] };
+      return { tools: [APPROVAL_TOOL, ASK_TOOL, TYPING_TOOL] };
     case 'tools/call':
       return callTool(request.params ?? {});
     default:

@@ -47,6 +47,8 @@ export const REMOTE_ACCESS = {
   AnswerApproval: 'chat',
   // Types the picked option of a chat's question into that chat, as Send would.
   AnswerAsk: 'chat',
+  // The user's text for a chat's request_typing, typed on the PC into a focused browser field only.
+  AnswerTyping: 'chat',
   InterruptChat: 'chat',
   PauseChats: 'chat',
   ContinueChats: 'chat',
@@ -103,9 +105,8 @@ export const REMOTE_ACCESS = {
   // The night auto-shutdown's hours, and tonight's start moved later (to the morning end, for not tonight).
   GetNightShutdown: 'read',
   SetNightShutdownStart: 'action',
-  // Type on the PC: which window has focus, and the user's text typed into it (never into a terminal or Orbit).
+  // Where a chat's request_typing would land: the focused window, accepted only when it is a browser.
   GetTypingTarget: 'read',
-  TypeOnPc: 'action',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',

@@ -1,5 +1,6 @@
 import type { NightShutdownState } from './night-shutdown';
-import type { TypeRequest, TypingTarget } from './remote-typing';
+import type { TypingTarget } from './remote-typing';
+import type { TypingAnswer, TypingRequest } from './typing-request';
 import type { ShutdownPlan, ShutdownPlanState } from './shutdown-plan';
 import type { ApprovalAnswer, ApprovalRequest } from './approval';
 import type { AskAnswer, AskRequest } from './ask';
@@ -97,6 +98,8 @@ export interface ChatSnapshot {
   readonly approval: ApprovalRequest | null;
   // A question or permission asked through Orbit's ask_user tool, pinned above the chat until answered.
   readonly ask: AskRequest | null;
+  // Something the chat asked the user to type on the PC (a password) through request_typing; the chat never sees it.
+  readonly typing: TypingRequest | null;
   // The monorepo's local CI running under this chat, shown in green above its thread.
   readonly localCi: LocalCiRun | null;
   // Any CI running under this chat, local or GitHub's watched from the terminal; its spinner turns green.
@@ -544,6 +547,7 @@ export interface RadarApi {
   restartChat(pid: number): Promise<ActionResult>;
   answerApproval(pid: number, answer: ApprovalAnswer): Promise<ActionResult>;
   answerAsk(pid: number, answer: AskAnswer): Promise<ActionResult>;
+  answerTyping(pid: number, answer: TypingAnswer): Promise<ActionResult>;
   interruptChat(pid: number): Promise<ActionResult>;
   // Asks each chat to stop what it is doing (and its agents), one chat at a time; the report says which were reached.
   pauseChats(targets: readonly PauseTarget[]): Promise<PauseReport>;
@@ -614,7 +618,6 @@ export interface RadarApi {
   getNightShutdown(): Promise<NightShutdownState>;
   setNightShutdownStart(hour: number): Promise<ActionResult>;
   getTypingTarget(): Promise<TypingTarget>;
-  typeOnPc(request: TypeRequest): Promise<ActionResult>;
   // Pins and suspended chats every Orbit window shares; null when knownVersion is still current.
   getBoardState(knownVersion: number | null): Promise<BoardState | null>;
   setBoardState(key: string, value: string): Promise<ActionResult>;

@@ -15,7 +15,7 @@ const PAST_GRACE: number = WITHIN_GRACE + 1;
 function chat(sessionId: string, startedAt: number, name: string = sessionId): ChatSnapshot {
   return {
     sessionId, pid: 7, name, color: 'blue', repository: { name: 'acme', root: '/code/acme' }, cwd: '/code/acme', startedAt,
-    status: 'idle', statusSince: startedAt, agents: [], shells: [], lastReplyAt: 4_000_000, isFocused: false, approval: null, ask: null, localCi: null,
+    status: 'idle', statusSince: startedAt, agents: [], shells: [], lastReplyAt: 4_000_000, isFocused: false, approval: null, ask: null, typing: null, localCi: null,
   };
 }
 
