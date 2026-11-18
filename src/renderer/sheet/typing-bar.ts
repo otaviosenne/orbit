@@ -20,7 +20,7 @@ const SENDING_CLASS: string = 'is-sending';
 // Focus can move on the PC while the bar waits, so where the text would land is checked again this often.
 const TARGET_POLL_MS: number = 2000;
 
-// A chat's request_typing, pinned under the header like a question: a password field whose text Orbit types into the
+// A chat's request_typing, pinned under the header like a question: a text field whose text Orbit types into the
 // browser field focused on the PC. The text is cleared before it is sent and never reaches the chat.
 export class TypingBar {
   private shown: ShownRequest | null = null;
@@ -114,9 +114,12 @@ export class TypingBar {
   }
 }
 
+// Plain text on purpose: the user wants to read what they write before it is typed. No autocorrect or capitals, which
+// would quietly change a password on a phone keyboard.
 function passwordField(): HTMLInputElement {
   const field: HTMLInputElement = element('input', 'typing-field');
-  field.type = 'password';
+  field.type = 'text';
+  field.setAttribute('autocorrect', 'off');
   field.maxLength = MAX_TYPED_LENGTH;
   field.autocomplete = 'off';
   field.spellcheck = false;
