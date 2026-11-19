@@ -41,6 +41,13 @@ export class ChatSuspension {
     this.host.changed();
   }
 
+  // A chat that is already closed (a Closed card) has no process to end and nothing running to warn about, so it goes
+  // straight to Suspended; going through suspend would see its close fail and take it back out.
+  suspendClosed(chat: ChatSnapshot): void {
+    this.store.add(chat, Date.now());
+    this.host.changed();
+  }
+
   // Takes the card out of Suspended without reopening the chat, which stays in Resume.
   remove(sessionId: string): void {
     this.store.remove(sessionId);

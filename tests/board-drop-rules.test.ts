@@ -12,7 +12,10 @@ function fromColumn(column: ColumnKey, isPinned: boolean = false): DragSource {
 }
 
 const FROM_PINNED_ROW: DragSource = { zone: 'pinned', isPinned: true, canSuspend: true };
-const FROM_CLOSED_PIN: DragSource = { zone: 'pinned', isPinned: true, canSuspend: false };
+// Closed cards have no process, but can still be put in Suspended; a suspended pin in the Pinned row cannot again.
+const FROM_CLOSED_PIN: DragSource = { zone: 'pinned', isPinned: true, canSuspend: true };
+const FROM_SUSPENDED_PIN: DragSource = { zone: 'pinned', isPinned: true, canSuspend: false };
+const FROM_LEFT_OPEN: DragSource = { zone: 'busy', isPinned: false, canSuspend: true };
 const FROM_SUSPENDED: DragSource = { zone: 'suspended', isPinned: false, canSuspend: false };
 
 describe('dropActionFor', () => {
@@ -67,10 +70,16 @@ describe('suspending by drag', () => {
     expect(dropActionFor(FROM_PINNED_ROW, 'suspended')).toEqual({ kind: 'suspend' });
   });
 
-  it('does not suspend a closed pin (no process to close), nor anything where suspending is not offered', () => {
-    expect(dropActionFor(FROM_CLOSED_PIN, 'suspended')).toEqual(NONE);
-    expect(dropActionFor({ zone: 'idle', isPinned: false, canSuspend: false }, 'suspended')).toEqual(NONE);
+  it('suspends a Closed card dropped on Suspended: a chat a shutdown left open, or a closed pin', () => {
+    expect(dropActionFor(FROM_LEFT_OPEN, 'suspended')).toEqual({ kind: 'suspend' });
+    expect(dropActionFor(FROM_CLOSED_PIN, 'suspended')).toEqual({ kind: 'suspend' });
     expect(dropActionFor(FROM_CLOSED_PIN, 'columns')).toEqual({ kind: 'unpin' });
+  });
+
+  it('does not suspend a pin that is suspended already, nor anything where suspending is not offered', () => {
+    expect(dropActionFor(FROM_SUSPENDED_PIN, 'suspended')).toEqual(NONE);
+    expect(dropActionFor({ zone: 'idle', isPinned: false, canSuspend: false }, 'suspended')).toEqual(NONE);
+    expect(dropActionFor(FROM_SUSPENDED_PIN, 'columns')).toEqual({ kind: 'unpin' });
   });
 
   it('does nothing with a suspended card dropped outside Suspended, and reorders it inside', () => {
@@ -85,9 +94,14 @@ describe('isZoneInPlay', () => {
     expect(inPlay).toEqual(['pinned', 'columns', 'suspended']);
   });
 
-  it('offers a closed pin only Pinned and the whole columns area', () => {
-    const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_CLOSED_PIN, zone));
+  it('offers a suspended pin only Pinned and the whole columns area', () => {
+    const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_SUSPENDED_PIN, zone));
     expect(inPlay).toEqual(['pinned', 'columns']);
+  });
+
+  it('offers a closed pin Pinned, the whole columns area and Suspended', () => {
+    const inPlay: BoardZone[] = ZONES.filter((zone: BoardZone) => isZoneInPlay(FROM_CLOSED_PIN, zone));
+    expect(inPlay).toEqual(['pinned', 'columns', 'suspended']);
   });
 
   it('offers a column card Pinned, every single column and Suspended', () => {

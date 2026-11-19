@@ -1,15 +1,15 @@
 import { DROP_ZONE_ATTRIBUTE, DROP_ZONE_SELECTOR, SESSION_ATTRIBUTE } from '../views/board-view';
 import type { BoardZone, DragSource } from './drop-rules';
 
-// Set on the stand-in cards of closed chats (closed pins and suspended chats).
-const CLOSED_CARD_CLASS: string = 'is-closed';
+// Set on suspended chats' cards, in Suspended and in the Pinned row; a Closed card without it can still be suspended.
+const SUSPENDED_CARD_CLASS: string = 'is-suspended';
 
 // What the drop rules need to know about a picked-up card, read from the board as it is drawn.
 export function dragSourceOf(card: HTMLElement, root: HTMLElement): DragSource | null {
   const zone: BoardZone | null = zoneOf(card);
   const sessionId: string | undefined = card.dataset[SESSION_ATTRIBUTE];
   if (zone === null || sessionId === undefined) return null;
-  const canSuspend: boolean = !card.classList.contains(CLOSED_CARD_CLASS);
+  const canSuspend: boolean = !card.classList.contains(SUSPENDED_CARD_CLASS);
   return { zone, isPinned: isPinnedOnBoard(sessionId, root), canSuspend };
 }
 

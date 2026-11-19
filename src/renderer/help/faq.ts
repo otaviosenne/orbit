@@ -37,7 +37,7 @@ export const FAQ: readonly FaqEntry[] = [
   {
     id: 'suspend-chat',
     question: 'What does suspending a chat do?',
-    answer: 'It closes the chat but keeps it, faded, in Suspended at the bottom of the board (click its header to fold it). Use Suspend in Chat settings, on a card’s right-click menu, by dragging the card there, or {key:chat-suspend}. Send it a message, or press Reopen chat, and it comes back. On a phone, hold a card for its menu.',
+    answer: 'It closes the chat but keeps it, faded, in Suspended at the bottom of the board (click its header to fold it). Use Suspend in Chat settings, on a card’s right-click menu, by dragging the card there, or {key:chat-suspend}. A Closed card (a chat a shutdown left open, or a closed pin) can be suspended the same way, from its menu or by dragging it there. Send it a message, or press Reopen chat, and it comes back. On a phone, hold a card for its menu.',
   },
   {
     id: 'pin-chat',

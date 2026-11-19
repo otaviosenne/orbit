@@ -7,7 +7,7 @@ export interface CardMenuTarget {
   readonly name: string;
   readonly isPinned: boolean;
   readonly inPinnedRow: boolean;
-  // A closed pin or a suspended chat: there is nothing to open, rename or close, only to reopen or unpin.
+  // A Closed card or a suspended chat: there is nothing to open, rename or close, only to reopen, pin or put away.
   readonly isClosed: boolean;
   // Closed on purpose and kept in the Suspended section, which it can also be taken out of without reopening.
   readonly isSuspended: boolean;
@@ -74,19 +74,25 @@ export class CardMenu {
       { icon: TERMINAL_ICON, label: 'Go to chat', isDestructive: false, run: this.actions.goToChat },
       this.pinItem(target),
       { icon: PENCIL_ICON, label: 'Rename', isDestructive: false, run: this.actions.rename },
-      { icon: SUSPEND_ICON, label: 'Suspend', isDestructive: false, isCaution: true, run: this.actions.suspend },
+      this.suspendItem(),
       { icon: CLOSE_ICON, label: `Close ${target.name} chat`, isDestructive: true, run: this.actions.close },
     ];
   }
 
-  // Removing a suspended chat forgets only its card: the chat stays in Resume.
+  // Removing a suspended chat forgets only its card: the chat stays in Resume. A Closed card can be suspended too,
+  // with the same yellow item an open card has.
   private closedItems(target: CardMenuTarget): MenuItem[] {
     const reopen: MenuItem = { icon: REOPEN_ICON, label: 'Reopen chat', isDestructive: false, run: this.actions.reopen };
+    const suspend: MenuItem = this.suspendItem();
     const remove: MenuItem = { icon: CLOSE_ICON, label: 'Remove from Suspended', isDestructive: false, run: this.actions.removeSuspended };
     const dismiss: MenuItem = { icon: CLOSE_ICON, label: 'Remove from board', isDestructive: false, run: this.actions.removeLeftOpen };
-    if (target.isLeftOpen) return [reopen, this.pinItem(target), dismiss];
+    if (target.isLeftOpen) return [reopen, this.pinItem(target), suspend, dismiss];
     if (target.isSuspended) return [reopen, this.pinItem(target), remove];
-    return [reopen, this.pinItem(target)];
+    return [reopen, this.pinItem(target), suspend];
+  }
+
+  private suspendItem(): MenuItem {
+    return { icon: SUSPEND_ICON, label: 'Suspend', isDestructive: false, isCaution: true, run: this.actions.suspend };
   }
 
   private pinItem(target: CardMenuTarget): MenuItem {

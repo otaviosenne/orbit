@@ -9,7 +9,7 @@ export interface DragSource {
   // Where the card was picked up: a pinned chat has a card in the Pinned row and one in its column.
   readonly zone: BoardZone;
   readonly isPinned: boolean;
-  // False for a closed chat's stand-in (no process to close) and on Orbit Web, where closing chats is desktop-only.
+  // False for a chat that is suspended already; an open chat or a Closed card can be dropped on Suspended.
   readonly canSuspend: boolean;
 }
 
@@ -28,7 +28,7 @@ const UNPIN: DropAction = { kind: 'unpin' };
 const SUSPEND: DropAction = { kind: 'suspend' };
 
 // A card taken out of Pinned only means "unpin", so the columns act as one zone for it; a column card keeps the
-// individual zones (Pinned and each column). Any open chat can be dropped on Suspended; a suspended card is
+// individual zones (Pinned and each column). Any open chat or Closed card can be dropped on Suspended; a suspended card is
 // reopened from its panel, never by a drop, so only its own section is in play for it (to reorder).
 export function isZoneInPlay(source: DragSource, zone: BoardZone): boolean {
   if (zone === source.zone) return true;

@@ -3,6 +3,7 @@ import { fitBoard } from './board/fit-board';
 import { ChatSuspension } from './suspend/chat-suspension';
 import type { ClosedChat } from './suspend/closed-chats';
 import { ClosedChats } from './suspend/closed-chats';
+import { suspendClosedChat } from './suspend/closed-suspension';
 import { SUSPENDED_TOGGLE_SELECTOR } from './views/suspended-row';
 import { closedChatSnapshot } from './board/closed-chat-info';
 import { closedCardLabel } from './views/closed-card';
@@ -483,11 +484,23 @@ async function closeChat(sessionId: string): Promise<boolean> {
 }
 
 // From the board: asks above the card first when suspending would stop work. A drop has no card to point at once
-// the drag ends, so it asks above the chat's card wherever the board redrew it.
+// the drag ends, so it asks above the chat's card wherever the board redrew it. A Closed card has nothing to stop.
 function requestSuspend(sessionId: string, anchor: HTMLElement | null): void {
   const chat: ChatSnapshot | undefined = chats.find((candidate: ChatSnapshot) => candidate.sessionId === sessionId);
+  if (chat === undefined) return suspendClosed(sessionId);
   const card: HTMLElement | null = anchor ?? viewRoot.querySelector<HTMLElement>(`.board [data-${SESSION_ATTRIBUTE}="${CSS.escape(sessionId)}"]`);
-  if (chat !== undefined && card !== null) suspension.request(chat, card);
+  if (card !== null) suspension.request(chat, card);
+}
+
+// Ends up where a suspended open chat does: in Suspended only, no longer among the chats a shutdown left open.
+function suspendClosed(sessionId: string): void {
+  const closed: ClosedChat | undefined = closedChats.find(sessionId);
+  const isSuspended: boolean = suspendClosedChat(closed, {
+    addSuspended: (chat: ChatSnapshot): void => suspension.suspendClosed(chat),
+    forgetLeftOpen: (id: string): void => openChats.forget(id),
+  });
+  // Its read-only panel, if open, now says Suspended like its card.
+  if (isSuspended && closed !== undefined && sheet.sessionId === sessionId && sheet.isShowingClosed) sheet.openClosed(closed.chat, closedCardLabel('suspended'));
 }
 
 // The panel's Suspend has already asked, if it had to.
