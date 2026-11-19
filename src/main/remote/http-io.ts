@@ -50,6 +50,12 @@ export function sendError(response: ServerResponse, status: number, message: str
   sendJson(response, status, JSON.stringify({ error: message }));
 }
 
+// For callers that show the body as is, such as an iPhone Shortcut copying the answer: a sentence, not JSON.
+export function sendText(response: ServerResponse, status: number, text: string): void {
+  response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+  response.end(text);
+}
+
 export function sendEmpty(response: ServerResponse, status: number, headers: Readonly<Record<string, string>> = {}): void {
   response.writeHead(status, { 'Cache-Control': 'no-store', ...headers });
   response.end();

@@ -6,6 +6,7 @@ import type { FailureLimiter } from './failure-limiter';
 import type { LegacySessions } from './legacy-session';
 import type { PairingCodes } from './pairing-codes';
 import type { TrustedOrigins } from './trusted-origins';
+import type { PcClipboard } from '../shared-clipboard/pc-clipboard';
 
 export type RemoteRoutes = Readonly<Record<RemoteChannel, Route>>;
 
@@ -29,6 +30,9 @@ export interface RemoteContext {
   readonly legacy: LegacySessions;
   // Makes the voice engine for each browser that opens the dictation socket.
   readonly dictation: DictationEngineFactory;
+  // What the iPhone's Shortcuts read and write, and the desktop notice once a copy from the phone landed.
+  readonly clipboard: PcClipboard;
+  readonly notifyPhoneCopy: () => void;
   readonly now: () => number;
   readonly log: (line: string) => void;
 }

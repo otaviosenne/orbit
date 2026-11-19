@@ -15,8 +15,16 @@ export const MAX_DEVICES: number = 50;
 const LAST_SEEN_SAVE_MS: number = 5 * 60_000;
 const JSON_INDENT: number = 2;
 
+// A browser signs in to all of Orbit Web with its cookie; a Shortcuts credential only reaches the shared clipboard,
+// sent as a Bearer header. Each is refused where the other is expected, so a leaked Shortcut cannot drive the chats.
+export type DeviceKind = 'browser' | 'shortcuts';
+
+// Listed on the desktop under this name, so the user can tell the Back Tap Shortcuts' credential apart and sign it out.
+export const SHORTCUTS_DEVICE_NAME: string = 'iPhone Shortcuts';
+
 interface DeviceEntry extends RemoteDevice {
   readonly secretHash: string;
+  readonly kind: DeviceKind;
 }
 
 export interface NewDevice {
@@ -44,7 +52,7 @@ export class DeviceSessions {
   async load(): Promise<void> {
     try {
       const raw: unknown = JSON.parse(await readFile(this.path, 'utf8'));
-      const entries: DeviceEntry[] = Array.isArray(raw) ? raw.filter(isDeviceEntry) : [];
+      const entries: DeviceEntry[] = Array.isArray(raw) ? raw.filter(isDeviceEntry).map(withKind) : [];
       this.entries = new Map(entries.map((entry: DeviceEntry): [string, DeviceEntry] => [entry.id, entry]));
     } catch {
       this.entries = new Map();
@@ -55,26 +63,33 @@ export class DeviceSessions {
     return [...this.entries.values()].map(publicView).sort((a: RemoteDevice, b: RemoteDevice) => b.lastSeenAt - a.lastSeenAt);
   }
 
-  create(name: string, now: number): NewDevice {
+  create(name: string, now: number, kind: DeviceKind = 'browser'): NewDevice {
     const id: string = randomBytes(ID_BYTES).toString('base64url');
     const secret: string = randomBytes(SECRET_BYTES).toString('base64url');
-    const entry: DeviceEntry = { id, name, createdAt: now, lastSeenAt: now, secretHash: hashOf(secret) };
+    const entry: DeviceEntry = { id, name, createdAt: now, lastSeenAt: now, secretHash: hashOf(secret), kind };
     this.entries.set(id, entry);
     this.dropOldest();
     this.persist(now);
     return { device: publicView(entry), cookieValue: `${id}${COOKIE_SEPARATOR}${secret}` };
   }
 
-  // The device a cookie belongs to, or null; a match also marks the device as seen now.
-  verify(cookieValue: string, now: number): RemoteDevice | null {
+  // The device a credential belongs to, or null when it is unknown or of another kind; a match also marks the device
+  // as seen now.
+  verify(cookieValue: string, now: number, kind: DeviceKind = 'browser'): RemoteDevice | null {
     const separator: number = cookieValue.indexOf(COOKIE_SEPARATOR);
     if (separator === -1) return null;
     const entry: DeviceEntry | undefined = this.entries.get(cookieValue.slice(0, separator));
-    if (entry === undefined || !hashesMatch(hashOf(cookieValue.slice(separator + 1)), entry.secretHash)) return null;
+    if (entry === undefined || entry.kind !== kind || !hashesMatch(hashOf(cookieValue.slice(separator + 1)), entry.secretHash)) return null;
     const seen: DeviceEntry = { ...entry, lastSeenAt: now };
     this.entries.set(entry.id, seen);
     if (now - this.savedAt >= LAST_SEEN_SAVE_MS) this.persist(now);
     return publicView(seen);
+  }
+
+  // One Shortcuts credential at a time: a new one retires the last, so a lost or shared Shortcut stops working.
+  replaceShortcuts(now: number): NewDevice {
+    for (const entry of this.entries.values()) if (entry.kind === 'shortcuts') this.entries.delete(entry.id);
+    return this.create(SHORTCUTS_DEVICE_NAME, now, 'shortcuts');
   }
 
   revoke(id: string, now: number): boolean {
@@ -123,6 +138,11 @@ function hashesMatch(given: string, expected: string): boolean {
   const a: Buffer = Buffer.from(given);
   const b: Buffer = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// Entries saved before kinds existed were all browsers.
+function withKind(entry: DeviceEntry): DeviceEntry {
+  return entry.kind === 'shortcuts' ? entry : { ...entry, kind: 'browser' };
 }
 
 function isDeviceEntry(value: unknown): value is DeviceEntry {

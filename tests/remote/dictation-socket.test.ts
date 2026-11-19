@@ -1,5 +1,6 @@
 import type { IncomingMessage, Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { MemoryClipboard } from '../../src/demo/demo-clipboard';
 import WebSocket from 'ws';
 import { DEMO_ROUTES } from '../../src/demo/demo-routes';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -99,6 +100,8 @@ beforeAll(async () => {
       engines.push(engine);
       return engine;
     },
+    clipboard: new MemoryClipboard(),
+    notifyPhoneCopy: (): void => undefined,
     now: (): number => Date.now(),
     log: (line: string): void => void logLines.push(line),
   });
@@ -192,6 +195,8 @@ describe('Orbit Web dictation socket', () => {
       pairing: new PairingCodes(),
       legacy: new LegacySessions(),
       dictation: (): RecordingEngine => new RecordingEngine(),
+      clipboard: new MemoryClipboard(),
+      notifyPhoneCopy: (): void => undefined,
       now: (): number => Date.now(),
       log: (): void => undefined,
     });

@@ -14,6 +14,7 @@ import { DEFAULT_REMOTE_CONFIG, isUserPort } from './remote-config';
 import type { RemoteCredentials, RemoteRoutes } from './remote-context';
 import { closeServer, createRemoteServer, dropDictationClients, listenLocally, LOOPBACK_HOST } from './remote-server';
 import { trustedOrigins } from './trusted-origins';
+import type { PcClipboard } from '../shared-clipboard/pc-clipboard';
 
 export interface RemoteControllerOptions {
   readonly store: RemoteConfigStore;
@@ -22,6 +23,8 @@ export interface RemoteControllerOptions {
   readonly routes: RemoteRoutes;
   readonly webRoot: string;
   readonly dictation: DictationEngineFactory;
+  readonly clipboard: PcClipboard;
+  readonly notifyPhoneCopy: () => void;
   readonly log: (line: string) => void;
 }
 
@@ -172,6 +175,8 @@ export class RemoteController {
       pairing: this.pairing,
       legacy: this.legacy,
       dictation: this.options.dictation,
+      clipboard: this.options.clipboard,
+      notifyPhoneCopy: this.options.notifyPhoneCopy,
       now: (): number => Date.now(),
       log: this.options.log,
     });

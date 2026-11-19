@@ -43,3 +43,13 @@ export interface PairingOffer {
   // Drawn by the server from the link alone.
   readonly qrSvg: string;
 }
+
+// GET reads the PC clipboard as plain text, POST puts text on it: what the iPhone's Back Tap Shortcuts call, signed
+// in with a Shortcuts credential sent as "Authorization: Bearer <token>", never a browser cookie.
+export const REMOTE_CLIPBOARD_PATH: string = '/api/clipboard';
+// POST from a signed-in browser: a new Shortcuts credential, retiring the last one.
+export const REMOTE_SHORTCUTS_TOKEN_PATH: string = '/api/shortcuts-token';
+
+export interface ShortcutsToken {
+  readonly token: string;
+}

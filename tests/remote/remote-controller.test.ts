@@ -2,6 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { MemoryClipboard } from '../../src/demo/demo-clipboard';
 import { DemoDictationEngine } from '../../src/demo/demo-dictation';
 import { DEMO_ROUTES } from '../../src/demo/demo-routes';
 import { DeviceSessions } from '../../src/main/remote/device-sessions';
@@ -22,7 +23,7 @@ describe('RemoteController', () => {
     const store: RemoteConfigStore = new RemoteConfigStore(dir);
     await store.save({ enabled: false, port: TEST_PORT, externalUrl: '', token: '' });
     devices = new DeviceSessions(dir);
-    controller = new RemoteController({ store, devices, routes: DEMO_ROUTES, webRoot: dir, dictation: () => new DemoDictationEngine(), log: (): void => undefined });
+    controller = new RemoteController({ store, devices, routes: DEMO_ROUTES, webRoot: dir, dictation: () => new DemoDictationEngine(), clipboard: new MemoryClipboard(), notifyPhoneCopy: (): void => undefined, log: (): void => undefined });
     await controller.start();
   });
 

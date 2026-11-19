@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { deviceNameFrom } from '../../src/main/remote/device-name';
-import { DeviceSessions, MAX_DEVICES } from '../../src/main/remote/device-sessions';
+import { DeviceSessions, MAX_DEVICES, SHORTCUTS_DEVICE_NAME } from '../../src/main/remote/device-sessions';
+import { writeFile } from 'node:fs/promises';
 
 const PRIVATE_FILE_MODE: number = 0o600;
 const PERMISSION_BITS: number = 0o777;
@@ -58,6 +59,30 @@ describe('DeviceSessions', () => {
     sessions.revokeAll(MAX_DEVICES + 2);
     expect(sessions.list()).toEqual([]);
   });
+  it('keeps a Shortcuts credential apart from browser cookies, and one at a time', () => {
+    const browser = sessions.create('Safari on iPhone', 100);
+    const first = sessions.replaceShortcuts(200);
+    expect(first.device.name).toBe(SHORTCUTS_DEVICE_NAME);
+    expect(sessions.verify(first.cookieValue, 300)).toBeNull();
+    expect(sessions.verify(first.cookieValue, 300, 'shortcuts')?.id).toBe(first.device.id);
+    expect(sessions.verify(browser.cookieValue, 300, 'shortcuts')).toBeNull();
+    const second = sessions.replaceShortcuts(400);
+    expect(sessions.verify(first.cookieValue, 500, 'shortcuts')).toBeNull();
+    expect(sessions.verify(second.cookieValue, 500, 'shortcuts')?.id).toBe(second.device.id);
+    expect(sessions.verify(browser.cookieValue, 500)?.id).toBe(browser.device.id);
+  });
+
+  it('reads devices saved before kinds existed as browsers', async () => {
+    const { cookieValue } = sessions.create('Chrome on Android', 100);
+    await sessions.flushed();
+    const path: string = join(dir, 'devices.json');
+    const saved: Record<string, unknown>[] = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>[];
+    await writeFile(path, JSON.stringify(saved.map(({ kind: _kind, ...rest }) => rest)));
+    const reloaded: DeviceSessions = new DeviceSessions(dir);
+    await reloaded.load();
+    expect(reloaded.verify(cookieValue, 200)).not.toBeNull();
+    expect(reloaded.verify(cookieValue, 200, 'shortcuts')).toBeNull();
+  });
 });
 
 describe('deviceNameFrom', () => {
@@ -69,4 +94,5 @@ describe('deviceNameFrom', () => {
     expect(deviceNameFrom(undefined)).toBe('Unknown browser');
     expect(deviceNameFrom('curl/8.0')).toBe('Unknown browser');
   });
+
 });

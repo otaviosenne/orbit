@@ -15,6 +15,8 @@ import { activeWindowPid, findTerminalWindowPid, windowTitles } from './terminal
 import { registerIpcHandlers } from './ipc';
 import type { RadarServices } from './ipc';
 import { startRemoteAccess } from './remote/start-remote';
+import { WaylandClipboard } from './shared-clipboard/wayland-clipboard';
+import { showCopiedFromPhoneNotification } from './notifications/phone-copy-notification';
 import { buildSharedRoutes } from './routes/shared-routes';
 import { ChatDeviceService } from './devices/chat-devices';
 import type { SharedRoutes } from './routes/shared-routes';
@@ -64,7 +66,7 @@ async function start(): Promise<void> {
   const routes: SharedRoutes = buildSharedRoutes(services);
   registerIpcHandlers(services, routes);
   // Each Orbit Web browser gets its own service, so its dictation never touches the desktop window's or another's.
-  await startRemoteAccess(routes, (): DictationEngine => new DictationService(), false);
+  await startRemoteAccess(routes, (): DictationEngine => new DictationService(), { clipboard: new WaylandClipboard(), notifyPhoneCopy: showCopiedFromPhoneNotification }, false);
   startAutoApprover();
   startPermissionAutoAllower(radar);
   createRadarWindow();

@@ -4,6 +4,7 @@ import { createRadarWindow } from '../main/window';
 import { startRemoteAccess } from '../main/remote/start-remote';
 import type { DictationEngine } from '../main/remote/dictation/dictation-engine';
 import { DemoDictationEngine } from './demo-dictation';
+import { MemoryClipboard } from './demo-clipboard';
 import { registerDemoIpcHandlers } from './demo-ipc';
 import { DEMO_ROUTES } from './demo-routes';
 
@@ -17,6 +18,7 @@ export async function startDemo(): Promise<void> {
   await app.whenReady();
   registerDemoIpcHandlers();
   // Orbit Web serves the same made-up data, so the web app can be shown without real chats.
-  await startRemoteAccess(DEMO_ROUTES, (): DictationEngine => new DemoDictationEngine(), true);
+  // The phone's clipboard Shortcuts share a clipboard in memory, so the demo never reads or replaces the desktop's.
+  await startRemoteAccess(DEMO_ROUTES, (): DictationEngine => new DemoDictationEngine(), { clipboard: new MemoryClipboard(), notifyPhoneCopy: (): void => undefined }, true);
   createRadarWindow();
 }

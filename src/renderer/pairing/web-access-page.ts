@@ -3,22 +3,33 @@ import { element } from '../dom';
 import { fetchThisDevice, signOutThisDevice } from './device-session';
 import { PAIRING_FAILED_NOTE, renderOffer } from './pairing-offer-view';
 import { requestPairingOffer } from './pairing-request';
+import { requestShortcutsToken } from './shortcuts-token-request';
+import { renderShortcutsToken, SHORTCUTS_TOKEN_FAILED_NOTE } from './shortcuts-token-view';
 
 // Signing out takes a second press within this long, so one stray tap does not end the session.
 const ARM_MS: number = 4000;
 const SIGN_OUT_LABEL: string = 'Sign out of this device';
 const SIGN_OUT_FAILED: string = 'The computer did not sign this device out. Restart Orbit on the computer, or sign it out from the desktop’s device list.';
 
-// Settings › Orbit Web in a browser: let another device in, and leave on this one. The token, the switch and the
-// device list stay on the desktop. One persistent element, so a code on screen survives the page's rebuild on every
-// poll, and a code is made only when asked for.
+// Settings › Orbit Web in a browser: let another device in, make the iPhone Shortcuts' clipboard token, and leave on
+// this one. The access token, the switch and the device list stay on the desktop. One persistent element, so a code or
+// token on screen survives the page's rebuild on every poll, and each is made only when asked for.
 export class WebAccessPage {
   readonly root: HTMLElement = element('section', 'settings-section web-access');
   private readonly thisDevice: HTMLParagraphElement = element('p', 'settings-lead', 'This browser is signed in to Orbit.');
   private readonly offer: HTMLDivElement = element('div', 'web-access-offer');
+  private readonly shortcutsToken: HTMLDivElement = element('div', 'web-access-shortcuts');
 
   constructor() {
-    this.root.append(element('h2', 'settings-heading', 'Orbit Web'), this.thisDevice, this.renderConnect(), this.offer, this.renderSignOut());
+    this.root.append(
+      element('h2', 'settings-heading', 'Orbit Web'),
+      this.thisDevice,
+      this.renderConnect(),
+      this.offer,
+      this.renderShortcuts(),
+      this.shortcutsToken,
+      this.renderSignOut(),
+    );
     void fetchThisDevice().then((device: RemoteDevice | null): void => {
       if (device !== null) this.thisDevice.textContent = `This device: ${device.name}, signed in ${new Date(device.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}.`;
     });
@@ -45,6 +56,30 @@ export class WebAccessPage {
     this.offer.replaceChildren(element('p', 'settings-note', 'Making a code…'));
     const offer: PairingOffer | null = await requestPairingOffer();
     this.offer.replaceChildren(...(offer === null ? [element('p', 'settings-note remote-error', PAIRING_FAILED_NOTE)] : renderOffer(offer)));
+    button.disabled = false;
+  }
+
+  private renderShortcuts(): HTMLElement {
+    const group: HTMLDivElement = element('div', 'settings-group');
+    const row: HTMLDivElement = element('div', 'settings-row remote-row');
+    const text: HTMLDivElement = element('div', 'remote-device-text');
+    text.append(
+      element('span', 'remote-device-name', 'iPhone Shortcuts'),
+      element('span', 'remote-device-detail', 'A token for the Back Tap Shortcuts that share the clipboard with the computer. It reaches the clipboard only, and a new one stops the last.'),
+    );
+    const make: HTMLButtonElement = element('button', 'button', 'New token');
+    make.type = 'button';
+    make.addEventListener('click', (): void => void this.showShortcutsToken(make));
+    row.append(text, make);
+    group.append(row);
+    return group;
+  }
+
+  private async showShortcutsToken(button: HTMLButtonElement): Promise<void> {
+    button.disabled = true;
+    this.shortcutsToken.replaceChildren(element('p', 'settings-note', 'Making a token…'));
+    const token: string | null = await requestShortcutsToken();
+    this.shortcutsToken.replaceChildren(...(token === null ? [element('p', 'settings-note remote-error', SHORTCUTS_TOKEN_FAILED_NOTE)] : renderShortcutsToken(token)));
     button.disabled = false;
   }
 

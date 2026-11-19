@@ -1,11 +1,20 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { REMOTE_API_PREFIX, REMOTE_DEVICE_PATH, REMOTE_PAIRING_PATH, REMOTE_SESSION_PATH } from '../../shared/remote-settings';
+import {
+  REMOTE_API_PREFIX,
+  REMOTE_CLIPBOARD_PATH,
+  REMOTE_DEVICE_PATH,
+  REMOTE_PAIRING_PATH,
+  REMOTE_SESSION_PATH,
+  REMOTE_SHORTCUTS_TOKEN_PATH,
+} from '../../shared/remote-settings';
 import { handleApiCall } from './api-call';
+import { handleClipboard } from './clipboard-route';
 import { handleDevice } from './device-route';
 import { applySecurityHeaders, sendError } from './http-io';
 import type { RemoteContext, RemoteCredentials } from './remote-context';
 import { handlePairingOffer } from './pairing-offer';
 import { handleSession } from './sign-in';
+import { handleShortcutsToken } from './shortcuts-token-route';
 import { serveStatic } from './static-files';
 import { isTrustedHost, isTrustedOrigin } from './trusted-origins';
 
@@ -19,14 +28,18 @@ export function requestPath(request: IncomingMessage): string {
 }
 
 // Host first (DNS rebinding), then Origin (CSRF): writes must come from Orbit Web's own page. No CORS headers exist,
-// so no other site can read an answer either.
+// so no other site can read an answer either. The clipboard skips the Origin check only when none is sent: an iPhone
+// Shortcut sends none, and the Bearer header it needs is one no browser adds on its own.
 export async function handleRequest(request: IncomingMessage, response: ServerResponse, context: RemoteContext): Promise<void> {
   const credentials: RemoteCredentials = context.credentials();
   applySecurityHeaders(response, credentials.trusted);
   if (!isTrustedHost(credentials.trusted, request.headers.host)) return sendError(response, 421, 'Unknown host');
+  const path: string = requestPath(request);
+  if (path === REMOTE_CLIPBOARD_PATH && request.headers.origin === undefined) return handleClipboard(request, response, context);
   if (!isAllowedOrigin(request, credentials)) return sendError(response, 403, 'Cross-origin request refused');
   context.legacy.upgrade(request, response, credentials, context.now());
-  const path: string = requestPath(request);
+  if (path === REMOTE_CLIPBOARD_PATH) return handleClipboard(request, response, context);
+  if (path === REMOTE_SHORTCUTS_TOKEN_PATH) return handleShortcutsToken(request, response, context);
   if (path === REMOTE_DEVICE_PATH) return handleDevice(request, response, context);
   if (path === REMOTE_SESSION_PATH) return handleSession(request, response, context);
   if (path === REMOTE_PAIRING_PATH) return handlePairingOffer(request, response, context);

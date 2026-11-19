@@ -7,13 +7,26 @@ import { RemoteConfigStore, remoteConfigDir } from './remote-config';
 import type { RemoteRoutes } from './remote-context';
 import { RemoteController } from './remote-controller';
 import { registerRemoteSettingsHandlers } from './remote-ipc';
+import type { PcClipboard } from '../shared-clipboard/pc-clipboard';
+
+// The clipboard the iPhone's Shortcuts share, and the desktop notice after a copy from the phone: the real ones, or
+// the demo's, which never touch the desktop.
+export interface SharedClipboardHost {
+  readonly clipboard: PcClipboard;
+  readonly notifyPhoneCopy: () => void;
+}
 
 // build.mjs writes the web app next to main.js.
 const WEB_ROOT: string = join(__dirname, 'web');
 
 // demo: the demo keeps Orbit Web's config (and token) inside its own profile, away from the real one.
 // dictation: the engine each browser's dictation socket drives, the real voice service or the demo's silent one.
-export async function startRemoteAccess(routes: RemoteRoutes, dictation: DictationEngineFactory, demo: boolean): Promise<RemoteController> {
+export async function startRemoteAccess(
+  routes: RemoteRoutes,
+  dictation: DictationEngineFactory,
+  sharedClipboard: SharedClipboardHost,
+  demo: boolean,
+): Promise<RemoteController> {
   const dir: string = remoteConfigDir(process.env, homedir(), demo ? app.getPath('userData') : null);
   const log = (line: string): void => console.log(line);
   const controller: RemoteController = new RemoteController({
@@ -22,6 +35,8 @@ export async function startRemoteAccess(routes: RemoteRoutes, dictation: Dictati
     routes,
     webRoot: WEB_ROOT,
     dictation,
+    clipboard: sharedClipboard.clipboard,
+    notifyPhoneCopy: sharedClipboard.notifyPhoneCopy,
     log,
   });
   registerRemoteSettingsHandlers(controller);

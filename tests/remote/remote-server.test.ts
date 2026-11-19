@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { MemoryClipboard } from '../../src/demo/demo-clipboard';
 import { generateToken, sessionValueFor } from '../../src/main/remote/access-token';
 import { DeviceSessions } from '../../src/main/remote/device-sessions';
 import { LegacySessions } from '../../src/main/remote/legacy-session';
@@ -85,6 +86,8 @@ beforeAll(async () => {
     pairing: new PairingCodes(),
     legacy: new LegacySessions(),
     dictation: () => new DemoDictationEngine(),
+    clipboard: new MemoryClipboard(),
+    notifyPhoneCopy: (): void => undefined,
     now: (): number => Date.now(),
     log: (line: string): void => void logLines.push(line),
   });
