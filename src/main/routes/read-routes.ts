@@ -19,8 +19,6 @@ import type { BoardState } from '../../shared/board-state';
 import type { ComputerStatus } from '../../shared/computer';
 import type { RouteServices } from './route-services';
 import { textArg } from './route-args';
-import type { TypingTarget } from '../../shared/remote-typing';
-import { typingTarget } from '../remote-typing/typing-target';
 import { NO_DEVICES } from '../devices/chat-devices';
 
 type ReadChannel = { [K in RemoteChannel]: (typeof REMOTE_ACCESS)[K] extends 'read' ? K : never }[RemoteChannel];
@@ -56,7 +54,6 @@ export function readRoutes({ radar, usage, pastChats, timelineHistory, resources
     GetComputerStatus: (): Promise<ComputerStatus> => computer.status(),
     GetShutdownPlan: (): Promise<ShutdownPlanState> => shutdown.state(),
     GetNightShutdown: (): Promise<NightShutdownState> => nightShutdownState(),
-    GetTypingTarget: (): Promise<TypingTarget> => typingTarget(),
     GetChatDevices: (sessionId: unknown): Promise<ChatDevices> =>
       isSessionId(sessionId) ? devices.devicesOf(sessionId) : Promise.resolve(NO_DEVICES),
   };

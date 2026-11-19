@@ -1989,14 +1989,15 @@ body.is-dragging-row, body.is-dragging-row * { cursor: grabbing !important; }
   flex: none; padding: 3px 10px; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
   background: var(--accent); color: var(--on-accent);
 }
-/* A chat's request_typing: one full-width input per field, each under its label so it fits a phone; the buttons keep
-   their size below them, and where the text lands sits under the title */
+/* A chat's request_typing: one input per field, each under its label so it fits a phone, with its own Copy button
+   beside it; a copied field keeps its row, struck through, so the user sees what is left */
 .typing-fields { display: flex; flex-direction: column; gap: 6px; }
 .typing-row { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .typing-row-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--secondary); }
 .typing-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .typing-field { width: 100%; box-sizing: border-box; min-width: 0; padding: 6px 10px; border: 0; border-radius: 7px; background: var(--control); color: var(--text); font: inherit; box-shadow: 0 0 0 0.5px var(--control-border); }
-.typing-enter { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); }
 .typing-decline { margin-left: auto; }
-.typing-target { display: block; font-size: 12px; color: var(--secondary); }
-.typing-target.is-refused { color: var(--danger, #e5484d); }
+.typing-hint { display: block; font-size: 12px; color: var(--secondary); }
+.typing-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.typing-line .typing-field { flex: 1; }
+.typing-row.is-done .typing-row-label { text-decoration: line-through; }

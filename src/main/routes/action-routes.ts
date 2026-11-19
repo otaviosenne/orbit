@@ -25,8 +25,8 @@ import { isSessionId } from '../../shared/session-id';
 import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, textArg } from './route-args';
 import { setNightShutdownStart } from '../night-shutdown/night-shutdown';
 import { answerTyping } from '../typing/typing-answerer';
-import type { TypingAnswer } from '../../shared/typing-request';
-import { parseTypingAnswer } from '../../shared/typing-request';
+import type { TypingAnswer } from '../../shared/typing-answer';
+import { parseTypingAnswer } from '../../shared/typing-answer';
 import type { RouteServices } from './route-services';
 
 type ActionChannel =

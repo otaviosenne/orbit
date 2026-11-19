@@ -9,17 +9,16 @@ export const TYPING_TOOL_NAME: string = 'request_typing';
 
 export const TYPING_TOOL = {
   name: TYPING_TOOL_NAME,
-  title: 'Ask the user to type secrets on the PC',
+  title: 'Ask the user for secrets through the PC clipboard',
   description:
-    'Ask the user to type things you must never see, such as a password, into browser fields on this PC. One ' +
-    `request can hold ${MIN_TYPING_FIELDS} to ${MAX_TYPING_FIELDS} fields (e.g. e-mail + password + security word, ` +
-    'or password + confirm password). Orbit pins a bar above this chat with one text input per field; the user ' +
-    'fills them (from the desktop or a phone) and Orbit types the values straight into the browser, in order, ' +
-    'pressing Tab between them, so the text never reaches you. First click the FIRST field in the browser so it has ' +
-    'the keyboard focus; the fields must follow each other in the page\'s Tab order, in the order you list them. ' +
-    'Orbit presses Enter after the last one only if the user asks for it. Orbit types only into a browser window. ' +
-    'After calling it, end your turn right away: the user\'s next message lists which fields were typed (never the ' +
-    'values) or says the user declined.',
+    'Ask the user for things you must never see, such as a password, to put into fields on this PC (a browser ' +
+    `sign-in, say). One request can hold ${MIN_TYPING_FIELDS} to ${MAX_TYPING_FIELDS} fields (e.g. e-mail + password ` +
+    '+ security word, or password + confirm password). Orbit pins a bar above this chat with one text input and one ' +
+    'Copy button per field; the user fills a field (from the desktop or a phone) and copies it, and Orbit puts that ' +
+    'value on the PC\'s clipboard, kept out of the clipboard history and wiped after a short while, so the text never ' +
+    'reaches you. Each copy arrives as the user\'s next message, naming the field (never the value): then click that ' +
+    'field on the PC and press ctrl+v to paste it, and end your turn to wait for the next "Copied" message until every ' +
+    'field is done; the last one says so. The user may also decline. After calling it, end your turn right away.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -32,7 +31,7 @@ export const TYPING_TOOL = {
         type: 'array',
         minItems: MIN_TYPING_FIELDS,
         maxItems: MAX_TYPING_FIELDS,
-        description: 'The fields to type, in the page\'s Tab order starting at the focused one.',
+        description: 'The fields the user copies, in the order the page asks for them.',
         items: {
           type: 'object',
           properties: {
@@ -53,11 +52,11 @@ export const TYPING_TOOL = {
 } as const;
 
 const SHOWN: string =
-  'Shown in Orbit above this chat. Keep the first field focused and end your turn now without doing anything else; ' +
-  'the user\'s next message says whether it was typed. Also say in one line, in your reply, that Orbit is waiting ' +
-  'for the user to type it.';
+  'Shown in Orbit above this chat. End your turn now without doing anything else; the user\'s next message says ' +
+  'which field is on the clipboard for you to paste with ctrl+v, or that the user declined. Also say in one line, in ' +
+  'your reply, that Orbit is waiting for the user to copy it.';
 
-const NO_FIELDS: string = `Give ${MIN_TYPING_FIELDS} to ${MAX_TYPING_FIELDS} fields, each with a label saying what to type`;
+const NO_FIELDS: string = `Give ${MIN_TYPING_FIELDS} to ${MAX_TYPING_FIELDS} fields, each with a label saying what goes in it`;
 
 export async function requestTyping(args: ToolArgs, chatPid: number, now: number = Date.now(), sessionId: string | null = currentSessionId()): Promise<ToolResult> {
   // Only "fields" counts here: the one-label shape is read back only from files an older server wrote.

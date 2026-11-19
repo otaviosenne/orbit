@@ -1,6 +1,5 @@
 import type { NightShutdownState } from '../shared/night-shutdown';
-import type { TypingTarget } from '../shared/remote-typing';
-import type { TypingAnswer } from '../shared/typing-request';
+import type { TypingAnswer } from '../shared/typing-answer';
 import type { ShutdownPlan, ShutdownPlanState } from '../shared/shutdown-plan';
 import type { ApprovalAnswer } from '../shared/approval';
 import type { AskAnswer } from '../shared/ask';
@@ -137,7 +136,6 @@ const api: RadarApi = {
   cancelShutdownPlan: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.CancelShutdownPlan),
   getNightShutdown: (): Promise<NightShutdownState> => ipcRenderer.invoke(IpcChannel.GetNightShutdown),
   setNightShutdownStart: (hour: number): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetNightShutdownStart, hour),
-  getTypingTarget: (): Promise<TypingTarget> => ipcRenderer.invoke(IpcChannel.GetTypingTarget),
   shutDownSafely: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ShutDownSafely),
   getBoardState: (knownVersion: number | null): Promise<BoardState | null> => ipcRenderer.invoke(IpcChannel.GetBoardState, knownVersion),
   setBoardState: (key: string, value: string): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.SetBoardState, key, value),

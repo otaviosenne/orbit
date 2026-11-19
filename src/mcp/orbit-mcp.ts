@@ -7,7 +7,7 @@ import type { ToolArgs, ToolResult } from './tool-result';
 
 // Orbit's MCP server: the tools a Claude Code chat calls to reach Orbit. Registered at user scope as "orbit",
 // started by each chat as `node dist/orbit-mcp.js`, so its parent process is the chat itself.
-const SERVER_INFO = { name: 'orbit', version: '1.2.0' } as const;
+const SERVER_INFO = { name: 'orbit', version: '1.3.0' } as const;
 const FALLBACK_PROTOCOL: string = '2025-06-18';
 
 type ToolRunner = (args: ToolArgs, chatPid: number) => Promise<ToolResult>;

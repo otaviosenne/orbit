@@ -103,10 +103,9 @@ export class ChatSheet {
     discuss: (): void => this.composer.focus(),
     report: (result: ActionResult, successText: string): void => this.report(result, successText),
   });
-  // Something the chat asked the user to type on the PC (a password), pinned until typed or declined.
+  // Secrets the chat asked the user to copy to the PC clipboard (a password), pinned until all copied or declined.
   private readonly typing: TypingBar = new TypingBar(requireElement('#typing-bar'), {
     answer: (pid, answer) => window.radar.answerTyping(pid, answer),
-    target: () => window.radar.getTypingTarget(),
     report: (result: ActionResult, successText: string): void => this.report(result, successText),
   });
   private readonly localCi: LocalCiBar = new LocalCiBar(requireElement('#local-ci-bar'));

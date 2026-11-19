@@ -106,7 +106,6 @@ export const REMOTE_ACCESS = {
   GetNightShutdown: 'read',
   SetNightShutdownStart: 'action',
   // Where a chat's request_typing would land: the focused window, accepted only when it is a browser.
-  GetTypingTarget: 'read',
   GetBoardState: 'read',
   // Only the shared board keys, and only text: the store refuses anything else.
   SetBoardState: 'action',
