@@ -47,6 +47,8 @@ export interface PairingOffer {
 // GET reads the PC clipboard as plain text, POST puts text on it: what the iPhone's Back Tap Shortcuts call, signed
 // in with a Shortcuts credential sent as "Authorization: Bearer <token>", never a browser cookie.
 export const REMOTE_CLIPBOARD_PATH: string = '/api/clipboard';
+// One Shortcut call that trades the two clipboards: the phone's goes to the PC, the PC's comes back.
+export const REMOTE_CLIPBOARD_SWAP_PATH: string = '/api/clipboard/swap';
 // POST from a signed-in browser: a new Shortcuts credential, retiring the last one.
 export const REMOTE_SHORTCUTS_TOKEN_PATH: string = '/api/shortcuts-token';
 

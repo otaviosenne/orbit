@@ -1,16 +1,16 @@
-import { REMOTE_CLIPBOARD_PATH } from '../../shared/remote-settings';
+import { REMOTE_CLIPBOARD_SWAP_PATH } from '../../shared/remote-settings';
 import { copyText } from '../clipboard';
 import { element } from '../dom';
 import { showToast } from '../toast';
 
 export const SHORTCUTS_TOKEN_FAILED_NOTE: string = 'Could not make a token. Check that this page is still signed in, then try again.';
 
-// The address and token the two Back Tap Shortcuts need. Copying is its own press: a phone refuses a copy that
+// The address and token the Back Tap Shortcut needs. Copying is its own press: a phone refuses a copy that
 // comes after the wait for the computer's answer.
 export function renderShortcutsToken(token: string): HTMLElement[] {
-  const address: string = `${window.location.origin}${REMOTE_CLIPBOARD_PATH}`;
+  const address: string = `${window.location.origin}${REMOTE_CLIPBOARD_SWAP_PATH}`;
   return [
-    element('p', 'dialog-note', 'In both Shortcuts, Get Contents of URL with this address and the header Authorization: Bearer followed by the token. GET brings the PC clipboard here; POST with JSON {"text": Clipboard} sends this one there. Making another token stops this one.'),
+    element('p', 'dialog-note', 'In the Shortcut, Get Contents of URL with this address, method POST, the header Authorization: Bearer followed by the token, and Request Body File = Clipboard: this clipboard goes to the PC and the PC one comes back. Making another token stops this one.'),
     copyRow('Address', address, 'Copied the clipboard address'),
     copyRow('Token', token, 'Copied the Shortcuts token'),
   ];

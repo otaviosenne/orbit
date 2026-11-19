@@ -226,6 +226,52 @@ describe('POST /api/clipboard', () => {
   });
 });
 
+const SWAP_PATH: string = '/api/clipboard/swap';
+
+describe('POST /api/clipboard/swap', () => {
+  it('trades the clipboards: the phone text lands on the PC and the PC text comes back', async () => {
+    const before: number = notified;
+    const reply: Reply = await call('POST', SWAP_PATH, { ...bearer(), 'content-type': 'text/plain' }, PHONE_TEXT);
+    expect(reply.status).toBe(200);
+    expect(reply.body).toBe('on the PC');
+    expect(await clipboard.read()).toEqual({ kind: 'text', text: PHONE_TEXT });
+    expect(notified).toBe(before + 1);
+  });
+
+  it('trades images both ways, byte for byte', async () => {
+    const pcImage: Buffer = Buffer.concat([PNG_BYTES, Buffer.from('pc')]);
+    clipboard.hold({ kind: 'image', mimeType: 'image/png', bytes: pcImage });
+    const reply: Reply = await call('POST', SWAP_PATH, { ...bearer(), 'content-type': 'application/octet-stream' }, PNG_BYTES);
+    expect(reply.headers['content-type']).toBe('image/png');
+    expect(reply.bytes.equals(pcImage)).toBe(true);
+    const read = await clipboard.read();
+    expect(read.kind === 'image' && read.bytes.equals(PNG_BYTES)).toBe(true);
+  });
+
+  it('leaves the PC clipboard alone when the phone one is empty, and still sends the PC one', async () => {
+    const before: number = notified;
+    const reply: Reply = await call('POST', SWAP_PATH, bearer(), '');
+    expect(reply.body).toBe('on the PC');
+    expect(await clipboard.read()).toEqual({ kind: 'text', text: 'on the PC' });
+    expect(notified).toBe(before);
+  });
+
+  it('sends nothing back when the PC has nothing to give, a secret included', async () => {
+    for (const held of [{ kind: 'empty' }, { kind: 'secret' }] as const) {
+      clipboard.hold(held);
+      const reply: Reply = await call('POST', SWAP_PATH, bearer(), PHONE_TEXT);
+      expect(reply.status).toBe(204);
+      expect(reply.bytes.length).toBe(0);
+    }
+  });
+
+  it('needs the Shortcuts token and POST', async () => {
+    expect((await call('POST', SWAP_PATH, bearer('forged.value'), PHONE_TEXT)).status).toBe(401);
+    expect((await call('GET', SWAP_PATH, bearer())).status).toBe(405);
+    expect(await clipboard.read()).toEqual({ kind: 'text', text: 'on the PC' });
+  });
+});
+
 describe('Wrong Shortcuts tokens', () => {
   it('lock the clipboard like failed sign-ins do', async () => {
     const maxFailures: number = 2;

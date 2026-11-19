@@ -1,14 +1,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   REMOTE_API_PREFIX,
-  REMOTE_CLIPBOARD_PATH,
   REMOTE_DEVICE_PATH,
   REMOTE_PAIRING_PATH,
   REMOTE_SESSION_PATH,
   REMOTE_SHORTCUTS_TOKEN_PATH,
 } from '../../shared/remote-settings';
 import { handleApiCall } from './api-call';
-import { handleClipboard } from './clipboard-route';
+import { handleClipboard, isClipboardPath } from './clipboard-route';
 import { handleDevice } from './device-route';
 import { applySecurityHeaders, sendError } from './http-io';
 import type { RemoteContext, RemoteCredentials } from './remote-context';
@@ -35,10 +34,10 @@ export async function handleRequest(request: IncomingMessage, response: ServerRe
   applySecurityHeaders(response, credentials.trusted);
   if (!isTrustedHost(credentials.trusted, request.headers.host)) return sendError(response, 421, 'Unknown host');
   const path: string = requestPath(request);
-  if (path === REMOTE_CLIPBOARD_PATH && request.headers.origin === undefined) return handleClipboard(request, response, context);
+  if (isClipboardPath(path) && request.headers.origin === undefined) return handleClipboard(request, response, context, path);
   if (!isAllowedOrigin(request, credentials)) return sendError(response, 403, 'Cross-origin request refused');
   context.legacy.upgrade(request, response, credentials, context.now());
-  if (path === REMOTE_CLIPBOARD_PATH) return handleClipboard(request, response, context);
+  if (isClipboardPath(path)) return handleClipboard(request, response, context, path);
   if (path === REMOTE_SHORTCUTS_TOKEN_PATH) return handleShortcutsToken(request, response, context);
   if (path === REMOTE_DEVICE_PATH) return handleDevice(request, response, context);
   if (path === REMOTE_SESSION_PATH) return handleSession(request, response, context);
