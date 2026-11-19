@@ -123,7 +123,7 @@ describe('ClosedChats', () => {
   }
 
   it('lists a chat left open by a shutdown in its column, unless it is open, pinned or suspended', () => {
-    const left: LeftOpenChat[] = ['a', 'b', 'c', 'd'].map((id: string): LeftOpenChat => ({ chat: chat(id, 0), column: 'busy' }));
+    const left: LeftOpenChat[] = ['a', 'b', 'c', 'd'].map((id: string): LeftOpenChat => ({ chat: chat(id, 0), column: 'busy', hasUnread: false }));
     const { closed, pins, suspended } = setUp([chat('a', 1)], left);
     pins.toggle('b');
     suspended.add(chat('c', 1), 5);

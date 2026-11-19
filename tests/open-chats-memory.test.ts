@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FORGET_AFTER_MISSING_MS, OpenChatsMemory } from '../src/renderer/restore/open-chats-memory';
+import { toLeftOpenChat } from '../src/renderer/suspend/closed-chats';
 import type { ChatSnapshot } from '../src/shared/types';
 
 const NOW: number = 1_000_000;
@@ -98,5 +99,42 @@ describe('OpenChatsMemory cut mid-work', () => {
     memory.observe([{ ...chat('a'), status: 'busy' }], columnOf, NOW);
     memory.observe([chat('a')], columnOf, NOW + 1);
     expect(memory.wasCutMidWork('a')).toBe(false);
+  });
+});
+
+describe('OpenChatsMemory unread', () => {
+  const unread = (...ids: string[]) => (candidate: ChatSnapshot): boolean => ids.includes(candidate.sessionId);
+
+  it('keeps a chat unread across a restart when it still had a dot at the last look', () => {
+    new OpenChatsMemory(true).observe([chat('a'), chat('b')], columnOf, NOW, unread('a'));
+    const restarted: OpenChatsMemory = new OpenChatsMemory(true);
+    expect(restarted.closed([]).map((remembered) => remembered.isUnread)).toEqual([true, false]);
+    expect(toLeftOpenChat(restarted.closed([])[0]).hasUnread).toBe(true);
+  });
+
+  it('follows the dot while the chat is open, so one read before the shutdown comes back read', () => {
+    const memory: OpenChatsMemory = new OpenChatsMemory(true);
+    memory.observe([chat('a')], columnOf, NOW, unread('a'));
+    memory.observe([chat('a')], columnOf, NOW + 1, unread());
+    expect(new OpenChatsMemory(true).closed([])[0].isUnread).toBe(false);
+  });
+
+  it('reads a closed chat once, across a restart', () => {
+    new OpenChatsMemory(true).observe([chat('a')], columnOf, NOW, unread('a'));
+    new OpenChatsMemory(true).markRead('a');
+    expect(new OpenChatsMemory(true).closed([])[0].isUnread).toBe(false);
+  });
+
+  it('reads it from Orbit Web too, which only mirrors the list', () => {
+    new OpenChatsMemory(true).observe([chat('a')], columnOf, NOW, unread('a'));
+    const mirror: OpenChatsMemory = new OpenChatsMemory(false);
+    expect(toLeftOpenChat(mirror.closed([])[0]).hasUnread).toBe(true);
+    mirror.markRead('a');
+    expect(new OpenChatsMemory(true).closed([])[0].isUnread).toBe(false);
+  });
+
+  it('loads a list saved before the flag existed as read', () => {
+    store.set('orbit.open-chats', JSON.stringify([{ sessionId: 'a', column: 'needs', info: { name: 'chat a', color: null, repositoryName: 'acme', repositoryRoot: '/code/acme', cwd: '/code/acme', lastReplyAt: 1 } }]));
+    expect(toLeftOpenChat(new OpenChatsMemory(true).closed([])[0]).hasUnread).toBe(false);
   });
 });

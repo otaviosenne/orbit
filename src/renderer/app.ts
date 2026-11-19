@@ -29,8 +29,8 @@ import { serverMenu } from './servers/server-menu';
 import { copyDeviceAddress } from './board/device-copy';
 import type { RestingColumn } from './views/board-columns';
 import { resumedChatTarget } from './launch-watch';
-import { OpenChatsMemory, type RememberedChat } from './restore/open-chats-memory';
-import type { LeftOpenChat } from './suspend/closed-chats';
+import { OpenChatsMemory } from './restore/open-chats-memory';
+import { toLeftOpenChat, type LeftOpenChat } from './suspend/closed-chats';
 import { PinnedInfoStore } from './board/pinned-info';
 import { installTooltips } from './tooltip';
 import { attachAppMenu } from './app-menu';
@@ -56,6 +56,7 @@ import { PendingEdits } from './pending-edits';
 import { ChatSheet } from './sheet/chat-sheet';
 import { loadThread } from './sheet/thread-loader';
 import { SeenTracker } from './seen-tracker';
+import { dotKindOf } from './unseen-dot';
 import { BoardSync } from './board/board-sync';
 import type { ThemePreference } from './theme';
 import { applyTheme, isThemePreference, loadTheme, saveTheme } from './theme';
@@ -307,7 +308,12 @@ function knownSessionIds(): Set<string> {
 // The desktop keeps this list and forgets a chat closed while it watches; Orbit Web shows the desktop's copy, so the
 // phone gets the same Closed cards after a shutdown without judging closings it slept through.
 function leftOpenChats(): LeftOpenChat[] {
-  return openChats.closed(chats).map((entry: RememberedChat): LeftOpenChat => ({ chat: closedChatSnapshot(entry.sessionId, entry.info), column: entry.column }));
+  return openChats.closed(chats).map(toLeftOpenChat);
+}
+
+// Whether the chat's card shows a dot now: what its Closed card keeps after a shutdown.
+function hasDot(chat: ChatSnapshot): boolean {
+  return dotKindOf(chat, seen.hasUnreadReply(chat)) !== null;
 }
 
 async function refreshChats(): Promise<void> {
@@ -316,7 +322,7 @@ async function refreshChats(): Promise<void> {
   closing.settle(polledChats, Date.now());
   suspension.settle(polledChats, Date.now());
   showChats();
-  openChats.observe(chats, columnOfChat, Date.now());
+  openChats.observe(chats, columnOfChat, Date.now(), hasDot);
   chatPause.settle(chats, Date.now());
   closedEmulators.settle((sessionId: string): boolean => boardDevices.devicesOf(sessionId).emulator !== null, Date.now());
   chatPause.prune(knownSessionIds());
@@ -567,6 +573,8 @@ function openSheet(sessionId: string): void {
   const closed: ClosedChat | undefined = chat === undefined ? closedChats.find(sessionId) : undefined;
   if (closed !== undefined) {
     sheet.openClosed(closed.chat, closedCardLabel(closed.kind));
+    // Opening it reads it, as with an open chat; the seen mark keeps it read if it is reopened.
+    if (closed.kind === 'left-open') readLeftOpen(closed.chat, Date.now());
     renderView();
     void refreshSheet();
     return;
@@ -576,6 +584,11 @@ function openSheet(sessionId: string): void {
   trackViewing(Date.now());
   renderView();
   void refreshSheet();
+}
+
+function readLeftOpen(chat: ChatSnapshot, now: number): void {
+  openChats.markRead(chat.sessionId);
+  seen.markSeen(chat.sessionId, Math.max(now, chat.lastReplyAt ?? 0));
 }
 
 // Voice "chat N": the panel opens on the chat with its composer ready for the words that follow. The Panel has no side

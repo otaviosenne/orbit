@@ -3,6 +3,8 @@ import type { PinnedChats } from '../board/pinned-chats';
 import type { PinnedInfoStore } from '../board/pinned-info';
 import type { ColumnKey } from '../views/board-columns';
 import type { ClosedCardKind } from '../views/closed-card';
+import { closedChatSnapshot } from '../board/closed-chat-info';
+import type { RememberedChat } from '../restore/open-chats-memory';
 
 // What the lookup needs to know about suspended chats.
 export interface SuspendedLookup {
@@ -20,6 +22,12 @@ export interface ClosedChat {
 export interface LeftOpenChat {
   readonly chat: ChatSnapshot;
   readonly column: ColumnKey;
+  // It still had a dot when the shutdown came, so its Closed card keeps the green one until it is opened.
+  readonly hasUnread: boolean;
+}
+
+export function toLeftOpenChat(entry: RememberedChat): LeftOpenChat {
+  return { chat: closedChatSnapshot(entry.sessionId, entry.info), column: entry.column, hasUnread: entry.isUnread === true };
 }
 
 // The board's closed chats: pinned ones in the Pinned row, suspended ones in Suspended. A chat both pinned and

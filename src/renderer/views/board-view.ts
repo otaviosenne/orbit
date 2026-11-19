@@ -109,7 +109,7 @@ function renderColumn(column: BoardColumn, marks: BoardMarks, now: number): HTML
   heading.append(element('span', `column-count${count > 0 ? ' has-items' : ''}`, String(count)));
   if (column.info !== null) heading.append(renderInfo(column.info));
   section.append(heading, ...marks.ordered(column.key, column.chats).map((chat: ChatSnapshot) => renderCard(chat, marks, now)));
-  section.append(...closed.map((entry: LeftOpenChat) => renderClosedCard(entry.chat, 'left-open', false)));
+  section.append(...closed.map((entry: LeftOpenChat) => renderClosedCard(entry.chat, 'left-open', false, entry.hasUnread)));
   return section;
 }
 
