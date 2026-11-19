@@ -2,18 +2,22 @@ import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { wlCopy } from '../wl-copy';
 import { parseTypeList } from './clipboard-types';
+import { PNG_MIME_TYPE } from './image-format';
+import { convertToPng } from './png-converter';
 
 // A list of MIME types is a few hundred bytes; anything longer is not one.
 const LIST_TYPES_LIMIT_BYTES: number = 64 * 1024;
 
 export type BoundedRead = { readonly kind: 'read'; readonly bytes: Buffer } | { readonly kind: 'too-large' } | { readonly kind: 'failed' };
 
-// The three wl-clipboard calls the shared clipboard needs, apart so tests can stand in for the desktop.
+// The wl-clipboard and ImageMagick calls the shared clipboard needs, apart so tests can stand in for the desktop.
 export interface WaylandCommands {
   // The MIME types on offer; empty when nothing is copied (wl-paste then exits non-zero).
   listTypes(): Promise<string[]>;
   readType(type: string, maxBytes: number): Promise<BoundedRead>;
   copy(text: string): Promise<void>;
+  copyPng(png: Buffer): Promise<void>;
+  convertToPng(image: Buffer): Promise<Buffer>;
 }
 
 export const WL_CLIPBOARD: WaylandCommands = {
@@ -23,6 +27,8 @@ export const WL_CLIPBOARD: WaylandCommands = {
   },
   readType: (type: string, maxBytes: number): Promise<BoundedRead> => runBounded(['--no-newline', '--type', type], maxBytes),
   copy: (text: string): Promise<void> => wlCopy(text),
+  copyPng: (png: Buffer): Promise<void> => wlCopy(png, ['--type', PNG_MIME_TYPE]),
+  convertToPng,
 };
 
 // wl-paste stops being read, and is killed, once it passes the limit: a huge copy is never held whole in memory.

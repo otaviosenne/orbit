@@ -21,6 +21,7 @@ interface Reply {
   readonly status: number;
   readonly headers: IncomingHttpHeaders;
   readonly body: string;
+  readonly bytes: Buffer;
 }
 
 const TOKEN: string = generateToken();
@@ -28,6 +29,8 @@ const TOKEN: string = generateToken();
 const GENEROUS_FAILURES: number = 1000;
 const CLIPBOARD_PATH: string = '/api/clipboard';
 const PHONE_TEXT: string = 'from the iPhone ✓';
+// A PNG signature followed by bytes that are invalid UTF-8, so a body read as text would not come back the same.
+const PNG_BYTES: Buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe, 0x00, 0xc3]);
 
 let server: Server;
 let port: number = 0;
@@ -39,12 +42,15 @@ let notified: number = 0;
 const clipboard: MemoryClipboard = new MemoryClipboard();
 const logLines: string[] = [];
 
-function call(method: string, path: string, headers: Readonly<Record<string, string>> = {}, body?: string, at: number = port): Promise<Reply> {
+function call(method: string, path: string, headers: Readonly<Record<string, string>> = {}, body?: string | Buffer, at: number = port): Promise<Reply> {
   return new Promise((resolve: (reply: Reply) => void, reject: (error: Error) => void): void => {
     const outgoing = request({ host: '127.0.0.1', port: at, method, path, headers: { host: `127.0.0.1:${at}`, ...headers } }, (response: IncomingMessage): void => {
       const chunks: Buffer[] = [];
       response.on('data', (chunk: Buffer): void => void chunks.push(chunk));
-      response.on('end', (): void => resolve({ status: response.statusCode ?? 0, headers: response.headers, body: Buffer.concat(chunks).toString('utf8') }));
+      response.on('end', (): void => {
+        const bytes: Buffer = Buffer.concat(chunks);
+        resolve({ status: response.statusCode ?? 0, headers: response.headers, body: bytes.toString('utf8'), bytes });
+      });
     });
     outgoing.on('error', reject);
     outgoing.end(body);
@@ -147,10 +153,18 @@ describe('GET /api/clipboard', () => {
     expect(reply.body).toContain('Orbit secret');
   });
 
-  it('answers empty for an empty clipboard and refuses an image or a huge copy', async () => {
+  it('sends an image as its own bytes and type', async () => {
+    clipboard.hold({ kind: 'image', mimeType: 'image/png', bytes: PNG_BYTES });
+    const reply: Reply = await call('GET', CLIPBOARD_PATH, bearer());
+    expect(reply.status).toBe(200);
+    expect(reply.headers['content-type']).toBe('image/png');
+    expect(reply.bytes.equals(PNG_BYTES)).toBe(true);
+  });
+
+  it('answers empty for an empty clipboard and refuses what it cannot share or a huge copy', async () => {
     clipboard.hold({ kind: 'empty' });
     expect((await call('GET', CLIPBOARD_PATH, bearer())).status).toBe(204);
-    clipboard.hold({ kind: 'not-text' });
+    clipboard.hold({ kind: 'unsupported' });
     expect((await call('GET', CLIPBOARD_PATH, bearer())).status).toBe(415);
     clipboard.hold({ kind: 'too-large' });
     expect((await call('GET', CLIPBOARD_PATH, bearer())).status).toBe(413);
@@ -182,6 +196,17 @@ describe('POST /api/clipboard', () => {
     expect(await clipboard.read()).toEqual({ kind: 'text', text: 'bare' });
   });
 
+  it('takes an image sent as a File body, byte for byte, and announces it', async () => {
+    const before: number = notified;
+    for (const type of ['image/png', 'application/octet-stream']) {
+      const reply: Reply = await call('POST', CLIPBOARD_PATH, { ...bearer(), 'content-type': type }, PNG_BYTES);
+      expect(reply.status).toBe(200);
+    }
+    const read = await clipboard.read();
+    expect(read.kind === 'image' && read.bytes.equals(PNG_BYTES)).toBe(true);
+    expect(notified).toBe(before + 2);
+  });
+
   it('leaves the clipboard alone for a wrong token, an empty or unusable body, or one over the limit', async () => {
     const before: number = notified;
     expect((await call('POST', CLIPBOARD_PATH, bearer('forged.value'), 'nope')).status).toBe(401);
@@ -189,7 +214,7 @@ describe('POST /api/clipboard', () => {
     expect((await call('POST', CLIPBOARD_PATH, { ...bearer(), 'content-type': 'application/json' }, '{"other":1}')).status).toBe(400);
     expect((await call('POST', CLIPBOARD_PATH, { ...bearer(), 'content-type': 'image/png' }, 'png')).status).toBe(415);
     const huge: string = 'x'.repeat(MAX_SHARED_TEXT_BYTES + 1);
-    expect([413, 0]).toContain((await call('POST', CLIPBOARD_PATH, bearer(), huge).catch((): Reply => ({ status: 0, headers: {}, body: '' }))).status);
+    expect([413, 0]).toContain((await call('POST', CLIPBOARD_PATH, bearer(), huge).catch((): Reply => ({ status: 0, headers: {}, body: '', bytes: Buffer.alloc(0) }))).status);
     expect(await clipboard.read()).toEqual({ kind: 'text', text: 'on the PC' });
     expect(notified).toBe(before);
   });
