@@ -520,8 +520,8 @@ export interface RadarApi {
   // Closed chats that were active since that time, for the timeline's "All" mode.
   getTimelineHistory(sinceMs: number): Promise<ClosedChatActivity[]>;
   // Reopens a listed past chat in a new terminal in the folder it was started in.
-  // afterCut: the chat was working when the machine went down, so it is told to carry on once it is back.
-  resumeChat(sessionId: string, afterCut?: boolean): Promise<ActionResult>;
+  // note: what the reopened chat is told first (cut midway by a shutdown, or paused and now told to continue).
+  resumeChat(sessionId: string, note?: ResumeNote | null): Promise<ActionResult>;
   // Opens a terminal running Claude Code's sign-in, for the user to finish in the browser.
   openSignIn(): Promise<ActionResult>;
   prepareDictation(): void;
@@ -631,3 +631,7 @@ export interface RadarApi {
   revokeRemoteDevice(id: string): Promise<RemoteSettings>;
   signOutRemoteDevices(): Promise<RemoteSettings>;
 }
+
+// Why a chat is reopened, when that changes its first message: 'cut' = it was working when the machine went down;
+// 'paused' = Pause all chats stopped it and Continue now reopens it.
+export type ResumeNote = 'cut' | 'paused';

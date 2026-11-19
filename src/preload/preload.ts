@@ -43,6 +43,7 @@ import type {
   TranscriptItem,
   TurnProgress,
   UsageSnapshot,
+  ResumeNote,
 } from '../shared/types';
 
 const api: RadarApi = {
@@ -64,7 +65,7 @@ const api: RadarApi = {
   listPastChats: (): Promise<PastChat[]> => ipcRenderer.invoke(IpcChannel.ListPastChats),
   getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => ipcRenderer.invoke(IpcChannel.GetTimelineHistory, sinceMs),
   openSignIn: (): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.OpenSignIn),
-  resumeChat: (sessionId: string, afterCut?: boolean): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ResumeChat, sessionId, afterCut === true),
+  resumeChat: (sessionId: string, note?: ResumeNote | null): Promise<ActionResult> => ipcRenderer.invoke(IpcChannel.ResumeChat, sessionId, note ?? null),
   prepareDictation: (): void => ipcRenderer.send(IpcChannel.DictationPrepare),
   startDictation: (): Promise<DictationStart> => ipcRenderer.invoke(IpcChannel.DictationStart),
   feedDictation: (session: number, pcm: Uint8Array): void => ipcRenderer.send(IpcChannel.DictationAudio, session, pcm),

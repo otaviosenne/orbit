@@ -29,6 +29,11 @@ export const SHUTDOWN_CONTINUE_MESSAGE: string =
   'Continue: you were paused so the computer could shut down, and it has been turned back on. Resume the work you paused, '
   + 'and restart anything you stopped (agents, background shells, dev servers) if it is still needed.';
 
+// Sent by Continue to a paused chat that was closed meanwhile (a reboot, most often), once it is reopened.
+export const PAUSED_REOPEN_MESSAGE: string =
+  'Continue: you were paused and then closed (the computer was most likely restarted), and you have just been reopened. '
+  + 'Resume the work you paused, and restart anything you stopped (agents, background shells, dev servers) if it is still needed.';
+
 // Sent to a chat that was working when the machine went down, once it is reopened.
 export const CUT_MESSAGE: string =
   'The computer was shut down while you were working, so your turn and every agent and background shell were cut off midway. '

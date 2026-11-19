@@ -1,4 +1,4 @@
-import type { AttachmentUpload, ContinueTarget, PauseTarget } from '../../shared/types';
+import type { AttachmentUpload, ContinueTarget, PauseTarget, ResumeNote } from '../../shared/types';
 
 // A chat is named by its Claude Code process id: always a positive whole number.
 export function isPid(value: unknown): value is number {
@@ -39,4 +39,10 @@ function isPauseTarget(value: unknown): value is PauseTarget {
   if (typeof value !== 'object' || value === null) return false;
   const candidate: Record<string, unknown> = value as Record<string, unknown>;
   return isPid(candidate['pid']) && typeof candidate['interrupt'] === 'boolean';
+}
+
+// An Orbit Web page loaded before the note existed still sends true for a cut chat.
+export function resumeNoteOf(value: unknown): ResumeNote | null {
+  if (value === 'cut' || value === true) return 'cut';
+  return value === 'paused' ? 'paused' : null;
 }

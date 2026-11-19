@@ -8,7 +8,7 @@ import { SUSPENDED_TOGGLE_SELECTOR } from './views/suspended-row';
 import { closedChatSnapshot } from './board/closed-chat-info';
 import { closedCardLabel } from './views/closed-card';
 import { CardPreview } from './board/card-preview';
-import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot, PastChat } from '../shared/types';
+import type { ActionResult, ChatDevices, ChatSnapshot, DeviceFocus, UsageSnapshot, PastChat, ResumeNote } from '../shared/types';
 import type { BoardColumn, ColumnKey } from './views/board-columns';
 import { toBoardColumns } from './views/board-columns';
 import { TIMELINE_AGENT_ATTRIBUTE } from './views/timeline-track';
@@ -152,7 +152,18 @@ const pinnedInfo: PinnedInfoStore = new PinnedInfoStore(!isWebHost());
 const restingPins: RestingPins = new RestingPins();
 const openChats: OpenChatsMemory = new OpenChatsMemory(!isWebHost());
 const closedEmulators: ClosedEmulators = new ClosedEmulators();
-const chatPause: ChatPause = new ChatPause((): readonly ChatSnapshot[] => chats, window.radar, Date.now, closedEmulators);
+const chatPause: ChatPause = new ChatPause(
+  (): readonly ChatSnapshot[] => chats,
+  window.radar,
+  Date.now,
+  closedEmulators,
+  (): string[] => openChats.closed(chats).map((chat: { readonly sessionId: string }) => chat.sessionId),
+  async (sessionId: string): Promise<boolean> => {
+    // The main process only resumes chats from its own latest list of past chats.
+    await window.radar.listPastChats();
+    return (await window.radar.resumeChat(sessionId, 'paused')).ok;
+  },
+);
 // Which chat used which emulator is noted just before they close, so Continue can ask each chat to open its own again.
 const pauseEmulators: EmulatorApi = {
   listOpenEmulators: (): Promise<string[]> => window.radar.listOpenEmulators(),
@@ -552,13 +563,18 @@ async function reopenClosed(sessionId: string): Promise<void> {
   if (chat === undefined) return;
   const launchedAt: number = Date.now();
   launches.expect(resumedChatTarget(sessionId, chat.name), launchedAt);
-  void resumeLaunched(sessionId, launchedAt, openChats.wasCutMidWork(sessionId));
+  void resumeLaunched(sessionId, launchedAt, resumeNoteFor(sessionId));
 }
 
-async function resumeLaunched(sessionId: string, launchedAt: number, afterCut: boolean): Promise<void> {
+// A chat reopened by hand while paused stays paused (Continue still counts it), so it is not told it was cut midway.
+function resumeNoteFor(sessionId: string): ResumeNote | null {
+  return !chatPause.isPaused(sessionId) && openChats.wasCutMidWork(sessionId) ? 'cut' : null;
+}
+
+async function resumeLaunched(sessionId: string, launchedAt: number, note: ResumeNote | null): Promise<void> {
   // The main process only resumes chats from its own latest list of past chats.
   await window.radar.listPastChats();
-  const result: ActionResult = await window.radar.resumeChat(sessionId, afterCut);
+  const result: ActionResult = await window.radar.resumeChat(sessionId, note);
   if (!result.ok) launches.fail(launchedAt, result.error ?? 'Could not reopen the chat.');
 }
 
@@ -832,7 +848,7 @@ const signInBadge: SignInBadge = new SignInBadge(signIn);
 const usageBadge: UsageBadge = new UsageBadge(showUsageSettings);
 requireElement('#resume-chat').before(usageBadge.root);
 requireElement('#resume-chat').before(signInBadge.root);
-const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat, (sessionId: string): boolean => openChats.wasCutMidWork(sessionId));
+const resumeButton: ResumeButton = new ResumeButton(requireElement('#resume-chat'), launches, peekPastChat, resumeNoteFor);
 const newChatButton: NewChatButton = new NewChatButton(requireElement('#new-chat'), launches);
 installShortcutDispatcher(
   appShortcutBindings({

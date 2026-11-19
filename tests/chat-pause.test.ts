@@ -186,4 +186,36 @@ describe('ChatPause settling', () => {
     expect(continueMessage(false, 'Pixel_6a')).toMatch(/^Orbit closed your Android emulator \(Pixel_6a\).*where it was\.$/);
     expect(continueMessage(true, 'Pixel_6a')).toMatch(/^Continue:.*Pixel_6a/);
   });
+
+  it('counts the paused chats a reboot left closed and reopens them on Continue, once', async () => {
+    const chats: ChatSnapshot[] = [chat('a', 1, 'busy'), chat('b', 2, 'busy')];
+    await new ChatPause(() => chats, api()).pauseAll();
+    // After the reboot nothing is open; both are remembered as left open.
+    const reopened: string[] = [];
+    const calls = api();
+    const pause: ChatPause = new ChatPause(() => [], calls, Date.now, new ClosedEmulators(), () => ['a', 'b', 'c'], (sessionId: string) => {
+      reopened.push(sessionId);
+      return Promise.resolve(sessionId === 'a');
+    });
+    expect(pause.pausedCount).toBe(2);
+    expect(pause.isPaused('a')).toBe(true);
+    await pause.continueAll();
+    expect(reopened).toEqual(['a', 'b']);
+    expect(calls.continued).toEqual([]);
+    // b failed to reopen, so it stays paused for the next Continue.
+    expect(pause.pausedCount).toBe(1);
+    expect(new ChatPause(() => [], api(), Date.now, new ClosedEmulators(), () => ['a', 'b']).pausedCount).toBe(1);
+  });
+
+  it('continues an open paused chat by message, not by reopening it', async () => {
+    const chats: ChatSnapshot[] = [chat('a', 1, 'busy')];
+    const calls = api();
+    const reopened: string[] = [];
+    const pause: ChatPause = new ChatPause(() => chats, calls, Date.now, new ClosedEmulators(), () => ['a'], (sessionId: string) => (reopened.push(sessionId), Promise.resolve(true)));
+    await pause.pauseAll();
+    expect(pause.pausedCount).toBe(1);
+    await pause.continueAll();
+    expect(calls.continued).toEqual([[1]]);
+    expect(reopened).toEqual([]);
+  });
 });

@@ -17,8 +17,11 @@ export interface PauseApi {
   continueChats(targets: readonly ContinueTarget[]): Promise<PauseReport>;
 }
 
+// Reopens a closed paused chat, telling it to continue once it is back; resolves whether it was relaunched.
+export type ReopenPaused = (sessionId: string) => Promise<boolean>;
+
 // The chats told to stop. They are remembered across restarts: a paused chat is still waiting for its go-ahead after a
-// reboot, so Continue reaches it once it is open again.
+// reboot, so Continue reaches it, reopening it first when the reboot left it closed.
 export class ChatPause {
   private paused: Map<string, PausedChat> = load();
 
@@ -27,11 +30,19 @@ export class ChatPause {
     private readonly api: PauseApi,
     private readonly clock: () => number = Date.now,
     private readonly emulators: ClosedEmulators = new ClosedEmulators(clock),
+    // The chats Orbit remembers as left open (closed by a shutdown) and the way to bring one back.
+    private readonly closedSessionIds: () => readonly string[] = (): string[] => [],
+    private readonly reopen: ReopenPaused = (): Promise<boolean> => Promise.resolve(false),
   ) {}
 
-  // The open chats Continue reaches: the paused ones and the ones whose emulator the pause closed.
+  // The chats Continue reaches: the open paused ones, the ones whose emulator the pause closed, and the paused ones a
+  // reboot left closed.
   get pausedCount(): number {
-    return this.pausedChats().length;
+    return this.pausedChats().length + this.closedPaused().length;
+  }
+
+  isPaused(sessionId: string): boolean {
+    return this.paused.has(sessionId);
   }
 
   async pauseAll(): Promise<void> {
@@ -43,12 +54,34 @@ export class ChatPause {
   }
 
   async continueAll(): Promise<void> {
+    await this.continueOpen();
+    await this.reopenClosed();
+  }
+
+  private async continueOpen(): Promise<void> {
     const waiting: ChatSnapshot[] = this.pausedChats();
     if (waiting.length === 0) return;
     const report: PauseReport = await this.api.continueChats(waiting.map((chat: ChatSnapshot) => this.continueTarget(chat)));
     this.remember(report.reached, false);
     this.emulators.forget(waiting.filter((chat: ChatSnapshot) => report.reached.includes(chat.pid)).map((chat: ChatSnapshot) => chat.sessionId));
     if (report.skipped.length > 0) console.error(`Could not continue ${report.skipped.length} chat(s): no kitty remote control`);
+  }
+
+  // One at a time, like the pause: each relaunch places a new terminal window. The reopened chat gets its go-ahead
+  // from the main process, so it leaves the set here and is not told twice by the next Continue.
+  private async reopenClosed(): Promise<void> {
+    const closed: string[] = this.closedPaused();
+    if (closed.length === 0) return;
+    for (const sessionId of closed) {
+      if (await this.reopen(sessionId)) this.paused.delete(sessionId);
+      else console.error(`Could not reopen paused chat ${sessionId}`);
+    }
+    save(this.paused);
+  }
+
+  private closedPaused(): string[] {
+    const open: Set<string> = new Set(this.chats().map((chat: ChatSnapshot) => chat.sessionId));
+    return this.closedSessionIds().filter((sessionId: string) => this.paused.has(sessionId) && !open.has(sessionId));
   }
 
   // Forgets paused chats that are neither open nor remembered as left open: nothing can bring them back.

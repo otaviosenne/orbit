@@ -22,7 +22,7 @@ import { isAskAnswer } from '../../shared/ask';
 import { isApprovalAnswer } from '../../shared/approval';
 import { focusTerminalOf } from '../terminal-focus';
 import { isSessionId } from '../../shared/session-id';
-import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, textArg } from './route-args';
+import { isAttachmentList, isContinueTargets, isPauseTargets, isPid, resumeNoteOf, textArg } from './route-args';
 import { setNightShutdownStart } from '../night-shutdown/night-shutdown';
 import { answerTyping } from '../typing/typing-answerer';
 import type { TypingAnswer } from '../../shared/typing-answer';
@@ -91,7 +91,7 @@ export function actionRoutes({ radar, pastChats, boardState, chatWindows, comput
     OpenChatWindow: (sessionId: unknown): void => {
       if (isSessionId(sessionId)) chatWindows.open(sessionId);
     },
-    ResumeChat: (sessionId: unknown, afterCut: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId, afterCut === true, shutdown.pausedChats),
+    ResumeChat: (sessionId: unknown, note: unknown): Promise<ActionResult> => resumeChat(pastChats, sessionId, resumeNoteOf(note), shutdown.pausedChats),
     RenameChat: (pid: unknown, name: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => renameChat(chat, textArg(name))),
     RecolorChat: (pid: unknown, color: unknown): Promise<ActionResult> => onChat(pid, (chat: number) => recolorChat(chat, textArg(color))),
     SendMessage: (pid: unknown, text: unknown, uploads: unknown): Promise<ActionResult> =>

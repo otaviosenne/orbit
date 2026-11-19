@@ -1,4 +1,4 @@
-import type { ActionResult, PastChat } from '../../shared/types';
+import type { ActionResult, PastChat, ResumeNote } from '../../shared/types';
 import { element } from '../dom';
 import { HISTORY_ICON } from '../icons';
 import type { LaunchListener } from '../launch-watch';
@@ -29,7 +29,7 @@ export class ResumeButton implements VoiceSelector {
     private readonly launches: LaunchListener,
     private readonly peek: (chat: PastChat) => void = (): void => undefined,
     // A chat a shutdown cut off midway is told to carry on when it comes back.
-    private readonly wasCut: (sessionId: string) => boolean = (): boolean => false,
+    private readonly noteFor: (sessionId: string) => ResumeNote | null = (): null => null,
   ) {
     this.button.type = 'button';
     this.button.title = IDLE_TITLE;
@@ -81,7 +81,7 @@ export class ResumeButton implements VoiceSelector {
     this.button.disabled = true;
     const launchedAt: number = Date.now();
     this.launches.expect(resumedChatTarget(sessionId, this.titleOf(sessionId)), launchedAt);
-    const result: ActionResult = await window.radar.resumeChat(sessionId, this.wasCut(sessionId));
+    const result: ActionResult = await window.radar.resumeChat(sessionId, this.noteFor(sessionId));
     if (!result.ok) {
       this.launches.fail(launchedAt, result.error ?? 'Could not resume the chat.');
       this.label.textContent = 'Failed';

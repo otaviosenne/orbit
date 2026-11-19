@@ -40,6 +40,7 @@ import type {
   TranscriptItem,
   TurnProgress,
   UsageSnapshot,
+  ResumeNote,
 } from '../shared/types';
 import type { RemoteDictation } from './dictation/remote-dictation';
 import type { RemoteCall } from './remote-caller';
@@ -72,7 +73,7 @@ export function createHttpRadar(call: RemoteCall, voice: RemoteVoice): RadarApi 
     listPastChats: (): Promise<PastChat[]> => call('ListPastChats', []),
     getTimelineHistory: (sinceMs: number): Promise<ClosedChatActivity[]> => call('GetTimelineHistory', [sinceMs]),
     openSignIn: (): Promise<ActionResult> => Promise.resolve({ ok: false, method: null, error: 'Sign in from the computer running Orbit' }),
-    resumeChat: (sessionId: string, afterCut?: boolean): Promise<ActionResult> => call('ResumeChat', [sessionId, afterCut === true]),
+    resumeChat: (sessionId: string, note?: ResumeNote | null): Promise<ActionResult> => call('ResumeChat', [sessionId, note ?? null]),
     prepareDictation: (): void => voice.prepare(),
     startDictation: (): Promise<DictationStart> => voice.start(),
     feedDictation: (session: number, pcm: Uint8Array): void => voice.feed(session, pcm),
