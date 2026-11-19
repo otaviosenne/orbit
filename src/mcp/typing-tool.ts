@@ -16,9 +16,10 @@ export const TYPING_TOOL = {
     '+ security word, or password + confirm password). Orbit pins a bar above this chat with one text input and one ' +
     'Copy button per field; the user fills a field (from the desktop or a phone) and copies it, and Orbit puts that ' +
     'value on the PC\'s clipboard, kept out of the clipboard history and wiped after a short while, so the text never ' +
-    'reaches you. Each copy arrives as the user\'s next message, naming the field (never the value): then click that ' +
-    'field on the PC and press ctrl+v to paste it, and end your turn to wait for the next "Copied" message until every ' +
-    'field is done; the last one says so. The user may also decline. After calling it, end your turn right away.',
+    'reaches you. Each copy arrives as the user\'s next message, naming the field (never the value): then give the ' +
+    'target window real keyboard focus on the PC (hyprctl dispatch focuswindow; Orbit may hold it), click that field, ' +
+    'press ctrl+v to paste it, and end your turn to wait for the next "Copied" message until every field is done; the ' +
+    'last one says so. The user may also decline. After calling it, end your turn right away.',
   inputSchema: {
     type: 'object',
     properties: {

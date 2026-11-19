@@ -98,7 +98,7 @@ export interface ChatSnapshot {
   readonly approval: ApprovalRequest | null;
   // A question or permission asked through Orbit's ask_user tool, pinned above the chat until answered.
   readonly ask: AskRequest | null;
-  // Something the chat asked the user to type on the PC (a password) through request_typing; the chat never sees it.
+  // Secrets the chat asked the user to copy to the PC clipboard (a password) through request_typing; it never sees them.
   readonly typing: TypingRequest | null;
   // The monorepo's local CI running under this chat, shown in green above its thread.
   readonly localCi: LocalCiRun | null;

@@ -5,7 +5,11 @@ import { remainingFields } from './typing-request';
 // request is the one after the copy, so what is left to copy is already up to date.
 export function copiedReply(request: TypingRequest, field: number): string {
   const copied: string = `Copied in Orbit: "${request.fields[field]?.label ?? ''}" is on the PC's clipboard.`;
-  const paste: string = 'Paste it now with ctrl+v in its field on the PC (click that field first if it lacks focus); you never get the text.';
+  // Orbit itself may hold the keyboard after the user's click, and a Wayland window sees the new clipboard only once
+  // it has real focus, so the paste must start by focusing the target window.
+  const paste: string =
+    'Paste it now: give the target window real keyboard focus on the PC (hyprctl dispatch focuswindow), click its ' +
+    'field and press ctrl+v; you never get the text.';
   return `${copied} ${paste} ${whatIsNext(remainingFields(request))}`;
 }
 
