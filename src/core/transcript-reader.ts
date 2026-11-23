@@ -4,6 +4,7 @@ import { FileMemo } from './file-memo';
 import { isTranscriptLine, parseRecords } from './jsonl';
 import type { TailSearchResult } from './tail-search';
 import { searchTail } from './tail-search';
+import { keepReplyImages } from './reply-image-keeper';
 import type { ChatNameResolver, ImageStore, StoredImage, TranscriptSource } from './transcript-extractor';
 import { extractTranscript } from './transcript-extractor';
 
@@ -54,7 +55,14 @@ export class TranscriptReader {
 
 async function readRecentItems(transcriptPath: string, loadNames: ChatNamesLoader, source: TranscriptSource, limit: number): Promise<ReadTranscript> {
   const resolveChat: ChatNameResolver = await loadNames();
-  return searchTail(transcriptPath, (text: string): TailSearchResult<ReadTranscript> => findRecentItems(text, resolveChat, source, limit));
+  const read: ReadTranscript = await searchTail(transcriptPath, (text: string): TailSearchResult<ReadTranscript> => findRecentItems(text, resolveChat, source, limit));
+  // Copied while the files still exist, so the pictures outlive a reboot; the panel does not wait for it.
+  void keepReplyImages(replyImagePaths(read.images));
+  return read;
+}
+
+function replyImagePaths(images: ImageStore): string[] {
+  return [...images.values()].flatMap((image: StoredImage): string[] => ('path' in image ? [image.path] : []));
 }
 
 function findRecentItems(text: string, resolveChat: ChatNameResolver, source: TranscriptSource, limit: number): TailSearchResult<ReadTranscript> {

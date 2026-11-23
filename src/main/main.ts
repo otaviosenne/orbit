@@ -6,6 +6,7 @@ import { ResourceSampler } from '../core/resources/resource-sampler';
 import { TimelineHistory } from '../core/timeline-history/timeline-history';
 import { UsageService } from '../core/usage-service';
 import { pruneOldAttachments } from './attachments';
+import { pruneOldReplyImages } from '../core/reply-image-keeper';
 import { BoardStateStore } from './board-state/board-state-store';
 import { ChatWindows } from './chat-windows';
 import { Computer } from './computer/computer';
@@ -71,6 +72,7 @@ async function start(): Promise<void> {
   startPermissionAutoAllower(radar);
   createRadarWindow();
   void pruneOldAttachments(Date.now());
+  void pruneOldReplyImages(Date.now());
 }
 
 void start();
