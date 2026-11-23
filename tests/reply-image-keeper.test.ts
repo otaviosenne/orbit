@@ -54,13 +54,23 @@ describe('kept reply images', () => {
     expect(await readReplyImage(join(scratch, 'missing.png'), kept)).toBeNull();
   });
 
-  it('prunes copies nobody refreshed for a long time', async () => {
+  it('prunes the copies of chats nobody opened for over a week', async () => {
     const picture: string = join(scratch, 'shot.png');
     await writeFile(picture, 'first');
     await keepReplyImage(picture, kept);
     await rm(picture);
-    await pruneOldReplyImages(Date.now() + 400 * DAY_MS, kept);
+    await pruneOldReplyImages(Date.now() + 8 * DAY_MS, kept);
     expect(await readReplyImage(picture, kept)).toBeNull();
     expect(keptCopyOf(picture, kept).endsWith('.png')).toBe(true);
+  });
+
+  it('spares a copy whose chat was opened again, even after its file is gone', async () => {
+    const picture: string = join(scratch, 'shot.png');
+    await writeFile(picture, 'first');
+    await keepReplyImage(picture, kept);
+    await rm(picture);
+    await keepReplyImage(picture, kept, Date.now() + 5 * DAY_MS);
+    await pruneOldReplyImages(Date.now() + 8 * DAY_MS, kept);
+    expect(decoded(await readReplyImage(picture, kept))).toBe('first');
   });
 });
