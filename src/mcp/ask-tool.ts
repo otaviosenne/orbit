@@ -9,14 +9,14 @@ export const ASK_TOOL_NAME: string = 'ask_user';
 
 export const ASK_TOOL = {
   name: ASK_TOOL_NAME,
-  title: 'Ask the user a question in Orbit',
+  title: 'Ask the user for permission in Orbit',
   description:
-    'Ask the user anything they must decide or allow: a choice between options (A or B, A to D), a yes-or-no ' +
-    'permission, which way to go next. Orbit pins the question above this chat, with one button per option, until ' +
-    'it is answered, so it is never lost in a long reply. Use this instead of asking in your reply text and instead ' +
-    'of AskUserQuestion. Not for pushing to main or cutting a release: that is request_approval. Give 2 to 4 short ' +
-    'options; the user can also answer in the chat instead. After calling it, end your turn right away and do ' +
-    'nothing else: the answer arrives as the user\'s next message.',
+    'Ask the user to allow something: a yes-or-no permission (may I restart Orbit, may I delete these files, may I ' +
+    'go ahead with X). Orbit pins the question above this chat, with one button per answer, until it is answered, so ' +
+    'it is never lost in a long reply. A choice between options (A or B, A to D, which way to go next) is not for ' +
+    'this tool: ask it with AskUserQuestion, which shows in the thread. Not for pushing to main or cutting a release: ' +
+    'that is request_approval. Never ask in your reply text instead. The user can also answer in the chat. After ' +
+    'calling it, end your turn right away and do nothing else: the answer arrives as the user\'s next message.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -29,7 +29,7 @@ export const ASK_TOOL = {
         type: 'array',
         minItems: MIN_ASK_OPTIONS,
         maxItems: MAX_ASK_OPTIONS,
-        description: 'The answers to pick from, recommended one first. For a permission: Yes / No.',
+        description: 'The answers, the recommended one first: usually Yes / No, or Yes / Later.',
         items: {
           type: 'object',
           properties: {

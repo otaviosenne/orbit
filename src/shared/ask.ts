@@ -1,5 +1,5 @@
-// A chat asking the user to decide something through Orbit's ask_user tool: a choice between a few options, a
-// yes-or-no permission. Orbit pins it above the chat until it is answered, so it is never lost in a long reply.
+// A chat asking the user's permission through Orbit's ask_user tool (choices between options go through
+// AskUserQuestion, in the thread). Orbit pins it above the chat until it is answered, so it is never lost in a long reply.
 export interface AskOption {
   readonly label: string;
   // One short line under the label; empty when the label says it all.
