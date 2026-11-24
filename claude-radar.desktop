@@ -2,7 +2,7 @@
 Type=Application
 Name=Orbit
 Comment=Watch and steer every open Claude Code chat and its agents
-Exec=/home/senne/Claude/Projects/claude-radar/node_modules/.bin/electron /home/senne/Claude/Projects/claude-radar
+Exec=/home/senne/.config/hypr/scripts/open-orbit.sh
 Icon=/home/senne/Claude/Projects/claude-radar/assets/orbit-icon.svg
 Terminal=false
 Categories=Utility;Development;

@@ -2,7 +2,7 @@
 Type=Application
 Name=Orbit chat
 Comment=A chat popped out of Orbit into its own window
-Exec=/home/senne/Claude/Projects/claude-radar/node_modules/.bin/electron /home/senne/Claude/Projects/claude-radar
+Exec=/home/senne/Claude/Projects/orbit-release/node_modules/.bin/electron /home/senne/Claude/Projects/orbit-release
 Icon=/home/senne/Claude/Projects/claude-radar/assets/orbit-chat-icon.svg
 Terminal=false
 NoDisplay=true
