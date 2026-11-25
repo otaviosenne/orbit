@@ -1069,12 +1069,17 @@ body.chat-window #action-window { display: none; }
 .tool-flag { flex: none; margin-left: auto; font-size: 11px; font-weight: 600; }
 .tool-flag.is-error { color: var(--danger); }
 .tool-flag.is-running { color: var(--accent); }
-/* A tool group still running: an accent-tinted well with a light sweeping across, like the loading bubbles */
+/* A tool group still running: an accent-tinted well with a light sweeping across it without end. The gradient tile
+   repeats sideways and each cycle moves it by exactly one tile at a constant speed, so the last frame equals the first
+   and the loop never jumps. With a tile 2.5x the row, a percentage position p offsets it by -1.5 x row x p, so one tile
+   (2.5 x row) is p = -166.667%. */
 .tool-group.is-running {
   background-color: color-mix(in srgb, var(--accent) 10%, var(--well));
   background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--accent) 16%, transparent) 50%, transparent 70%);
-  background-size: 250% 100%; animation: pending-shimmer 1.6s ease-in-out infinite;
+  background-size: 250% 100%; background-repeat: repeat-x;
+  animation: running-sweep linear infinite; /* duration and phase: tool-group.ts */
 }
+@keyframes running-sweep { from { background-position: 0% 0; } to { background-position: -166.667% 0; } }
 @media (prefers-reduced-motion: reduce) { .tool-group.is-running { animation: none; } }
 .tool-label { font-size: 10.5px; font-weight: 600; color: var(--tertiary); }
 .tool-text {

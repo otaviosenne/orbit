@@ -6,6 +6,8 @@ import type { ToolGroup } from './group-tools';
 
 // How many distinct tool names the collapsed line lists before trailing off.
 const NAMES_IN_SUMMARY: number = 3;
+// One pass of the running row's sweep.
+const RUNNING_SWEEP_MS: number = 2400;
 
 export function renderToolGroup(group: ToolGroup, isOpen: OpenState): HTMLElement {
   const summary: Node[] = [
@@ -18,7 +20,16 @@ export function renderToolGroup(group: ToolGroup, isOpen: OpenState): HTMLElemen
   if (isRunning) summary.push(element('span', 'tool-flag is-running', 'running'));
   // A running group shimmers like a loading row, so it reads as still working at a glance, not just by its label.
   const className: string = isRunning ? 'tool-group is-running' : 'tool-group';
-  return disclosure(`tools:${group.id}`, className, summary, group.tools.map((tool: ToolItem) => renderTool(tool, isOpen)), isOpen);
+  const details: HTMLDetailsElement = disclosure(`tools:${group.id}`, className, summary, group.tools.map((tool: ToolItem) => renderTool(tool, isOpen)), isOpen);
+  if (isRunning) syncSweep(details, Date.now());
+  return details;
+}
+
+// The row is rebuilt whenever its group gains a tool; starting the sweep at the clock's phase instead of from zero
+// keeps it gliding through the rebuild rather than snapping back.
+function syncSweep(row: HTMLElement, now: number): void {
+  row.style.animationDuration = `${RUNNING_SWEEP_MS}ms`;
+  row.style.animationDelay = `-${now % RUNNING_SWEEP_MS}ms`;
 }
 
 function renderTool(tool: ToolItem, isOpen: OpenState): HTMLElement {
