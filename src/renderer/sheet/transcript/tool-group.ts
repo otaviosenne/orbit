@@ -14,8 +14,11 @@ export function renderToolGroup(group: ToolGroup, isOpen: OpenState): HTMLElemen
   ];
   const failures: number = group.tools.filter((tool: ToolItem) => tool.isError).length;
   if (failures > 0) summary.push(element('span', 'tool-flag is-error', `${failures} failed`));
-  if (group.tools.some((tool: ToolItem) => tool.output === null)) summary.push(element('span', 'tool-flag is-running', 'running'));
-  return disclosure(`tools:${group.id}`, 'tool-group', summary, group.tools.map((tool: ToolItem) => renderTool(tool, isOpen)), isOpen);
+  const isRunning: boolean = group.tools.some((tool: ToolItem) => tool.output === null);
+  if (isRunning) summary.push(element('span', 'tool-flag is-running', 'running'));
+  // A running group shimmers like a loading row, so it reads as still working at a glance, not just by its label.
+  const className: string = isRunning ? 'tool-group is-running' : 'tool-group';
+  return disclosure(`tools:${group.id}`, className, summary, group.tools.map((tool: ToolItem) => renderTool(tool, isOpen)), isOpen);
 }
 
 function renderTool(tool: ToolItem, isOpen: OpenState): HTMLElement {
